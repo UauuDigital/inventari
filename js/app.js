@@ -2,8 +2,23 @@
 
 // ── CONSTANTS ──────────────────────────────────────────────────────
 
-const STORAGE_ITEMS = 'uauu_inv_items';
-const STORAGE_CATS  = 'uauu_inv_cats';
+const STORAGE_ITEMS  = 'uauu_inv_items';
+const STORAGE_CATS   = 'uauu_inv_cats';
+const STORAGE_ORDERS = 'uauu_inv_orders';
+
+const STATUS_LABELS = {
+  pendent:      'Pendent',
+  en_curs:      'En curs',
+  rebuda:       'Rebuda',
+  'cancel·lada':'Cancel·lada',
+};
+
+const STATUS_CSS = {
+  pendent:      'status-pendent',
+  en_curs:      'status-en_curs',
+  rebuda:       'status-rebuda',
+  'cancel·lada':'status-cancel_lada',
+};
 
 const CAT_COLORS = [
   '#B8A99A', '#A4B5A8', '#B0B4C8', '#C8B0B0',
@@ -26,59 +41,371 @@ const state = {
   searchOpen:  false,
   selColor:    CAT_COLORS[0],
   user:        null,
+  orders:      [],
+  orderFilter: '',
+  editingOrderId: null,
+  importRows:  [],
 };
 
 // ── STORAGE ────────────────────────────────────────────────────────
 
 function loadData() {
   try {
-    state.items      = JSON.parse(localStorage.getItem(STORAGE_ITEMS)) || [];
-    state.categories = JSON.parse(localStorage.getItem(STORAGE_CATS))  || [...DEFAULT_CATS];
+    state.items      = JSON.parse(localStorage.getItem(STORAGE_ITEMS))  || [];
+    state.categories = JSON.parse(localStorage.getItem(STORAGE_CATS))   || [...DEFAULT_CATS];
+    state.orders     = JSON.parse(localStorage.getItem(STORAGE_ORDERS)) || [];
   } catch {
     state.items      = [];
     state.categories = [...DEFAULT_CATS];
+    state.orders     = [];
   }
 }
 
-function saveItems() { localStorage.setItem(STORAGE_ITEMS, JSON.stringify(state.items)); }
-function saveCats()  { localStorage.setItem(STORAGE_CATS,  JSON.stringify(state.categories)); }
+function saveItems()  { localStorage.setItem(STORAGE_ITEMS,  JSON.stringify(state.items)); }
+function saveCats()   { localStorage.setItem(STORAGE_CATS,   JSON.stringify(state.categories)); }
+function saveOrders() { localStorage.setItem(STORAGE_ORDERS, JSON.stringify(state.orders)); }
 
-// ── USER SELECTION ─────────────────────────────────────────────────
+// ── USER SELECTION & ROLE ──────────────────────────────────────────
+
+const ROLE_MAP = {
+  'Começal':     'comencal',
+  'Coordinador': 'coordinador',
+  'Admin':       'admin',
+};
+
+function applyRole(name) {
+  const role = ROLE_MAP[name] || 'comencal';
+  document.body.dataset.role = role;
+
+  // Import button: only admin
+  const importBtn = document.getElementById('btn-import-excel');
+  if (importBtn) importBtn.hidden = (role !== 'admin');
+
+  // Default view
+  if (role === 'comencal') {
+    setView('list');
+  } else {
+    setView('orders');
+  }
+}
 
 function selectUser(name) {
   state.user = name;
   localStorage.setItem('uauu_inv_user', name);
-
   document.getElementById('user-pill-name').textContent = name;
 
   const screen = document.getElementById('screen-users');
   screen.classList.add('leaving');
   setTimeout(() => { screen.hidden = true; }, 400);
+
+  applyRole(name);
 }
 
 function showUserScreen() {
   state.user = null;
   localStorage.removeItem('uauu_inv_user');
   document.getElementById('user-pill-name').textContent = '';
+  document.body.removeAttribute('data-role');
 
   const screen = document.getElementById('screen-users');
   screen.hidden = false;
-  // force reflow so transition plays
   screen.classList.remove('leaving');
   void screen.offsetWidth;
 }
 
 function initUserScreen() {
   const saved = localStorage.getItem('uauu_inv_user');
-  if (saved) {
-    selectUser(saved);
-  }
+  if (saved) selectUser(saved);
 
   document.querySelectorAll('.user-card[data-user]').forEach(card => {
     card.addEventListener('click', () => selectUser(card.dataset.user));
   });
 
   document.getElementById('btn-switch-user').addEventListener('click', showUserScreen);
+}
+
+// ── ORDERS ─────────────────────────────────────────────────────────
+
+function filteredOrders() {
+  if (!state.orderFilter) return state.orders;
+  return state.orders.filter(o => o.status === state.orderFilter);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('ca', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return iso; }
+}
+
+function renderOrders() {
+  const list  = document.getElementById('orders-list');
+  const empty = document.getElementById('orders-empty');
+  if (!list) return;
+
+  // Update filter pills
+  document.querySelectorAll('#orders-filter-strip .filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.status === state.orderFilter);
+  });
+
+  const orders = filteredOrders();
+
+  if (orders.length === 0) {
+    list.innerHTML  = '';
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  list.innerHTML = orders.map(o => `
+    <div class="order-card" data-id="${o.id}">
+      <div class="order-card-top">
+        <div class="order-card-meta">
+          ${o.ref ? `<span class="order-ref">${esc(o.ref)}</span>` : ''}
+          ${o.date ? `<span class="order-date">${fmtDate(o.date)}</span>` : ''}
+        </div>
+        <span class="order-status-badge ${STATUS_CSS[o.status] || ''}">
+          ${esc(STATUS_LABELS[o.status] || o.status)}
+        </span>
+      </div>
+      ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
+      ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
+      <div class="order-card-footer">
+        <span class="order-amount">${o.amount ? '€' + parseFloat(o.amount).toFixed(2) : ''}</span>
+        <button class="order-edit-btn" data-edit-order="${o.id}" aria-label="Editar comanda">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openOrderModal(order = null) {
+  state.editingOrderId = order?.id || null;
+  document.getElementById('modal-order-title').textContent = order ? 'Editar comanda' : 'Nova comanda';
+  document.getElementById('btn-delete-order').hidden = !order;
+
+  document.getElementById('f-order-ref').value      = order?.ref      ?? '';
+  document.getElementById('f-order-date').value     = order?.date     ?? new Date().toISOString().slice(0, 10);
+  document.getElementById('f-order-supplier').value = order?.supplier ?? '';
+  document.getElementById('f-order-status').value   = order?.status   ?? 'pendent';
+  document.getElementById('f-order-desc').value     = order?.desc     ?? '';
+  document.getElementById('f-order-amount').value   = order?.amount   ?? '';
+  document.getElementById('f-order-notes').value    = order?.notes    ?? '';
+
+  document.getElementById('modal-order').classList.add('open');
+  setTimeout(() => document.getElementById('f-order-supplier').focus(), 380);
+}
+
+function closeOrderModal() {
+  document.getElementById('modal-order').classList.remove('open');
+  state.editingOrderId = null;
+}
+
+function saveOrder() {
+  const desc = document.getElementById('f-order-desc').value.trim();
+  if (!desc) {
+    const el = document.getElementById('f-order-desc');
+    el.focus();
+    el.style.borderColor = 'rgba(176,32,32,0.5)';
+    setTimeout(() => { el.style.borderColor = ''; }, 1200);
+    return;
+  }
+  const data = {
+    ref:      document.getElementById('f-order-ref').value.trim(),
+    date:     document.getElementById('f-order-date').value,
+    supplier: document.getElementById('f-order-supplier').value.trim(),
+    status:   document.getElementById('f-order-status').value,
+    desc,
+    amount:   parseFloat(document.getElementById('f-order-amount').value) || 0,
+    notes:    document.getElementById('f-order-notes').value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  if (state.editingOrderId) {
+    const idx = state.orders.findIndex(o => o.id === state.editingOrderId);
+    if (idx >= 0) state.orders[idx] = { ...state.orders[idx], ...data };
+    toast('Comanda actualitzada');
+  } else {
+    state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), ...data });
+    toast('Comanda afegida');
+  }
+  saveOrders();
+  closeOrderModal();
+  renderOrders();
+}
+
+function deleteOrder() {
+  if (!state.editingOrderId) return;
+  const o = state.orders.find(x => x.id === state.editingOrderId);
+  if (!confirm(`Eliminar la comanda${o?.ref ? ' ' + o.ref : ''}?`)) return;
+  state.orders = state.orders.filter(x => x.id !== state.editingOrderId);
+  saveOrders();
+  closeOrderModal();
+  renderOrders();
+  toast('Comanda eliminada');
+}
+
+// ── EXCEL / CSV IMPORT ─────────────────────────────────────────────
+
+let _xlsxLoaded = false;
+
+function loadSheetJS() {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) { resolve(window.XLSX); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+    s.onload  = () => { _xlsxLoaded = true; resolve(window.XLSX); };
+    s.onerror = () => reject(new Error('No s\'ha pogut carregar la llibreria Excel.\nConnecta\'t a internet i torna a intentar-ho.'));
+    document.head.appendChild(s);
+  });
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const delim = lines[0].includes(';') ? ';' : ',';
+  return lines.map(l =>
+    l.split(delim).map(c => c.trim().replace(/^"|"$/g, ''))
+  );
+}
+
+function findCol(headers, candidates) {
+  for (const c of candidates) {
+    const i = headers.findIndex(h => h.toLowerCase().includes(c));
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+function rowsToItems(rows) {
+  const headers = rows[0].map(h => String(h).toLowerCase().trim());
+  const iName  = findCol(headers, ['nom', 'name', 'article', 'producte']);
+  const iCat   = findCol(headers, ['categoria', 'category', 'cat']);
+  const iQty   = findCol(headers, ['quantitat', 'quantity', 'qty', 'estoc', 'stock']);
+  const iUnit  = findCol(headers, ['unitat', 'unit']);
+  const iMin   = findCol(headers, ['mínim', 'minim', 'min stock', 'estoc mínim']);
+  const iPrice = findCol(headers, ['preu', 'price', 'cost']);
+
+  if (iName === -1) throw new Error('Columna "Nom" no trobada. Comprova les capçaleres.');
+
+  return rows.slice(1)
+    .filter(r => String(r[iName] || '').trim())
+    .map(r => ({
+      name:     String(r[iName] || '').trim(),
+      category: String(r[iCat]  || '').trim(),
+      quantity: parseFloat(String(r[iQty]   || '0').replace(',', '.')) || 0,
+      unit:     String(r[iUnit] || '').trim(),
+      minStock: parseFloat(String(r[iMin]   || '0').replace(',', '.')) || 0,
+      price:    parseFloat(String(r[iPrice] || '0').replace(',', '.')) || 0,
+    }));
+}
+
+async function processImportFile(file) {
+  let rows;
+  if (file.name.toLowerCase().endsWith('.csv')) {
+    rows = parseCSV(await file.text());
+  } else {
+    const XLSX = await loadSheetJS();
+    const buf  = await file.arrayBuffer();
+    const wb   = XLSX.read(buf);
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  }
+
+  state.importRows = rowsToItems(rows);
+
+  const preview = document.getElementById('import-preview');
+  const confirmBtn = document.getElementById('btn-confirm-import');
+
+  if (state.importRows.length === 0) {
+    preview.innerHTML = '<p style="padding:12px;font-size:13px;color:rgba(34,31,30,0.5)">Cap fila vàlida trobada.</p>';
+    preview.hidden = false;
+    confirmBtn.hidden = true;
+    return;
+  }
+
+  const cols = [
+    { k: 'name',     l: 'Nom' },
+    { k: 'category', l: 'Categoria' },
+    { k: 'quantity', l: 'Quantitat' },
+    { k: 'unit',     l: 'Unitat' },
+    { k: 'price',    l: 'Preu' },
+  ];
+  const sample = state.importRows.slice(0, 5);
+
+  preview.innerHTML = `
+    <table class="import-preview-table">
+      <thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${sample.map(row =>
+          `<tr>${cols.map(c => `<td>${esc(String(row[c.k] ?? ''))}</td>`).join('')}</tr>`
+        ).join('')}
+      </tbody>
+    </table>
+    <p class="import-count">${state.importRows.length} articles detectats${state.importRows.length > 5 ? ' (mostrant 5)' : ''}</p>
+  `;
+  preview.hidden = false;
+  confirmBtn.textContent = `Importar ${state.importRows.length} article${state.importRows.length !== 1 ? 's' : ''}`;
+  confirmBtn.hidden = false;
+}
+
+function confirmImport() {
+  if (!state.importRows.length) return;
+  let created = 0;
+  let updated = 0;
+
+  state.importRows.forEach(row => {
+    // Find or create category
+    let catId = 'cat_general';
+    if (row.category) {
+      let cat = state.categories.find(c => c.name.toLowerCase() === row.category.toLowerCase());
+      if (!cat) {
+        cat = { id: 'cat_' + uid(), name: row.category, color: CAT_COLORS[state.categories.length % CAT_COLORS.length] };
+        state.categories.push(cat);
+      }
+      catId = cat.id;
+    }
+
+    // Check if item already exists (by name, case-insensitive)
+    const existing = state.items.find(i => i.name.toLowerCase() === row.name.toLowerCase());
+    if (existing) {
+      existing.quantity  = row.quantity;
+      existing.unit      = row.unit      || existing.unit;
+      existing.minStock  = row.minStock  || existing.minStock;
+      existing.price     = row.price     || existing.price;
+      existing.category  = catId;
+      existing.updatedAt = new Date().toISOString();
+      updated++;
+    } else {
+      state.items.unshift({
+        id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        name: row.name, category: catId,
+        quantity: row.quantity, unit: row.unit,
+        minStock: row.minStock, price: row.price, notes: '',
+      });
+      created++;
+    }
+  });
+
+  saveCats();
+  saveItems();
+  state.importRows = [];
+  closeImportModal();
+  toast(`Importació completada: ${created} nous, ${updated} actualitzats`);
+}
+
+function openImportModal() {
+  document.getElementById('import-preview').hidden   = true;
+  document.getElementById('btn-confirm-import').hidden = true;
+  document.getElementById('f-import-file').value    = '';
+  document.getElementById('modal-import').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('modal-import').classList.remove('open');
+  state.importRows = [];
 }
 
 // ── HELPERS ────────────────────────────────────────────────────────
@@ -146,8 +473,18 @@ function renderNav() {
   document.querySelectorAll('.view-panel').forEach(panel => {
     panel.hidden = panel.id !== `view-${state.view}`;
   });
+
   const fab = document.getElementById('btn-add');
-  fab.hidden = (state.view !== 'list');
+  const fabLabel = fab.querySelector('span:last-child');
+  if (state.view === 'orders') {
+    fab.hidden = false;
+    fabLabel.textContent = 'Nova comanda';
+  } else if (state.view === 'list') {
+    fab.hidden = false;
+    fabLabel.textContent = 'Nou article';
+  } else {
+    fab.hidden = true;
+  }
 }
 
 function renderStatsStrip() {
@@ -492,18 +829,27 @@ function updateQty(id, delta) {
 function setView(view) {
   state.view = view;
   renderNav();
-  if (view === 'stats') renderStats();
-  if (view === 'cats')  renderCats();
+  if (view === 'stats')  renderStats();
+  if (view === 'cats')   renderCats();
+  if (view === 'orders') renderOrders();
 }
 
 // ── EVENT DELEGATION ───────────────────────────────────────────────
 
 document.addEventListener('click', e => {
-  // Edit button
+  // Edit article button
   const editBtn = e.target.closest('[data-edit]');
   if (editBtn) {
     const item = state.items.find(i => i.id === editBtn.dataset.edit);
     if (item) openItemModal(item);
+    return;
+  }
+
+  // Edit order button
+  const editOrder = e.target.closest('[data-edit-order]');
+  if (editOrder) {
+    const o = state.orders.find(x => x.id === editOrder.dataset.editOrder);
+    if (o) openOrderModal(o);
     return;
   }
 
@@ -514,12 +860,20 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Filter pill
-  const pill = e.target.closest('.filter-pill[data-cat]');
+  // Articles filter pill
+  const pill = e.target.closest('#filter-pills .filter-pill');
   if (pill) {
     state.filter = pill.dataset.cat || null;
     renderFilterPills();
     renderItems();
+    return;
+  }
+
+  // Orders filter pill
+  const orderPill = e.target.closest('#orders-filter-strip .filter-pill');
+  if (orderPill) {
+    state.orderFilter = orderPill.dataset.status;
+    renderOrders();
     return;
   }
 
@@ -545,17 +899,21 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Close modals on backdrop click
-  if (e.target.id === 'modal-item') { closeItemModal(); return; }
-  if (e.target.id === 'modal-cat')  { closeCatModal();  return; }
+  // Backdrop close for all modals
+  if (e.target.id === 'modal-item')   { closeItemModal();   return; }
+  if (e.target.id === 'modal-cat')    { closeCatModal();    return; }
+  if (e.target.id === 'modal-order')  { closeOrderModal();  return; }
+  if (e.target.id === 'modal-import') { closeImportModal(); return; }
 });
 
 // ── KEYBOARD ───────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if (document.getElementById('modal-item').classList.contains('open')) { closeItemModal(); return; }
-    if (document.getElementById('modal-cat').classList.contains('open'))  { closeCatModal();  return; }
+    if (document.getElementById('modal-item').classList.contains('open'))   { closeItemModal();   return; }
+    if (document.getElementById('modal-cat').classList.contains('open'))    { closeCatModal();    return; }
+    if (document.getElementById('modal-order').classList.contains('open'))  { closeOrderModal();  return; }
+    if (document.getElementById('modal-import').classList.contains('open')) { closeImportModal(); return; }
     if (state.searchOpen) toggleSearch();
   }
 });
@@ -582,23 +940,79 @@ function init() {
   render();
   initUserScreen();
 
+  // Search (Começal only)
   document.getElementById('btn-search').addEventListener('click', toggleSearch);
-
   document.getElementById('search-input').addEventListener('input', e => {
     state.search = e.target.value.trim();
     renderItems();
   });
 
-  document.getElementById('btn-add').addEventListener('click', () => openItemModal());
+  // FAB — obre modal d'article o de comanda segons la vista activa
+  document.getElementById('btn-add').addEventListener('click', () => {
+    if (state.view === 'orders') openOrderModal();
+    else openItemModal();
+  });
 
+  // Modal article
   document.getElementById('btn-modal-close').addEventListener('click', closeItemModal);
   document.getElementById('btn-save-item').addEventListener('click', saveItem);
   document.getElementById('btn-delete-item').addEventListener('click', deleteItem);
   document.getElementById('item-form').addEventListener('submit', e => { e.preventDefault(); saveItem(); });
 
+  // Modal categoria
   document.getElementById('btn-cat-modal-close').addEventListener('click', closeCatModal);
   document.getElementById('btn-save-cat').addEventListener('click', saveCat);
   document.getElementById('cat-form').addEventListener('submit', e => { e.preventDefault(); saveCat(); });
+
+  // Modal comanda
+  document.getElementById('btn-order-modal-close').addEventListener('click', closeOrderModal);
+  document.getElementById('btn-save-order').addEventListener('click', saveOrder);
+  document.getElementById('btn-delete-order').addEventListener('click', deleteOrder);
+  document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); saveOrder(); });
+
+  // Modal importació
+  document.getElementById('btn-import-excel').addEventListener('click', openImportModal);
+  document.getElementById('btn-import-close').addEventListener('click', closeImportModal);
+  document.getElementById('btn-confirm-import').addEventListener('click', confirmImport);
+
+  // File drop zone
+  const dropZone = document.getElementById('file-drop-zone');
+  const fileInput = document.getElementById('f-import-file');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    dropZone.querySelector('.file-drop-label').textContent = file.name;
+    try {
+      await processImportFile(file);
+    } catch (err) {
+      document.getElementById('import-preview').innerHTML =
+        `<p style="padding:12px;font-size:13px;color:rgba(176,32,32,0.75)">${esc(err.message)}</p>`;
+      document.getElementById('import-preview').hidden = false;
+      document.getElementById('btn-confirm-import').hidden = true;
+    }
+  });
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', async e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    dropZone.querySelector('.file-drop-label').textContent = file.name;
+    try {
+      await processImportFile(file);
+    } catch (err) {
+      document.getElementById('import-preview').innerHTML =
+        `<p style="padding:12px;font-size:13px;color:rgba(176,32,32,0.75)">${esc(err.message)}</p>`;
+      document.getElementById('import-preview').hidden = false;
+      document.getElementById('btn-confirm-import').hidden = true;
+    }
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
