@@ -1,0 +1,27 @@
+{
+  "name": "Inventari — Uauu",
+  "short_name": "Inventari",
+  "description": "Gestió d'inventari per a Uauu Digital",
+  "start_url": "/inventari/",
+  "scope": "/inventari/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#221F1E",
+  "theme_color": "#221F1E",
+  "lang": "ca",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"]
+}
