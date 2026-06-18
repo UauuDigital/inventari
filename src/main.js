@@ -1151,6 +1151,32 @@ function renderStats() {
   const el = document.getElementById('stats-content');
   if (!el) return;
 
+  if (document.body.dataset.role === 'comensal') {
+    if (state.items.length === 0) {
+      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">Encara no s'ha comptat cap producte</span></div>`;
+      return;
+    }
+    const groups = new Map();
+    state.items.forEach(item => {
+      const cat = state.categories.find(c => c.id === item.category);
+      const catName = cat ? cat.name : 'Sense categoria';
+      if (!groups.has(catName)) groups.set(catName, []);
+      groups.get(catName).push(item);
+    });
+    let html = `<div class="stats-total-row"><span class="stats-total-label">Total comptat</span><span class="stats-total-val">${state.items.length} productes</span></div>`;
+    groups.forEach((items, catName) => {
+      html += `<div class="stats-section-title">${esc(catName)}</div>`;
+      items.forEach(item => {
+        html += `<div class="stats-cat-row">
+          <span class="stats-cat-name">${esc(item.name)}</span>
+          <span class="stats-cat-count">${fmtNum(item.quantity)} ${esc(item.unit || 'u')}</span>
+        </div>`;
+      });
+    });
+    el.innerHTML = html;
+    return;
+  }
+
   const totalVal = state.items.reduce((s, i) => s + i.quantity * (i.price || 0), 0);
   const lowItems  = state.items.filter(i => i.minStock > 0 && i.quantity <= i.minStock);
   const zeroItems = state.items.filter(i => i.quantity === 0);
