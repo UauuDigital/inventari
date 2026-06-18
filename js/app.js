@@ -577,11 +577,14 @@ function closeNewProductModal() {
 
 function sendToSheet(gasUrl, params) {
   const url = `${gasUrl}?${params}`;
-  // Primary: fetch (no-cors) — net request; service worker no intercepta URLs externes
-  fetch(url, { mode: 'no-cors' }).catch(() => {
-    // Fallback: image pixel trick si fetch falla per algun motiu
-    new Image().src = url;
-  });
+  // Iframe ocult: segueix redirects cross-origin igual que obrir en pestanya nova,
+  // sense restriccions CORS ni problemes amb service workers. Funciona a mòbil.
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;width:0;height:0;opacity:0;pointer-events:none';
+  document.body.appendChild(iframe);
+  iframe.src = url;
+  setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 8000);
 }
 
 function saveNewProduct() {
