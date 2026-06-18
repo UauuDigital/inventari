@@ -546,6 +546,18 @@ function saveGasUrl() {
   closeGasModal();
 }
 
+function testGasUrl() {
+  const url = document.getElementById('f-gas-url').value.trim()
+           || localStorage.getItem('uauu_inv_gas_url') || '';
+  if (!url) { toast('Enganxa primer la URL'); return; }
+  const params = new URLSearchParams({
+    id: 0, producte: 'TEST_CONNEXIO', proveidor: '', preu: 0, categoria: 'TEST', codi: '',
+  });
+  // Obre en una pestanya nova per veure la resposta directament
+  window.open(`${url}?${params}`, '_blank');
+  toast('Comprova si ha aparegut una fila TEST al full');
+}
+
 // ── NOU PRODUCTE (Comensal) ────────────────────────────────────────
 
 function openNewProductModal(prefill = {}) {
@@ -561,6 +573,13 @@ function openNewProductModal(prefill = {}) {
 
 function closeNewProductModal() {
   document.getElementById('modal-new-product').classList.remove('open');
+}
+
+function sendToSheet(gasUrl, params) {
+  // El truc de la imatge bypassa qualsevol restricció CORS i segueix redirects automàticament.
+  // El navegador envia sempre el GET; no podem llegir la resposta però el GAS l'executa.
+  const img = new Image();
+  img.src = `${gasUrl}?${params}`;
 }
 
 async function saveNewProduct() {
@@ -589,19 +608,15 @@ async function saveNewProduct() {
   state.catalogExtra.push(product);
   localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
 
-  // Envia al Google Sheet via GET (evita el problema de redirecció 302 amb POST)
+  // Envia al Google Sheet
   const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
   if (gasUrl) {
-    try {
-      const params = new URLSearchParams({
-        id: newId, producte: name, proveidor: supplier,
-        preu: price, categoria: category, codi: code,
-      });
-      await fetch(`${gasUrl}?${params}`, { method: 'GET', mode: 'no-cors' });
-      toast(`"${name}" afegit i enviat al full`);
-    } catch {
-      toast(`"${name}" desat localment (sense connexió)`);
-    }
+    const params = new URLSearchParams({
+      id: newId, producte: name, proveidor: supplier,
+      preu: price, categoria: category, codi: code,
+    });
+    sendToSheet(gasUrl, params);
+    toast(`"${name}" afegit i enviat al full`);
   } else {
     toast(`"${name}" desat localment — configura l'Apps Script per sincronitzar`);
   }
@@ -1494,6 +1509,7 @@ function init() {
   document.getElementById('btn-gas-config').addEventListener('click', openGasModal);
   document.getElementById('btn-gas-close').addEventListener('click', closeGasModal);
   document.getElementById('btn-save-gas').addEventListener('click', saveGasUrl);
+  document.getElementById('btn-test-gas').addEventListener('click', testGasUrl);
   document.getElementById('gas-form').addEventListener('submit', e => { e.preventDefault(); saveGasUrl(); });
 
   // Modal nou producte (Comensal)
