@@ -204,6 +204,11 @@
     <!-- VIEW: CATÀLEG (Comensal) -->
     <div id="view-catalog" class="view-panel" hidden></div>
 
+    <!-- VIEW: INFORMES (Coordinador + Admin) -->
+    <div id="view-reports" class="view-panel" hidden>
+      <div class="reports-list" id="reports-content"></div>
+    </div>
+
     <!-- VIEW: COMANDES (Coordinador + Admin) -->
     <div id="view-orders" class="view-panel" hidden>
       <div class="orders-filter-strip" id="orders-filter-strip">
@@ -243,7 +248,7 @@
       </svg>
       Articles
     </button>
-    <button class="nav-tab role-coord-only" data-view="cats" aria-label="Categories" hidden>
+    <button class="nav-tab role-admin-only" data-view="cats" aria-label="Categories" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/>
         <path d="M10 6h10M10 12h10M10 18h6"/>
@@ -258,7 +263,14 @@
       </svg>
       Resum
     </button>
-    <!-- Tab Coordinador / Admin -->
+    <!-- Tabs Coordinador / Admin -->
+    <button class="nav-tab role-coord-only" data-view="reports" aria-label="Informes" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="3" width="16" height="19" rx="2"/>
+        <path d="M4 9h16M8 6h.01M8 13h8M8 17h5"/>
+      </svg>
+      Informes
+    </button>
     <button class="nav-tab role-coord-only" data-view="orders" aria-label="Comandes" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="4" y="3" width="16" height="19" rx="2"/>

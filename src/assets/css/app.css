@@ -875,6 +875,82 @@ body {
   color: var(--white);
 }
 
+/* ── SEND REPORT BUTTON ──────────────────────────────────────────── */
+
+.btn-send-report {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--white);
+  color: var(--dark);
+  border: none;
+  border-radius: 13px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-send-report:active { opacity: 0.75; }
+
+/* ── REPORTS VIEW ────────────────────────────────────────────────── */
+
+.reports-list {
+  padding: 14px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.report-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-date-time {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--white);
+  letter-spacing: 0.01em;
+}
+
+.report-count-badge {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+.report-items-list {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reports-loading {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.report-items-list .stats-cat-row {
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
 /* ── TOAST ───────────────────────────────────────────────────────── */
 
 .toast {
@@ -924,6 +1000,11 @@ body[data-role="comensal"]   .role-comensal-only.nav-tab { display: flex !import
 body[data-role="coordinador"] .role-coord-only.nav-tab   { display: flex !important; }
 body[data-role="admin"]       .role-coord-only.nav-tab   { display: flex !important; }
 body[data-role="admin"]       .role-admin-only.icon-btn  { display: flex !important; }
+
+/* El coordinador no gestiona articles ni el FAB */
+body[data-role="coordinador"] .fab                { display: none !important; }
+body[data-role="coordinador"] #btn-search         { display: none !important; }
+body[data-role="coordinador"] .stats-strip        { display: none !important; }
 
 /* ── ORDERS LIST ─────────────────────────────────────────────────── */
 

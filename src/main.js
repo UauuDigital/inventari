@@ -6,6 +6,7 @@ const CATALOG_URL         = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pB
 const OPEN_FOOD_FACTS_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 // URL del Google Apps Script per afegir files al full. Deixa buit si no s'ha configurat.
 const SHEET_APPEND_URL    = 'https://script.google.com/macros/s/AKfycbztMwSVooLa8kyrfc4w8nwozximqD_mwDztLQ4lvAY99MvUr6pgsS9Pt5i1F-D_nUoiQg/exec';
+const INVENTARI_URL       = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=1640722155';
 const STORAGE_ITEMS       = 'uauu_inv_items';
 const STORAGE_CATS        = 'uauu_inv_cats';
 const STORAGE_ORDERS      = 'uauu_inv_orders';
@@ -78,7 +79,7 @@ function loadData() {
 
 function saveItems()  { localStorage.setItem(STORAGE_ITEMS,  JSON.stringify(state.items)); }
 function saveCats()   { localStorage.setItem(STORAGE_CATS,   JSON.stringify(state.categories)); }
-function saveOrders() { localStorage.setItem(STORAGE_ORDERS, JSON.stringify(state.orders)); }
+function saveOrders()   { localStorage.setItem(STORAGE_ORDERS,   JSON.stringify(state.orders)); }
 
 // ── USER SELECTION & ROLE ──────────────────────────────────────────
 
@@ -102,6 +103,8 @@ function applyRole(name) {
   // Default view
   if (role === 'comensal') {
     setView('catalog');
+  } else if (role === 'coordinador') {
+    setView('reports');
   } else {
     setView('orders');
   }
@@ -1173,6 +1176,7 @@ function renderStats() {
         </div>`;
       });
     });
+    html += `<button class="btn-send-report" data-action="send-report">Enviar inventari al coordinador</button>`;
     el.innerHTML = html;
     return;
   }
@@ -1233,6 +1237,105 @@ function renderStats() {
       </div>
     ` : ''}
   `;
+}
+
+function sendInventoryReport() {
+  if (!state.items.length) return;
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const snapshot = state.items.map(i => ({
+    name:     i.name,
+    quantity: i.quantity,
+    unit:     i.unit || 'u',
+    category: i.category,
+  }));
+
+  const inventariStr = snapshot.map(i => `${i.name}: ${fmtNum(i.quantity)} ${i.unit}`).join(' | ');
+  const params = new URLSearchParams({
+    action:    'inventari',
+    id:        String(now.getTime()),
+    data:      dateStr,
+    hora:      timeStr,
+    comensal:  '',
+    masia:     state.masia || '',
+    inventari: inventariStr,
+  });
+  sendToSheet(SHEET_APPEND_URL, params.toString());
+
+  state.items = [];
+  saveItems();
+
+  showToast('Inventari enviat al coordinador');
+  setView('catalog');
+  renderStatsStrip();
+}
+
+async function renderReports() {
+  const el = document.getElementById('reports-content');
+  if (!el) return;
+
+  el.innerHTML = `<div class="reports-loading">Carregant informes…</div>`;
+
+  try {
+    const res  = await fetch(INVENTARI_URL);
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    // Validate that we're reading the Inventari sheet (not the catalog)
+    const headers = (rows[0] || []).map(h => h.toLowerCase().trim());
+    const isCorrectSheet = headers.some(h => h === 'inventari' || h === 'data' || h === 'hora');
+    if (!isCorrectSheet) {
+      el.innerHTML = `<div class="stats-cat-row" style="flex-direction:column;gap:6px;padding:20px 16px">
+        <span class="stats-cat-name" style="flex:none;font-size:13px;color:var(--low)">Error: s'està llegint el full incorrecte.</span>
+        <span class="stats-cat-count">Capçaleres trobades: ${esc((rows[0] || []).join(', '))}</span>
+      </div>`;
+      return;
+    }
+
+    const data = rows.slice(1).filter(r => r.length > 1 && r[0]);
+
+    if (!data.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <svg class="empty-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="1.5" aria-hidden="true">
+            <rect x="10" y="8" width="44" height="50" rx="4"/>
+            <path d="M10 22h44"/><path d="M20 36h24M20 44h16"/>
+          </svg>
+          <p class="empty-title">Sense informes</p>
+          <p class="empty-text">Els comensals enviaran informes<br>quan acabin l'inventari.</p>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = [...data].reverse().map(r => {
+      const [id, date, hora, comensal, masia, inventari] = r;
+      const items = (inventari || '').split(' | ').filter(Boolean);
+      const itemsHtml = items.map(item => {
+        const sep  = item.indexOf(': ');
+        const name = sep > -1 ? item.slice(0, sep) : item;
+        const qty  = sep > -1 ? item.slice(sep + 2) : '';
+        return `<div class="stats-cat-row">
+          <span class="stats-cat-name">${esc(name)}</span>
+          <span class="stats-cat-count">${esc(qty)}</span>
+        </div>`;
+      }).join('');
+      return `
+        <div class="report-card">
+          <div class="report-card-header">
+            <span class="report-date-time">${esc(date)} · ${esc(hora)}</span>
+            <span class="report-count-badge">${items.length} productes</span>
+          </div>
+          <div class="report-items-list">${itemsHtml}</div>
+        </div>`;
+    }).join('');
+
+  } catch {
+    el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.5"><span class="stats-cat-name" style="flex:none;font-size:13px">Error carregant informes. Comprova la connexió.</span></div>`;
+  }
 }
 
 function renderCats() {
@@ -1425,6 +1528,7 @@ function setView(view) {
   if (view === 'cats')    renderCats();
   if (view === 'orders')  renderOrders();
   if (view === 'catalog') renderCatalogView();
+  if (view === 'reports') renderReports();
 }
 
 // ── EVENT DELEGATION ───────────────────────────────────────────────
@@ -1482,6 +1586,12 @@ document.addEventListener('click', e => {
   if (swatch) {
     state.selColor = swatch.dataset.color;
     renderColorPicker();
+    return;
+  }
+
+  // Send inventory report
+  if (e.target.closest('[data-action="send-report"]')) {
+    sendInventoryReport();
     return;
   }
 
