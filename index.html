@@ -434,17 +434,18 @@
         <p class="gas-script-hint">
           Al full → <strong>Extensions → Apps Script</strong>, enganxa aquest codi i despliega'l com a App Web (accés: Tothom):
         </p>
-        <pre class="gas-code">function doPost(e) {
+        <pre class="gas-code">function doGet(e) {
   const s = SpreadsheetApp
     .getActiveSpreadsheet().getSheets()[0];
-  const d = JSON.parse(e.postData.contents);
-  s.appendRow([d.id,d.producte,d.proveidor,
-               d.preu,d.categoria]);
+  const p = e.parameter;
+  s.appendRow([p.id, p.producte, p.proveidor,
+               p.preu, p.categoria, p.codi]);
   return ContentService.createTextOutput('ok');
 }</pre>
       </form>
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-gas">Desar URL</button>
+        <button class="btn-danger" id="btn-test-gas" type="button">Testa connexió</button>
       </div>
     </div>
   </div>
@@ -480,6 +481,10 @@
             <input class="form-input" id="f-np-price" type="number" min="0" step="0.01" placeholder="—">
           </div>
         </div>
+        <div class="form-field">
+          <label class="form-label" for="f-np-code">Codi de barres</label>
+          <input class="form-input" id="f-np-code" type="text" placeholder="Escaneja o escriu el codi" autocomplete="off" inputmode="numeric">
+        </div>
       </form>
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-new-product">Afegir al catàleg</button>
@@ -509,6 +514,22 @@
         <button class="btn-primary" id="btn-save-qty">Desar</button>
       </div>
     </div>
+  </div>
+
+  <!-- ── MODAL: ESCÀNER ── -->
+  <div id="modal-scan" role="dialog" aria-modal="true" aria-label="Escanejar codi de barres">
+    <div class="scan-header">
+      <div>
+        <p class="scan-title">Codi de barres</p>
+        <p class="scan-subtitle" id="scan-status-text">Apunta la càmera al codi</p>
+      </div>
+      <button class="scan-close-btn" id="btn-scan-close" aria-label="Tancar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="barcode-reader"></div>
   </div>
 
   <!-- ── TOAST ── -->

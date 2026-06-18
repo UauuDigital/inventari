@@ -1519,6 +1519,109 @@ body[data-role="admin"]       .role-admin-only.icon-btn  { display: flex !import
   text-overflow: ellipsis;
 }
 
+/* ── SCAN BUTTON ─────────────────────────────────────────────────── */
+
+.catalog-scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: var(--r-card);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .2s, border-color .2s;
+  margin-bottom: 6px;
+}
+.catalog-scan-btn:hover  { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.38); }
+.catalog-scan-btn:active { transform: scale(0.98); }
+
+/* ── SCAN MODAL (full screen camera) ─────────────────────────────── */
+
+#modal-scan {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+#modal-scan.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scan-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(var(--safe-top) + 18px) 20px 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 60%, transparent);
+}
+
+.scan-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  line-height: 1.1;
+}
+
+.scan-subtitle {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.scan-close-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 50%;
+  color: var(--white);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .2s;
+  margin-top: 2px;
+}
+.scan-close-btn:hover { background: rgba(255,255,255,0.22); }
+
+#barcode-reader {
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+}
+/* Neutralitza estils per defecte de html5-qrcode */
+#barcode-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+#barcode-reader img { display: none !important; }
+
 /* ── GAS CONFIG MODAL ────────────────────────────────────────────── */
 
 .gas-script-hint {
