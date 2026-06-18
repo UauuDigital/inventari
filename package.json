@@ -1,0 +1,11 @@
+{
+  "name": "inventari-uauu",
+  "version": "1.0.0",
+  "description": "Gestió d'inventari per a Uauu Digital — PWA",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "author": "Uauu Digital <digital@uauu.cat>",
+  "license": "UNLICENSED",
+  "private": true
+}

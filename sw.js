@@ -1,13 +1,13 @@
-const CACHE = 'uauu-inv-v2';
+const CACHE = 'uauu-inv-v4';
 
 const ASSETS = [
   './',
   './index.html',
-  './css/app.css',
-  './js/app.js',
+  './src/assets/css/app.css',
+  './src/main.js',
   './manifest.json',
-  './icons/icon.svg',
-  './icons/icon-maskable.svg',
+  './src/assets/icons/icon.svg',
+  './src/assets/icons/icon-maskable.svg',
 ];
 
 self.addEventListener('install', e => {

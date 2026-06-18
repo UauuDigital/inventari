@@ -1,13 +1,13 @@
 @font-face {
   font-family: 'Ogg';
-  src: url('../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.otf') format('opentype'),
-       url('../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.ttf') format('truetype');
+  src: url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.otf') format('opentype'),
+       url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.ttf') format('truetype');
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
   font-family: 'Inter';
-  src: url('../../catalegs-web/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('../../../../catalegs-web/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 900;
   font-display: swap;
 }
