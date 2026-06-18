@@ -1,13 +1,14 @@
-const CACHE = 'uauu-inv-v1';
+const CACHE = 'uauu-inv-v5';
 
 const ASSETS = [
   './',
   './index.html',
-  './css/app.css',
-  './js/app.js',
+  './favicon.ico',
+  './src/assets/css/app.css',
+  './src/main.js',
   './manifest.json',
-  './icons/icon.svg',
-  './icons/icon-maskable.svg',
+  './src/assets/icons/icon.svg',
+  './src/assets/icons/icon-maskable.svg',
 ];
 
 self.addEventListener('install', e => {
@@ -27,6 +28,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Only cache same-origin assets; let external requests (GAS, Sheets, OFF API) go straight to network
+  if (!e.request.url.startsWith(self.location.origin)) return;
   if (e.request.method !== 'GET') return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))

@@ -10,31 +10,28 @@
   <meta name="description" content="Gestió d'inventari — Uauu">
   <title>Inventari — Uauu</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon.svg">
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="apple-touch-icon" href="src/assets/icons/icon.svg">
+  <link rel="icon" href="src/assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="src/assets/css/app.css">
 </head>
 <body>
 
   <!-- ── PANTALLA SELECCIÓ D'USUARI ── -->
   <div id="screen-users">
+    <img src="src/assets/logo-uauu-black.png" alt="Uauu Digital" class="users-brand-logo">
+
     <div class="users-inner">
 
       <div class="users-heading-wrap">
-        <svg width="36" height="36" viewBox="0 0 28 28" fill="none" class="users-logo" aria-hidden="true">
-          <rect x="3" y="9" width="22" height="16" rx="2.5" stroke="white" stroke-width="1.5"/>
-          <path d="M3 14h22" stroke="white" stroke-width="1.5"/>
-          <path d="M10 14V9a4 4 0 018 0v5" stroke="white" stroke-width="1.5" fill="none"/>
-          <path d="M11 19h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
         <h1 class="users-title">Qui ets?</h1>
         <p class="users-sub">Selecciona el teu perfil per continuar</p>
       </div>
 
       <div class="users-grid">
 
-        <!-- Começal -->
-        <button class="user-card" data-user="Começal">
+        <!-- Comensal -->
+        <button class="user-card" data-user="Comensal">
           <div class="user-card-icon">
             <svg width="52" height="52" viewBox="0 0 60 60" fill="none" aria-hidden="true">
               <!-- seedling: stem -->
@@ -49,7 +46,7 @@
                     fill="rgba(255,255,255,0.07)"/>
             </svg>
           </div>
-          <span class="user-card-name">Començal</span>
+          <span class="user-card-name">Comensal</span>
           <span class="user-card-role">Gestió bàsica</span>
         </button>
 
@@ -94,6 +91,43 @@
     </div>
   </div>
 
+  <!-- ── PANTALLA SELECCIÓ MASIA ── -->
+  <div id="screen-masia" hidden>
+    <img src="src/assets/logo-uauu-black.png" alt="Uauu Digital" class="users-brand-logo">
+    <div class="users-inner">
+      <div class="users-heading-wrap">
+        <h1 class="users-title">Quina masia?</h1>
+        <p class="users-sub">Selecciona la masia per continuar</p>
+      </div>
+      <div class="users-grid">
+        <button class="user-card" data-masia="ca-nalzina">
+          <div class="user-card-icon">
+            <img src="src/assets/logo-ca-nalzina.png" alt="Ca l'Alzina" class="masia-card-logo">
+          </div>
+          <span class="user-card-name">Ca l'Alzina</span>
+        </button>
+        <button class="user-card" data-masia="can-macia">
+          <div class="user-card-icon">
+            <img src="src/assets/logo-can-macia.png" alt="Can Macià" class="masia-card-logo">
+          </div>
+          <span class="user-card-name">Can Macià</span>
+        </button>
+        <button class="user-card" data-masia="castell-de-tous">
+          <div class="user-card-icon">
+            <img src="src/assets/logo-castell-de-tous.png" alt="Castell de Tous" class="masia-card-logo">
+          </div>
+          <span class="user-card-name">Castell de Tous</span>
+        </button>
+        <button class="user-card" data-masia="mas-vivencs">
+          <div class="user-card-icon">
+            <img src="src/assets/logo-mas-vivencs.png" alt="Mas Vivencs" class="masia-card-logo">
+          </div>
+          <span class="user-card-name">Mas Vivencs</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── HEADER ── -->
   <header class="app-header">
     <div class="app-header-bar">
@@ -111,6 +145,13 @@
           <span class="user-pill-dot"></span>
           <span class="user-pill-name" id="user-pill-name"></span>
         </button>
+        <button class="icon-btn role-admin-only" id="btn-gas-config" aria-label="Configurar sincronització" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+          </svg>
+        </button>
         <button class="icon-btn role-admin-only" id="btn-import-excel" aria-label="Importar Excel" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
@@ -118,7 +159,7 @@
             <path d="M12 18v-6M9 15l3 3 3-3"/>
           </svg>
         </button>
-        <button class="icon-btn role-comencal-only" id="btn-search" aria-label="Cerca">
+        <button class="icon-btn role-comensal-only" id="btn-search" aria-label="Cerca">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
@@ -160,6 +201,9 @@
       <div class="stats-view" id="stats-content"></div>
     </div>
 
+    <!-- VIEW: CATÀLEG (Comensal) -->
+    <div id="view-catalog" class="view-panel" hidden></div>
+
     <!-- VIEW: COMANDES (Coordinador + Admin) -->
     <div id="view-orders" class="view-panel" hidden>
       <div class="orders-filter-strip" id="orders-filter-strip">
@@ -191,15 +235,15 @@
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav" aria-label="Navegació principal">
-    <!-- Tabs Começal -->
-    <button class="nav-tab active role-comencal-only" data-view="list" aria-label="Articles">
+    <!-- Tabs Comensal -->
+    <button class="nav-tab active role-comensal-only" data-view="catalog" aria-label="Articles">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
         <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
       </svg>
       Articles
     </button>
-    <button class="nav-tab role-comencal-only" data-view="cats" aria-label="Categories">
+    <button class="nav-tab role-coord-only" data-view="cats" aria-label="Categories" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/>
         <path d="M10 6h10M10 12h10M10 18h6"/>
@@ -208,7 +252,7 @@
       </svg>
       Categories
     </button>
-    <button class="nav-tab role-comencal-only" data-view="stats" aria-label="Resum">
+    <button class="nav-tab role-comensal-only" data-view="stats" aria-label="Resum">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 20V10M12 20V4M6 20v-6"/>
       </svg>
@@ -237,21 +281,22 @@
         </button>
       </div>
       <form class="modal-form" id="item-form" autocomplete="off" novalidate>
-        <div class="form-field">
+        <div class="form-field product-search-wrap">
           <label class="form-label" for="f-name">Nom *</label>
-          <input class="form-input" id="f-name" type="text" placeholder="Nom de l'article" required>
+          <input class="form-input" id="f-name" type="text" placeholder="Nom de l'article" required autocomplete="off">
+          <div class="product-dropdown" id="product-dropdown" hidden role="listbox" aria-label="Suggeriments de productes"></div>
         </div>
-        <div class="form-row">
+        <div class="form-row row-qty-unit">
           <div class="form-field">
             <label class="form-label" for="f-quantity">Quantitat</label>
             <input class="form-input" id="f-quantity" type="number" min="0" step="any" placeholder="0">
           </div>
-          <div class="form-field">
+          <div class="form-field field-unit">
             <label class="form-label" for="f-unit">Unitat</label>
             <input class="form-input" id="f-unit" type="text" placeholder="u, kg, l…">
           </div>
         </div>
-        <div class="form-row">
+        <div class="form-row row-adv">
           <div class="form-field">
             <label class="form-label" for="f-min-stock">Estoc mínim</label>
             <input class="form-input" id="f-min-stock" type="number" min="0" step="any" placeholder="—">
@@ -400,9 +445,130 @@
     </div>
   </div>
 
+  <!-- ── MODAL: CONFIGURACIÓ GAS (Admin) ── -->
+  <div class="modal-overlay" id="modal-gas" role="dialog" aria-modal="true" aria-labelledby="modal-gas-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-gas-title">Sincronització full</h2>
+        <button class="modal-close" id="btn-gas-close" aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-form" id="gas-form" autocomplete="off" novalidate>
+        <p style="font-size:13px;color:rgba(34,31,30,0.55);line-height:1.6">
+          Enganxa aquí la URL del <strong>Google Apps Script</strong> per desar productes nous directament al full de Google.
+        </p>
+        <div class="form-field">
+          <label class="form-label" for="f-gas-url">URL Apps Script</label>
+          <input class="form-input" id="f-gas-url" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false">
+        </div>
+        <p class="gas-script-hint">
+          Al full → <strong>Extensions → Apps Script</strong>, enganxa aquest codi i despliega'l com a App Web (accés: Tothom):
+        </p>
+        <pre class="gas-code">function doGet(e) {
+  const s = SpreadsheetApp
+    .getActiveSpreadsheet().getSheets()[0];
+  const p = e.parameter;
+  s.appendRow([p.id, p.producte, p.proveidor,
+               p.preu, p.categoria, p.codi]);
+  return ContentService.createTextOutput('ok');
+}</pre>
+      </form>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-save-gas">Desar URL</button>
+        <button class="btn-danger" id="btn-test-gas" type="button">Testa connexió</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: NOU PRODUCTE (Comensal) ── -->
+  <div class="modal-overlay" id="modal-new-product" role="dialog" aria-modal="true" aria-labelledby="modal-np-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-np-title">Nou producte</h2>
+        <button class="modal-close" id="btn-np-close" aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-form" id="new-product-form" autocomplete="off" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="f-np-name">Nom del producte *</label>
+          <input class="form-input" id="f-np-name" type="text" placeholder="p.ex. Farina de blat">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-np-category">Categoria</label>
+          <input class="form-input" id="f-np-category" type="text" placeholder="p.ex. Alimentació">
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="f-np-supplier">Proveïdor</label>
+            <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor">
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="f-np-price">Preu (€)</label>
+            <input class="form-input" id="f-np-price" type="number" min="0" step="0.01" placeholder="—">
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-np-code">Codi de barres</label>
+          <input class="form-input" id="f-np-code" type="text" placeholder="Escaneja o escriu el codi" autocomplete="off" inputmode="numeric">
+        </div>
+      </form>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-save-new-product">Afegir al catàleg</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: QUANTITAT (Comensal) ── -->
+  <div class="modal-overlay" id="modal-qty" role="dialog" aria-modal="true" aria-labelledby="modal-qty-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title modal-qty-title" id="modal-qty-title"></h2>
+        <button class="modal-close" id="btn-qty-close" aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-form" id="qty-form" autocomplete="off" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="f-qty-value">Nombre d'unitats</label>
+          <input class="form-input qty-big-input" id="f-qty-value" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+        </div>
+      </form>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-save-qty">Desar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: ESCÀNER ── -->
+  <div id="modal-scan" role="dialog" aria-modal="true" aria-label="Escanejar codi de barres">
+    <div class="scan-header">
+      <div>
+        <p class="scan-title">Codi de barres</p>
+        <p class="scan-subtitle" id="scan-status-text">Apunta la càmera al codi</p>
+      </div>
+      <button class="scan-close-btn" id="btn-scan-close" aria-label="Tancar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="barcode-reader"></div>
+  </div>
+
   <!-- ── TOAST ── -->
   <div class="toast" id="toast" aria-live="polite"></div>
 
-  <script src="js/app.js"></script>
+  <script src="src/main.js"></script>
 </body>
 </html>

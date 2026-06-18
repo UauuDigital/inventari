@@ -2,9 +2,15 @@
 
 // ── CONSTANTS ──────────────────────────────────────────────────────
 
-const STORAGE_ITEMS  = 'uauu_inv_items';
-const STORAGE_CATS   = 'uauu_inv_cats';
-const STORAGE_ORDERS = 'uauu_inv_orders';
+const CATALOG_URL         = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=0';
+const OPEN_FOOD_FACTS_URL = 'https://world.openfoodfacts.org/api/v2/product/';
+// URL del Google Apps Script per afegir files al full. Deixa buit si no s'ha configurat.
+const SHEET_APPEND_URL    = 'https://script.google.com/macros/s/AKfycbztMwSVooLa8kyrfc4w8nwozximqD_mwDztLQ4lvAY99MvUr6pgsS9Pt5i1F-D_nUoiQg/exec';
+const STORAGE_ITEMS       = 'uauu_inv_items';
+const STORAGE_CATS        = 'uauu_inv_cats';
+const STORAGE_ORDERS      = 'uauu_inv_orders';
+const STORAGE_CAT_EXTRA   = 'uauu_inv_catalog_extra';
+const STORAGE_MASIA       = 'uauu_inv_masia';
 
 const STATUS_LABELS = {
   pendent:      'Pendent',
@@ -41,23 +47,32 @@ const state = {
   searchOpen:  false,
   selColor:    CAT_COLORS[0],
   user:        null,
+  masia:       null,
+  catalog:     [],
+  catalogReady: false,
   orders:      [],
   orderFilter: '',
   editingOrderId: null,
   importRows:  [],
+  editingCatalogIdx: null,
+  catalogExtra: [],
+  maxCatalogId: 0,
+  scannerInstance: null,
 };
 
 // ── STORAGE ────────────────────────────────────────────────────────
 
 function loadData() {
   try {
-    state.items      = JSON.parse(localStorage.getItem(STORAGE_ITEMS))  || [];
-    state.categories = JSON.parse(localStorage.getItem(STORAGE_CATS))   || [...DEFAULT_CATS];
-    state.orders     = JSON.parse(localStorage.getItem(STORAGE_ORDERS)) || [];
+    state.items        = JSON.parse(localStorage.getItem(STORAGE_ITEMS))     || [];
+    state.categories   = JSON.parse(localStorage.getItem(STORAGE_CATS))      || [...DEFAULT_CATS];
+    state.orders       = JSON.parse(localStorage.getItem(STORAGE_ORDERS))    || [];
+    state.catalogExtra = JSON.parse(localStorage.getItem(STORAGE_CAT_EXTRA)) || [];
   } catch {
-    state.items      = [];
-    state.categories = [...DEFAULT_CATS];
-    state.orders     = [];
+    state.items        = [];
+    state.categories   = [...DEFAULT_CATS];
+    state.orders       = [];
+    state.catalogExtra = [];
   }
 }
 
@@ -68,22 +83,25 @@ function saveOrders() { localStorage.setItem(STORAGE_ORDERS, JSON.stringify(stat
 // ── USER SELECTION & ROLE ──────────────────────────────────────────
 
 const ROLE_MAP = {
-  'Começal':     'comencal',
+  'Comensal':    'comensal',
+  'Começal':     'comensal', // backwards compat amb sessions antigues
   'Coordinador': 'coordinador',
   'Admin':       'admin',
 };
 
 function applyRole(name) {
-  const role = ROLE_MAP[name] || 'comencal';
+  const role = ROLE_MAP[name] || 'comensal';
   document.body.dataset.role = role;
 
-  // Import button: only admin
+  // Botons exclusius admin
   const importBtn = document.getElementById('btn-import-excel');
+  const gasBtn    = document.getElementById('btn-gas-config');
   if (importBtn) importBtn.hidden = (role !== 'admin');
+  if (gasBtn)    gasBtn.hidden    = (role !== 'admin');
 
   // Default view
-  if (role === 'comencal') {
-    setView('list');
+  if (role === 'comensal') {
+    setView('catalog');
   } else {
     setView('orders');
   }
@@ -92,20 +110,45 @@ function applyRole(name) {
 function selectUser(name) {
   state.user = name;
   localStorage.setItem('uauu_inv_user', name);
-  document.getElementById('user-pill-name').textContent = name;
 
   const screen = document.getElementById('screen-users');
   screen.classList.add('leaving');
   setTimeout(() => { screen.hidden = true; }, 400);
 
-  applyRole(name);
+  const role = ROLE_MAP[name] || 'comensal';
+  if (role === 'comensal') {
+    const masiaSc = document.getElementById('screen-masia');
+    masiaSc.hidden = false;
+    void masiaSc.offsetWidth;
+  } else {
+    document.getElementById('user-pill-name').textContent = name;
+    applyRole(name);
+  }
+}
+
+function selectMasia(masiaId) {
+  state.masia = masiaId;
+  localStorage.setItem(STORAGE_MASIA, masiaId);
+
+  const masiaSc = document.getElementById('screen-masia');
+  masiaSc.classList.add('leaving');
+  setTimeout(() => { masiaSc.hidden = true; }, 400);
+
+  document.getElementById('user-pill-name').textContent = state.user;
+  applyRole(state.user);
 }
 
 function showUserScreen() {
-  state.user = null;
+  state.user  = null;
+  state.masia = null;
   localStorage.removeItem('uauu_inv_user');
+  localStorage.removeItem(STORAGE_MASIA);
   document.getElementById('user-pill-name').textContent = '';
   document.body.removeAttribute('data-role');
+
+  const masiaSc = document.getElementById('screen-masia');
+  masiaSc.hidden = true;
+  masiaSc.classList.remove('leaving');
 
   const screen = document.getElementById('screen-users');
   screen.hidden = false;
@@ -114,14 +157,525 @@ function showUserScreen() {
 }
 
 function initUserScreen() {
-  const saved = localStorage.getItem('uauu_inv_user');
-  if (saved) selectUser(saved);
+  const savedUser  = localStorage.getItem('uauu_inv_user');
+  const savedMasia = localStorage.getItem(STORAGE_MASIA);
+
+  if (savedUser) {
+    const role = ROLE_MAP[savedUser] || 'comensal';
+    if (role === 'comensal' && savedMasia) {
+      state.user  = savedUser;
+      state.masia = savedMasia;
+      document.getElementById('screen-users').hidden = true;
+      document.getElementById('user-pill-name').textContent = savedUser;
+      applyRole(savedUser);
+    } else {
+      selectUser(savedUser);
+    }
+  }
 
   document.querySelectorAll('.user-card[data-user]').forEach(card => {
     card.addEventListener('click', () => selectUser(card.dataset.user));
   });
+  document.querySelectorAll('.user-card[data-masia]').forEach(card => {
+    card.addEventListener('click', () => selectMasia(card.dataset.masia));
+  });
 
   document.getElementById('btn-switch-user').addEventListener('click', showUserScreen);
+}
+
+// ── CATALOG AUTOCOMPLETE ───────────────────────────────────────────
+
+async function loadCatalog() {
+  if (state.catalogReady) return;
+  try {
+    const res  = await fetch(CATALOG_URL);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length < 2) return;
+
+    const headers = rows[0].map(h => String(h).toLowerCase().trim());
+    const iId    = headers.indexOf('id');
+    const iName  = findCol(headers, ['producte', 'nom', 'name', 'article']);
+    const iCat   = findCol(headers, ['categoria', 'category', 'cat']);
+    const iPrice = findCol(headers, ['preu', 'price', 'cost']);
+    const iSupp  = findCol(headers, ['proveidor', 'proveedor', 'proveïdor', 'supplier', 'prove']);
+    const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
+
+    state.catalog = rows.slice(1)
+      .filter(r => String(r[iName] ?? '').trim())
+      .map(r => ({
+        id:       parseInt(String(r[iId] ?? '0')) || 0,
+        code:     String(r[iCode]  ?? '').trim(),
+        name:     String(r[iName]  ?? '').trim(),
+        category: String(r[iCat]   ?? '').trim(),
+        price:    parseFloat(String(r[iPrice] ?? '0').replace(',', '.')) || 0,
+        supplier: String(r[iSupp]  ?? '').trim(),
+      }));
+
+    state.maxCatalogId = state.catalog.reduce((max, p) => Math.max(max, p.id || 0), 0);
+    state.catalogReady = true;
+  } catch {
+    /* offline o sheet privat */
+  }
+
+  // Afegeix productes creats localment que no estiguin ja al full
+  if (state.catalogExtra.length > 0) {
+    const sheetNames = new Set(state.catalog.map(p => p.name.toLowerCase()));
+    const fresh = state.catalogExtra.filter(p => !sheetNames.has(p.name.toLowerCase()));
+    state.catalog = [...state.catalog, ...fresh];
+    // Actualitza el maxId pels productes extra
+    fresh.forEach(p => { if ((p.id || 0) > state.maxCatalogId) state.maxCatalogId = p.id; });
+    if (fresh.length > 0) state.catalogReady = true;
+  }
+}
+
+let _ddResults = [];
+let _ddIdx     = -1;
+
+function highlightMatch(text, query) {
+  if (!query) return esc(text);
+  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return esc(text).replace(re, '<mark>$1</mark>');
+}
+
+function openProductDropdown(results, query) {
+  _ddResults = results;
+  _ddIdx     = -1;
+  const dd = document.getElementById('product-dropdown');
+  if (!dd) return;
+
+  if (results.length === 0) {
+    dd.innerHTML = `<p class="product-dd-empty">Sense coincidències</p>`;
+    dd.hidden = false;
+    return;
+  }
+
+  dd.innerHTML = results.map((p, i) => `
+    <div class="product-dd-item" data-dd="${i}" role="option" tabindex="-1">
+      <span class="product-dd-name">${highlightMatch(p.name, query)}</span>
+      ${p.category ? `<span class="product-dd-cat">${esc(p.category)}</span>` : ''}
+    </div>
+  `).join('');
+  dd.hidden = false;
+}
+
+function closeProductDropdown() {
+  const dd = document.getElementById('product-dropdown');
+  if (dd) dd.hidden = true;
+  _ddResults = [];
+  _ddIdx     = -1;
+}
+
+function moveDDHighlight(dir) {
+  _ddIdx = Math.max(-1, Math.min(_ddIdx + dir, _ddResults.length - 1));
+  document.querySelectorAll('.product-dd-item').forEach((el, i) => {
+    el.classList.toggle('is-active', i === _ddIdx);
+    if (i === _ddIdx) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+function ensureCategory(name) {
+  if (!name) return state.categories[0]?.id || 'cat_general';
+  let cat = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (!cat) {
+    cat = { id: 'cat_' + uid(), name, color: CAT_COLORS[state.categories.length % CAT_COLORS.length] };
+    state.categories.push(cat);
+    saveCats();
+  }
+  return cat.id;
+}
+
+function selectCatalogProduct(product) {
+  document.getElementById('f-name').value = product.name;
+
+  const catId = ensureCategory(product.category);
+  const catSel = document.getElementById('f-category');
+  catSel.innerHTML = state.categories
+    .map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  catSel.value = catId;
+
+  if (product.price) document.getElementById('f-price').value = product.price;
+
+  closeProductDropdown();
+  document.getElementById('f-quantity').focus();
+}
+
+function initCatalogSearch() {
+  const input = document.getElementById('f-name');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (!state.catalogReady) {
+      if (q.length >= 2) {
+        const dd = document.getElementById('product-dropdown');
+        dd.innerHTML = `<p class="product-dd-loading">Carregant catàleg…</p>`;
+        dd.hidden = false;
+        loadCatalog().then(() => {
+          const results = state.catalog.filter(p =>
+            p.name.toLowerCase().includes(q.toLowerCase())
+          ).slice(0, 8);
+          openProductDropdown(results, q);
+        });
+      }
+      return;
+    }
+    if (q.length < 2) { closeProductDropdown(); return; }
+    const results = state.catalog
+      .filter(p => p.name.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 8);
+    openProductDropdown(results, q);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (_ddResults.length === 0) return;
+    if (e.key === 'ArrowDown')  { e.preventDefault(); moveDDHighlight(1);  return; }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); moveDDHighlight(-1); return; }
+    if (e.key === 'Enter' && _ddIdx >= 0) { e.preventDefault(); selectCatalogProduct(_ddResults[_ddIdx]); return; }
+    if (e.key === 'Escape')     { closeProductDropdown(); }
+  });
+
+  // Dropdown item click
+  document.getElementById('product-dropdown').addEventListener('mousedown', e => {
+    const item = e.target.closest('.product-dd-item[data-dd]');
+    if (item) {
+      e.preventDefault(); // evita que l'input perdi el focus
+      selectCatalogProduct(_ddResults[parseInt(item.dataset.dd)]);
+    }
+  });
+
+  // Close on outside click
+  document.addEventListener('pointerdown', e => {
+    if (!e.target.closest('.product-search-wrap')) closeProductDropdown();
+  }, true);
+}
+
+// ── BARCODE SCANNER ────────────────────────────────────────────────
+
+let _html5QrLoaded = false;
+
+function loadHtml5QrCode() {
+  return new Promise((resolve, reject) => {
+    if (window.Html5Qrcode) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+    s.onload  = () => { _html5QrLoaded = true; resolve(); };
+    s.onerror = () => reject(new Error('No s\'ha pogut carregar l\'escàner.'));
+    document.head.appendChild(s);
+  });
+}
+
+async function openScanModal() {
+  document.getElementById('modal-scan').classList.add('open');
+  document.getElementById('scan-status-text').textContent = 'Apunta la càmera al codi de barres';
+
+  try {
+    await loadHtml5QrCode();
+  } catch {
+    document.getElementById('scan-status-text').textContent = 'Error carregant l\'escàner. Comprova la connexió.';
+    return;
+  }
+
+  try {
+    state.scannerInstance = new Html5Qrcode('barcode-reader');
+    await state.scannerInstance.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 260, height: 100 } },
+      (code) => handleBarcode(code),
+      () => {}
+    );
+  } catch {
+    document.getElementById('scan-status-text').textContent = 'No s\'ha pogut accedir a la càmera.';
+  }
+}
+
+async function closeScanModal() {
+  document.getElementById('modal-scan').classList.remove('open');
+  if (state.scannerInstance) {
+    try {
+      await state.scannerInstance.stop();
+      state.scannerInstance.clear();
+    } catch {}
+    state.scannerInstance = null;
+  }
+}
+
+async function lookupOpenFoodFacts(code) {
+  try {
+    const res  = await fetch(`${OPEN_FOOD_FACTS_URL}${code}.json`);
+    const data = await res.json();
+    if (data.status !== 1 || !data.product) return null;
+    const p = data.product;
+    const name = (p.product_name_ca || p.product_name_es || p.product_name || '').trim();
+    if (!name) return null;
+    const rawCat = (p.categories || '').split(',')[0].trim();
+    const category = rawCat.replace(/^[a-z]{2}:/, ''); // treu el prefix "en:" etc.
+    return {
+      name,
+      category,
+      supplier: (p.brands || '').split(',')[0].trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function handleBarcode(code) {
+  // Atura l'escàner i mostra estat de cerca
+  if (state.scannerInstance) {
+    try { await state.scannerInstance.stop(); state.scannerInstance.clear(); state.scannerInstance = null; } catch {}
+  }
+  const statusEl = document.getElementById('scan-status-text');
+  if (statusEl) statusEl.textContent = 'Buscant producte…';
+
+  // 1. Cerca al catàleg local per codi
+  const localIdx = state.catalog.findIndex(p => p.code && p.code === code);
+  if (localIdx >= 0) {
+    closeScanModal();
+    toast(`Trobat: ${state.catalog[localIdx].name}`);
+    openQtyModal(localIdx);
+    return;
+  }
+
+  // 2. Cerca a Open Food Facts
+  const offProduct = await lookupOpenFoodFacts(code);
+  if (offProduct) {
+    closeScanModal();
+    toast(`Trobat a Open Food Facts: ${offProduct.name}`);
+    openNewProductModal({ ...offProduct, code });
+    return;
+  }
+
+  // 3. No trobat en cap lloc
+  if (statusEl) statusEl.textContent = 'Producte no trobat — afegeix-lo manualment';
+  setTimeout(() => {
+    closeScanModal();
+    openNewProductModal({ code });
+  }, 900);
+}
+
+// ── CATALOG VIEW (Comensal) ────────────────────────────────────────
+
+function renderCatalogView() {
+  const panel = document.getElementById('view-catalog');
+  if (!panel) return;
+
+  if (!state.catalogReady) {
+    panel.innerHTML = '<div class="catalog-loading">Carregant catàleg…</div>';
+    loadCatalog()
+      .then(() => renderCatalogView())
+      .catch(() => {
+        panel.innerHTML = '<div class="catalog-empty">No s\'ha pogut carregar el catàleg.<br>Comprova la connexió a internet.</div>';
+      });
+    return;
+  }
+
+  if (state.catalog.length === 0) {
+    panel.innerHTML = '<div class="catalog-empty">Cap producte al catàleg.</div>';
+    return;
+  }
+
+  // Group by category preserving sheet order
+  const groups = new Map();
+  state.catalog.forEach((p, i) => {
+    const cat = p.category || 'Sense categoria';
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push({ p, i });
+  });
+
+  const html = [`
+    <div class="catalog-list">
+    <button class="catalog-scan-btn" id="btn-scan-barcode">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
+        <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="17" y1="12" x2="17" y2="12.01"/>
+      </svg>
+      Escaneja codi de barres
+    </button>
+  `];
+  groups.forEach((entries, catName) => {
+    html.push(`<div class="catalog-section-title">${esc(catName)}</div>`);
+    entries.forEach(({ p, i }) => {
+      const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
+      const qty = existing != null ? fmtNum(existing.quantity) : '';
+      html.push(`
+        <button class="catalog-btn" data-catalog="${i}">
+          <span class="catalog-btn-name">${esc(p.name)}</span>
+          <span class="catalog-btn-qty${qty ? ' has-qty' : ''}">${qty || '—'}</span>
+        </button>
+      `);
+    });
+  });
+  html.push('</div>');
+  panel.innerHTML = html.join('');
+}
+
+function openQtyModal(idx) {
+  const product = state.catalog[idx];
+  if (!product) return;
+  state.editingCatalogIdx = idx;
+
+  const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+  const currentQty = existing != null ? existing.quantity : '';
+
+  document.getElementById('modal-qty-title').textContent = product.name;
+  const input = document.getElementById('f-qty-value');
+  input.value = currentQty !== '' ? currentQty : '';
+
+  document.getElementById('modal-qty').classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 350);
+}
+
+function closeQtyModal() {
+  document.getElementById('modal-qty').classList.remove('open');
+  state.editingCatalogIdx = null;
+}
+
+function saveQty() {
+  const product = state.catalog[state.editingCatalogIdx];
+  if (!product) return;
+
+  const val = document.getElementById('f-qty-value').value;
+  const qty = parseFloat(val);
+  if (val === '' || isNaN(qty) || qty < 0) {
+    document.getElementById('f-qty-value').focus();
+    return;
+  }
+
+  const catId = ensureCategory(product.category);
+  const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+
+  if (existing) {
+    existing.quantity  = qty;
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    state.items.unshift({
+      id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      name: product.name, category: catId,
+      quantity: qty, unit: '', minStock: 0,
+      price: product.price || 0, notes: '',
+    });
+  }
+
+  saveItems();
+  closeQtyModal();
+  toast(`${product.name}: ${fmtNum(qty)} u`);
+  renderCatalogView();
+}
+
+// ── CONFIGURACIÓ GAS (Admin) ───────────────────────────────────────
+
+function openGasModal() {
+  const saved = localStorage.getItem('uauu_inv_gas_url') || '';
+  document.getElementById('f-gas-url').value = saved;
+  document.getElementById('modal-gas').classList.add('open');
+  setTimeout(() => document.getElementById('f-gas-url').focus(), 380);
+}
+
+function closeGasModal() {
+  document.getElementById('modal-gas').classList.remove('open');
+}
+
+function saveGasUrl() {
+  const url = document.getElementById('f-gas-url').value.trim();
+  if (url) {
+    localStorage.setItem('uauu_inv_gas_url', url);
+    toast('URL desada correctament');
+  } else {
+    localStorage.removeItem('uauu_inv_gas_url');
+    toast('URL eliminada');
+  }
+  closeGasModal();
+}
+
+function testGasUrl() {
+  const url = document.getElementById('f-gas-url').value.trim()
+           || localStorage.getItem('uauu_inv_gas_url') || '';
+  if (!url) { toast('Enganxa primer la URL'); return; }
+  const params = new URLSearchParams({
+    id: 0, producte: 'TEST_CONNEXIO', proveidor: '', preu: 0, categoria: 'TEST', codi: '',
+  });
+  // Obre en una pestanya nova per veure la resposta directament
+  window.open(`${url}?${params}`, '_blank');
+  toast('Comprova si ha aparegut una fila TEST al full');
+}
+
+// ── NOU PRODUCTE (Comensal) ────────────────────────────────────────
+
+function openNewProductModal(prefill = {}) {
+  document.getElementById('f-np-name').value     = prefill.name     || '';
+  document.getElementById('f-np-category').value = prefill.category || '';
+  document.getElementById('f-np-supplier').value = prefill.supplier || '';
+  document.getElementById('f-np-price').value    = prefill.price    || '';
+  document.getElementById('f-np-code').value     = prefill.code     || '';
+  document.getElementById('modal-new-product').classList.add('open');
+  const focusField = prefill.name ? 'f-np-category' : 'f-np-name';
+  setTimeout(() => document.getElementById(focusField).focus(), 380);
+}
+
+function closeNewProductModal() {
+  document.getElementById('modal-new-product').classList.remove('open');
+}
+
+function sendToSheet(gasUrl, params) {
+  const url = `${gasUrl}?${params}`;
+  // Iframe ocult: segueix redirects cross-origin igual que obrir en pestanya nova,
+  // sense restriccions CORS ni problemes amb service workers. Funciona a mòbil.
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;width:0;height:0;opacity:0;pointer-events:none';
+  document.body.appendChild(iframe);
+  iframe.src = url;
+  setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 8000);
+}
+
+function saveNewProduct() {
+  try {
+    const name     = document.getElementById('f-np-name').value.trim();
+    const category = document.getElementById('f-np-category').value.trim();
+    const supplier = document.getElementById('f-np-supplier').value.trim();
+    const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
+    const code     = document.getElementById('f-np-code').value.trim();
+
+    if (!name) {
+      const el = document.getElementById('f-np-name');
+      el.focus();
+      el.style.borderColor = 'rgba(176,32,32,0.5)';
+      setTimeout(() => { el.style.borderColor = ''; }, 1200);
+      return;
+    }
+
+    // ID = últim ID del full + 1
+    state.maxCatalogId++;
+    const newId = state.maxCatalogId;
+
+    const product = { id: newId, code, name, category, supplier, price };
+
+    // Desa localment i marca catàleg com a preparat
+    state.catalog.push(product);
+    state.catalogExtra.push(product);
+    state.catalogReady = true;
+    localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+
+    // Envia al Google Sheet
+    const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
+    if (gasUrl) {
+      const params = new URLSearchParams({
+        id: newId, producte: name, proveidor: supplier,
+        preu: price, categoria: category, codi: code,
+      });
+      sendToSheet(gasUrl, params);
+      toast(`"${name}" afegit i enviat al full`);
+    } else {
+      toast(`"${name}" desat localment`);
+    }
+
+    closeNewProductModal();
+    renderCatalogView();
+  } catch (err) {
+    toast(`Error al desar: ${err.message}`);
+  }
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────────
@@ -265,10 +819,28 @@ function loadSheetJS() {
 
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
   const delim = lines[0].includes(';') ? ';' : ',';
-  return lines.map(l =>
-    l.split(delim).map(c => c.trim().replace(/^"|"$/g, ''))
-  );
+
+  return lines.map(line => {
+    const cells = [];
+    let inQuote = false;
+    let cell = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuote && line[i + 1] === '"') { cell += '"'; i++; } // "" escaped quote
+        else inQuote = !inQuote;
+      } else if (ch === delim && !inQuote) {
+        cells.push(cell.trim());
+        cell = '';
+      } else {
+        cell += ch;
+      }
+    }
+    cells.push(cell.trim());
+    return cells;
+  });
 }
 
 function findCol(headers, candidates) {
@@ -357,16 +929,7 @@ function confirmImport() {
   let updated = 0;
 
   state.importRows.forEach(row => {
-    // Find or create category
-    let catId = 'cat_general';
-    if (row.category) {
-      let cat = state.categories.find(c => c.name.toLowerCase() === row.category.toLowerCase());
-      if (!cat) {
-        cat = { id: 'cat_' + uid(), name: row.category, color: CAT_COLORS[state.categories.length % CAT_COLORS.length] };
-        state.categories.push(cat);
-      }
-      catId = cat.id;
-    }
+    const catId = ensureCategory(row.category);
 
     // Check if item already exists (by name, case-insensitive)
     const existing = state.items.find(i => i.name.toLowerCase() === row.name.toLowerCase());
@@ -482,6 +1045,9 @@ function renderNav() {
   } else if (state.view === 'list') {
     fab.hidden = false;
     fabLabel.textContent = 'Nou article';
+  } else if (state.view === 'catalog') {
+    fab.hidden = false;
+    fabLabel.textContent = 'Nou producte';
   } else {
     fab.hidden = true;
   }
@@ -584,6 +1150,32 @@ function renderItems() {
 function renderStats() {
   const el = document.getElementById('stats-content');
   if (!el) return;
+
+  if (document.body.dataset.role === 'comensal') {
+    if (state.items.length === 0) {
+      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">Encara no s'ha comptat cap producte</span></div>`;
+      return;
+    }
+    const groups = new Map();
+    state.items.forEach(item => {
+      const cat = state.categories.find(c => c.id === item.category);
+      const catName = cat ? cat.name : 'Sense categoria';
+      if (!groups.has(catName)) groups.set(catName, []);
+      groups.get(catName).push(item);
+    });
+    let html = `<div class="stats-total-row"><span class="stats-total-label">Total comptat</span><span class="stats-total-val">${state.items.length} productes</span></div>`;
+    groups.forEach((items, catName) => {
+      html += `<div class="stats-section-title">${esc(catName)}</div>`;
+      items.forEach(item => {
+        html += `<div class="stats-cat-row">
+          <span class="stats-cat-name">${esc(item.name)}</span>
+          <span class="stats-cat-count">${fmtNum(item.quantity)} ${esc(item.unit || 'u')}</span>
+        </div>`;
+      });
+    });
+    el.innerHTML = html;
+    return;
+  }
 
   const totalVal = state.items.reduce((s, i) => s + i.quantity * (i.price || 0), 0);
   const lowItems  = state.items.filter(i => i.minStock > 0 && i.quantity <= i.minStock);
@@ -829,9 +1421,10 @@ function updateQty(id, delta) {
 function setView(view) {
   state.view = view;
   renderNav();
-  if (view === 'stats')  renderStats();
-  if (view === 'cats')   renderCats();
-  if (view === 'orders') renderOrders();
+  if (view === 'stats')   renderStats();
+  if (view === 'cats')    renderCats();
+  if (view === 'orders')  renderOrders();
+  if (view === 'catalog') renderCatalogView();
 }
 
 // ── EVENT DELEGATION ───────────────────────────────────────────────
@@ -899,11 +1492,24 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // Scan barcode button
+  if (e.target.closest('#btn-scan-barcode')) { openScanModal(); return; }
+
+  // Catalog product button
+  const catalogBtn = e.target.closest('.catalog-btn[data-catalog]');
+  if (catalogBtn) {
+    openQtyModal(parseInt(catalogBtn.dataset.catalog));
+    return;
+  }
+
   // Backdrop close for all modals
   if (e.target.id === 'modal-item')   { closeItemModal();   return; }
   if (e.target.id === 'modal-cat')    { closeCatModal();    return; }
   if (e.target.id === 'modal-order')  { closeOrderModal();  return; }
   if (e.target.id === 'modal-import') { closeImportModal(); return; }
+  if (e.target.id === 'modal-qty')          { closeQtyModal();         return; }
+  if (e.target.id === 'modal-new-product')  { closeNewProductModal();   return; }
+  if (e.target.id === 'modal-gas')          { closeGasModal();          return; }
 });
 
 // ── KEYBOARD ───────────────────────────────────────────────────────
@@ -914,6 +1520,10 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('modal-cat').classList.contains('open'))    { closeCatModal();    return; }
     if (document.getElementById('modal-order').classList.contains('open'))  { closeOrderModal();  return; }
     if (document.getElementById('modal-import').classList.contains('open')) { closeImportModal(); return; }
+    if (document.getElementById('modal-qty').classList.contains('open'))           { closeQtyModal();          return; }
+    if (document.getElementById('modal-new-product').classList.contains('open'))  { closeNewProductModal();    return; }
+    if (document.getElementById('modal-gas').classList.contains('open'))          { closeGasModal();           return; }
+    if (document.getElementById('modal-scan').classList.contains('open'))         { closeScanModal();           return; }
     if (state.searchOpen) toggleSearch();
   }
 });
@@ -940,16 +1550,17 @@ function init() {
   render();
   initUserScreen();
 
-  // Search (Começal only)
+  // Search (Comensal only)
   document.getElementById('btn-search').addEventListener('click', toggleSearch);
   document.getElementById('search-input').addEventListener('input', e => {
     state.search = e.target.value.trim();
     renderItems();
   });
 
-  // FAB — obre modal d'article o de comanda segons la vista activa
+  // FAB — obre modal segons la vista activa
   document.getElementById('btn-add').addEventListener('click', () => {
-    if (state.view === 'orders') openOrderModal();
+    if (state.view === 'orders')  openOrderModal();
+    else if (state.view === 'catalog') openNewProductModal();
     else openItemModal();
   });
 
@@ -969,6 +1580,26 @@ function init() {
   document.getElementById('btn-save-order').addEventListener('click', saveOrder);
   document.getElementById('btn-delete-order').addEventListener('click', deleteOrder);
   document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); saveOrder(); });
+
+  // Modal escàner
+  document.getElementById('btn-scan-close').addEventListener('click', closeScanModal);
+
+  // Modal configuració GAS (Admin)
+  document.getElementById('btn-gas-config').addEventListener('click', openGasModal);
+  document.getElementById('btn-gas-close').addEventListener('click', closeGasModal);
+  document.getElementById('btn-save-gas').addEventListener('click', saveGasUrl);
+  document.getElementById('btn-test-gas').addEventListener('click', testGasUrl);
+  document.getElementById('gas-form').addEventListener('submit', e => { e.preventDefault(); saveGasUrl(); });
+
+  // Modal nou producte (Comensal)
+  document.getElementById('btn-np-close').addEventListener('click', closeNewProductModal);
+  document.getElementById('btn-save-new-product').addEventListener('click', saveNewProduct);
+  document.getElementById('new-product-form').addEventListener('submit', e => { e.preventDefault(); saveNewProduct(); });
+
+  // Modal quantitat (Comensal)
+  document.getElementById('btn-qty-close').addEventListener('click', closeQtyModal);
+  document.getElementById('btn-save-qty').addEventListener('click', saveQty);
+  document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); saveQty(); });
 
   // Modal importació
   document.getElementById('btn-import-excel').addEventListener('click', openImportModal);
@@ -1013,6 +1644,10 @@ function init() {
       document.getElementById('btn-confirm-import').hidden = true;
     }
   });
+
+  // Carrega el catàleg de productes en segon pla
+  loadCatalog();
+  initCatalogSearch();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
