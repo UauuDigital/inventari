@@ -3,6 +3,7 @@
 // ── CONSTANTS ──────────────────────────────────────────────────────
 
 const CATALOG_URL         = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=0';
+const OPEN_FOOD_FACTS_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 // URL del Google Apps Script per afegir files al full. Deixa buit si no s'ha configurat.
 const SHEET_APPEND_URL    = '';
 const STORAGE_ITEMS       = 'uauu_inv_items';
@@ -54,6 +55,7 @@ const state = {
   editingCatalogIdx: null,
   catalogExtra: [],
   maxCatalogId: 0,
+  scannerInstance: null,
 };
 
 // ── STORAGE ────────────────────────────────────────────────────────
@@ -154,11 +156,13 @@ async function loadCatalog() {
     const iCat   = findCol(headers, ['categoria', 'category', 'cat']);
     const iPrice = findCol(headers, ['preu', 'price', 'cost']);
     const iSupp  = findCol(headers, ['proveidor', 'proveedor', 'proveïdor', 'supplier', 'prove']);
+    const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
 
     state.catalog = rows.slice(1)
       .filter(r => String(r[iName] ?? '').trim())
       .map(r => ({
         id:       parseInt(String(r[iId] ?? '0')) || 0,
+        code:     String(r[iCode]  ?? '').trim(),
         name:     String(r[iName]  ?? '').trim(),
         category: String(r[iCat]   ?? '').trim(),
         price:    parseFloat(String(r[iPrice] ?? '0').replace(',', '.')) || 0,
@@ -303,6 +307,110 @@ function initCatalogSearch() {
   }, true);
 }
 
+// ── BARCODE SCANNER ────────────────────────────────────────────────
+
+let _html5QrLoaded = false;
+
+function loadHtml5QrCode() {
+  return new Promise((resolve, reject) => {
+    if (window.Html5Qrcode) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+    s.onload  = () => { _html5QrLoaded = true; resolve(); };
+    s.onerror = () => reject(new Error('No s\'ha pogut carregar l\'escàner.'));
+    document.head.appendChild(s);
+  });
+}
+
+async function openScanModal() {
+  document.getElementById('modal-scan').classList.add('open');
+  document.getElementById('scan-status-text').textContent = 'Apunta la càmera al codi de barres';
+
+  try {
+    await loadHtml5QrCode();
+  } catch {
+    document.getElementById('scan-status-text').textContent = 'Error carregant l\'escàner. Comprova la connexió.';
+    return;
+  }
+
+  try {
+    state.scannerInstance = new Html5Qrcode('barcode-reader');
+    await state.scannerInstance.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 260, height: 100 } },
+      (code) => handleBarcode(code),
+      () => {}
+    );
+  } catch {
+    document.getElementById('scan-status-text').textContent = 'No s\'ha pogut accedir a la càmera.';
+  }
+}
+
+async function closeScanModal() {
+  document.getElementById('modal-scan').classList.remove('open');
+  if (state.scannerInstance) {
+    try {
+      await state.scannerInstance.stop();
+      state.scannerInstance.clear();
+    } catch {}
+    state.scannerInstance = null;
+  }
+}
+
+async function lookupOpenFoodFacts(code) {
+  try {
+    const res  = await fetch(`${OPEN_FOOD_FACTS_URL}${code}.json`);
+    const data = await res.json();
+    if (data.status !== 1 || !data.product) return null;
+    const p = data.product;
+    const name = (p.product_name_ca || p.product_name_es || p.product_name || '').trim();
+    if (!name) return null;
+    const rawCat = (p.categories || '').split(',')[0].trim();
+    const category = rawCat.replace(/^[a-z]{2}:/, ''); // treu el prefix "en:" etc.
+    return {
+      name,
+      category,
+      supplier: (p.brands || '').split(',')[0].trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function handleBarcode(code) {
+  // Atura l'escàner i mostra estat de cerca
+  if (state.scannerInstance) {
+    try { await state.scannerInstance.stop(); state.scannerInstance.clear(); state.scannerInstance = null; } catch {}
+  }
+  const statusEl = document.getElementById('scan-status-text');
+  if (statusEl) statusEl.textContent = 'Buscant producte…';
+
+  // 1. Cerca al catàleg local per codi
+  const localIdx = state.catalog.findIndex(p => p.code && p.code === code);
+  if (localIdx >= 0) {
+    closeScanModal();
+    toast(`Trobat: ${state.catalog[localIdx].name}`);
+    openQtyModal(localIdx);
+    return;
+  }
+
+  // 2. Cerca a Open Food Facts
+  const offProduct = await lookupOpenFoodFacts(code);
+  if (offProduct) {
+    closeScanModal();
+    toast(`Trobat a Open Food Facts: ${offProduct.name}`);
+    openNewProductModal({ ...offProduct, code });
+    return;
+  }
+
+  // 3. No trobat en cap lloc
+  if (statusEl) statusEl.textContent = 'Producte no trobat — afegeix-lo manualment';
+  setTimeout(() => {
+    closeScanModal();
+    openNewProductModal({ code });
+  }, 900);
+}
+
 // ── CATALOG VIEW (Comensal) ────────────────────────────────────────
 
 function renderCatalogView() {
@@ -332,7 +440,17 @@ function renderCatalogView() {
     groups.get(cat).push({ p, i });
   });
 
-  const html = ['<div class="catalog-list">'];
+  const html = [`
+    <div class="catalog-list">
+    <button class="catalog-scan-btn" id="btn-scan-barcode">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
+        <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="17" y1="12" x2="17" y2="12.01"/>
+      </svg>
+      Escaneja codi de barres
+    </button>
+  `];
   groups.forEach((entries, catName) => {
     html.push(`<div class="catalog-section-title">${esc(catName)}</div>`);
     entries.forEach(({ p, i }) => {
@@ -430,13 +548,15 @@ function saveGasUrl() {
 
 // ── NOU PRODUCTE (Comensal) ────────────────────────────────────────
 
-function openNewProductModal() {
-  document.getElementById('f-np-name').value     = '';
-  document.getElementById('f-np-category').value = '';
-  document.getElementById('f-np-supplier').value = '';
-  document.getElementById('f-np-price').value    = '';
+function openNewProductModal(prefill = {}) {
+  document.getElementById('f-np-name').value     = prefill.name     || '';
+  document.getElementById('f-np-category').value = prefill.category || '';
+  document.getElementById('f-np-supplier').value = prefill.supplier || '';
+  document.getElementById('f-np-price').value    = prefill.price    || '';
+  document.getElementById('f-np-code').value     = prefill.code     || '';
   document.getElementById('modal-new-product').classList.add('open');
-  setTimeout(() => document.getElementById('f-np-name').focus(), 380);
+  const focusField = prefill.name ? 'f-np-category' : 'f-np-name';
+  setTimeout(() => document.getElementById(focusField).focus(), 380);
 }
 
 function closeNewProductModal() {
@@ -448,6 +568,7 @@ async function saveNewProduct() {
   const category = document.getElementById('f-np-category').value.trim();
   const supplier = document.getElementById('f-np-supplier').value.trim();
   const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
+  const code     = document.getElementById('f-np-code').value.trim();
 
   if (!name) {
     const el = document.getElementById('f-np-name');
@@ -461,7 +582,7 @@ async function saveNewProduct() {
   state.maxCatalogId++;
   const newId = state.maxCatalogId;
 
-  const product = { id: newId, name, category, supplier, price };
+  const product = { id: newId, code, name, category, supplier, price };
 
   // Desa localment
   state.catalog.push(product);
@@ -472,11 +593,10 @@ async function saveNewProduct() {
   const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
   if (gasUrl) {
     try {
-      // mode no-cors: no es pot usar Content-Type: application/json (no és un header "simple")
       await fetch(gasUrl, {
         method: 'POST',
         mode:   'no-cors',
-        body: JSON.stringify({ id: newId, producte: name, proveidor: supplier, preu: price, categoria: category }),
+        body: JSON.stringify({ id: newId, producte: name, proveidor: supplier, preu: price, categoria: category, codi: code }),
       });
       toast(`"${name}" afegit i enviat al full`);
     } catch {
@@ -1278,6 +1398,9 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // Scan barcode button
+  if (e.target.closest('#btn-scan-barcode')) { openScanModal(); return; }
+
   // Catalog product button
   const catalogBtn = e.target.closest('.catalog-btn[data-catalog]');
   if (catalogBtn) {
@@ -1306,6 +1429,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('modal-qty').classList.contains('open'))           { closeQtyModal();          return; }
     if (document.getElementById('modal-new-product').classList.contains('open'))  { closeNewProductModal();    return; }
     if (document.getElementById('modal-gas').classList.contains('open'))          { closeGasModal();           return; }
+    if (document.getElementById('modal-scan').classList.contains('open'))         { closeScanModal();           return; }
     if (state.searchOpen) toggleSearch();
   }
 });
@@ -1362,6 +1486,9 @@ function init() {
   document.getElementById('btn-save-order').addEventListener('click', saveOrder);
   document.getElementById('btn-delete-order').addEventListener('click', deleteOrder);
   document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); saveOrder(); });
+
+  // Modal escàner
+  document.getElementById('btn-scan-close').addEventListener('click', closeScanModal);
 
   // Modal configuració GAS (Admin)
   document.getElementById('btn-gas-config').addEventListener('click', openGasModal);
