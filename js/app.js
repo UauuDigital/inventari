@@ -576,53 +576,60 @@ function closeNewProductModal() {
 }
 
 function sendToSheet(gasUrl, params) {
-  // El truc de la imatge bypassa qualsevol restricció CORS i segueix redirects automàticament.
-  // El navegador envia sempre el GET; no podem llegir la resposta però el GAS l'executa.
-  const img = new Image();
-  img.src = `${gasUrl}?${params}`;
+  const url = `${gasUrl}?${params}`;
+  // Primary: fetch (no-cors) — net request; service worker no intercepta URLs externes
+  fetch(url, { mode: 'no-cors' }).catch(() => {
+    // Fallback: image pixel trick si fetch falla per algun motiu
+    new Image().src = url;
+  });
 }
 
-async function saveNewProduct() {
-  const name     = document.getElementById('f-np-name').value.trim();
-  const category = document.getElementById('f-np-category').value.trim();
-  const supplier = document.getElementById('f-np-supplier').value.trim();
-  const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
-  const code     = document.getElementById('f-np-code').value.trim();
+function saveNewProduct() {
+  try {
+    const name     = document.getElementById('f-np-name').value.trim();
+    const category = document.getElementById('f-np-category').value.trim();
+    const supplier = document.getElementById('f-np-supplier').value.trim();
+    const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
+    const code     = document.getElementById('f-np-code').value.trim();
 
-  if (!name) {
-    const el = document.getElementById('f-np-name');
-    el.focus();
-    el.style.borderColor = 'rgba(176,32,32,0.5)';
-    setTimeout(() => { el.style.borderColor = ''; }, 1200);
-    return;
+    if (!name) {
+      const el = document.getElementById('f-np-name');
+      el.focus();
+      el.style.borderColor = 'rgba(176,32,32,0.5)';
+      setTimeout(() => { el.style.borderColor = ''; }, 1200);
+      return;
+    }
+
+    // ID = últim ID del full + 1
+    state.maxCatalogId++;
+    const newId = state.maxCatalogId;
+
+    const product = { id: newId, code, name, category, supplier, price };
+
+    // Desa localment i marca catàleg com a preparat
+    state.catalog.push(product);
+    state.catalogExtra.push(product);
+    state.catalogReady = true;
+    localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+
+    // Envia al Google Sheet
+    const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
+    if (gasUrl) {
+      const params = new URLSearchParams({
+        id: newId, producte: name, proveidor: supplier,
+        preu: price, categoria: category, codi: code,
+      });
+      sendToSheet(gasUrl, params);
+      toast(`"${name}" afegit i enviat al full`);
+    } else {
+      toast(`"${name}" desat localment`);
+    }
+
+    closeNewProductModal();
+    renderCatalogView();
+  } catch (err) {
+    toast(`Error al desar: ${err.message}`);
   }
-
-  // ID = últim ID del full + 1
-  state.maxCatalogId++;
-  const newId = state.maxCatalogId;
-
-  const product = { id: newId, code, name, category, supplier, price };
-
-  // Desa localment
-  state.catalog.push(product);
-  state.catalogExtra.push(product);
-  localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
-
-  // Envia al Google Sheet
-  const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
-  if (gasUrl) {
-    const params = new URLSearchParams({
-      id: newId, producte: name, proveidor: supplier,
-      preu: price, categoria: category, codi: code,
-    });
-    sendToSheet(gasUrl, params);
-    toast(`"${name}" afegit i enviat al full`);
-  } else {
-    toast(`"${name}" desat localment — configura l'Apps Script per sincronitzar`);
-  }
-
-  closeNewProductModal();
-  renderCatalogView();
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────────
