@@ -589,15 +589,15 @@ async function saveNewProduct() {
   state.catalogExtra.push(product);
   localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
 
-  // Envia al Google Sheet
+  // Envia al Google Sheet via GET (evita el problema de redirecció 302 amb POST)
   const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
   if (gasUrl) {
     try {
-      await fetch(gasUrl, {
-        method: 'POST',
-        mode:   'no-cors',
-        body: JSON.stringify({ id: newId, producte: name, proveidor: supplier, preu: price, categoria: category, codi: code }),
+      const params = new URLSearchParams({
+        id: newId, producte: name, proveidor: supplier,
+        preu: price, categoria: category, codi: code,
       });
+      await fetch(`${gasUrl}?${params}`, { method: 'GET', mode: 'no-cors' });
       toast(`"${name}" afegit i enviat al full`);
     } catch {
       toast(`"${name}" desat localment (sense connexió)`);

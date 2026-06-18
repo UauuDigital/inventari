@@ -434,12 +434,12 @@
         <p class="gas-script-hint">
           Al full → <strong>Extensions → Apps Script</strong>, enganxa aquest codi i despliega'l com a App Web (accés: Tothom):
         </p>
-        <pre class="gas-code">function doPost(e) {
+        <pre class="gas-code">function doGet(e) {
   const s = SpreadsheetApp
     .getActiveSpreadsheet().getSheets()[0];
-  const d = JSON.parse(e.postData.contents);
-  s.appendRow([d.id, d.producte, d.proveidor,
-               d.preu, d.categoria, d.codi]);
+  const p = e.parameter;
+  s.appendRow([p.id, p.producte, p.proveidor,
+               p.preu, p.categoria, p.codi]);
   return ContentService.createTextOutput('ok');
 }</pre>
       </form>
