@@ -13,11 +13,25 @@ const STORAGE_ORDERS      = 'uauu_inv_orders';
 const STORAGE_CAT_EXTRA   = 'uauu_inv_catalog_extra';
 const STORAGE_MASIA       = 'uauu_inv_masia';
 
+const SUPABASE_URL        = 'https://oeriszeicvdnagohnqvq.supabase.co';
+const SUPABASE_KEY        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lcmlzemVpY3ZkbmFnb2hucXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjM2MTAsImV4cCI6MjA5NzMzOTYxMH0.GyZe8TDZus51kyYeOViZMPKxXYHlynfvJiJ83S_2cu0';
+const STORAGE_ACCESS_TOKEN  = 'uauu_inv_access_token';
+const STORAGE_REFRESH_TOKEN = 'uauu_inv_refresh_token';
+const STORAGE_TOKEN_EXPIRES = 'uauu_inv_token_expires';
+const STORAGE_USER_PROFILE  = 'uauu_inv_user_profile';
+
 const STATUS_LABELS = {
   pendent:      'Pendent',
   en_curs:      'En curs',
   rebuda:       'Rebuda',
   'cancel·lada':'Cancel·lada',
+};
+
+const MASIA_LABELS = {
+  'ca-nalzina':     "Ca l'Alzina",
+  'can-macia':      'Can Macià',
+  'castell-de-tous':'Castell de Tous',
+  'mas-vivencs':    'Mas Vivencs',
 };
 
 const STATUS_CSS = {
@@ -59,6 +73,8 @@ const state = {
   catalogExtra: [],
   maxCatalogId: 0,
   scannerInstance: null,
+  authProfile:  null,
+  accessToken:  null,
 };
 
 // ── STORAGE ────────────────────────────────────────────────────────
@@ -80,6 +96,202 @@ function loadData() {
 function saveItems()  { localStorage.setItem(STORAGE_ITEMS,  JSON.stringify(state.items)); }
 function saveCats()   { localStorage.setItem(STORAGE_CATS,   JSON.stringify(state.categories)); }
 function saveOrders()   { localStorage.setItem(STORAGE_ORDERS,   JSON.stringify(state.orders)); }
+
+// ── SUPABASE AUTH ──────────────────────────────────────────────────
+
+async function supabaseSignIn(email, password) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Credencials incorrectes');
+  return data;
+}
+
+async function supabaseGetProfile(userId, accessToken) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/usuaris?id=eq.${userId}&select=*`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Error perfil (${res.status}): ${err.message || err.hint || JSON.stringify(err)}`);
+  }
+  const data = await res.json();
+  return data[0] || null;
+}
+
+async function supabaseRefreshToken(refreshToken) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  if (!res.ok) throw new Error('Sessió caducada');
+  return res.json();
+}
+
+function clearSession() {
+  localStorage.removeItem(STORAGE_ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_REFRESH_TOKEN);
+  localStorage.removeItem(STORAGE_TOKEN_EXPIRES);
+  localStorage.removeItem(STORAGE_USER_PROFILE);
+  state.authProfile = null;
+  state.accessToken = null;
+}
+
+async function tryRestoreSession() {
+  const accessToken  = localStorage.getItem(STORAGE_ACCESS_TOKEN);
+  const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN);
+  const expiresAt    = Number(localStorage.getItem(STORAGE_TOKEN_EXPIRES)) || 0;
+  const profileStr   = localStorage.getItem(STORAGE_USER_PROFILE);
+  if (!accessToken || !refreshToken || !profileStr) return false;
+
+  let token = accessToken;
+  if (Date.now() > expiresAt - 60000) {
+    try {
+      const refreshed = await supabaseRefreshToken(refreshToken);
+      token = refreshed.access_token;
+      localStorage.setItem(STORAGE_ACCESS_TOKEN, token);
+      localStorage.setItem(STORAGE_REFRESH_TOKEN, refreshed.refresh_token || refreshToken);
+      localStorage.setItem(STORAGE_TOKEN_EXPIRES, String(Date.now() + (refreshed.expires_in || 3600) * 1000));
+    } catch { clearSession(); return false; }
+  }
+
+  try {
+    const profile = JSON.parse(profileStr);
+    state.authProfile = profile;
+    state.accessToken = token;
+    const rolToUser = { comensal: 'Comensal', coordinador: 'Coordinador', admin: 'Admin' };
+    state.user = rolToUser[(profile.rol || '').toLowerCase()] || localStorage.getItem('uauu_inv_user') || 'Comensal';
+    const savedMasia = localStorage.getItem(STORAGE_MASIA);
+    if ((profile.rol || '').toLowerCase() === 'comensal' && savedMasia) state.masia = savedMasia;
+    return true;
+  } catch { clearSession(); return false; }
+}
+
+function updateHeaderUser() {
+  const profile = state.authProfile;
+  if (!profile) return;
+  const nameEl = document.getElementById('user-pill-name');
+  if (nameEl) nameEl.textContent = profile.nom || state.user;
+  const roleEl = document.getElementById('user-pill-role');
+  if (roleEl) { roleEl.textContent = profile.rol || ''; roleEl.hidden = !profile.rol; }
+}
+
+function renderCrumb(navId, crumbs) {
+  const nav = document.getElementById(navId);
+  if (!nav) return;
+  nav.innerHTML = crumbs.map((c, i) => {
+    const sep = i > 0 ? '<span class="crumb crumb-sep" aria-hidden="true">›</span>' : '';
+    if (i === crumbs.length - 1) return `${sep}<span class="crumb crumb-current">${c.label}</span>`;
+    return `${sep}<button class="crumb crumb-link" data-ci="${i}">${c.label}</button>`;
+  }).join('');
+  crumbs.forEach((c, i) => {
+    if (i < crumbs.length - 1 && c.onClick) {
+      nav.querySelector(`[data-ci="${i}"]`)?.addEventListener('click', c.onClick);
+    }
+  });
+}
+
+function goBackToUsers() {
+  document.getElementById('screen-masia').hidden = true;
+  document.getElementById('screen-masia').classList.remove('leaving');
+  document.getElementById('screen-login').hidden = true;
+  document.getElementById('screen-login').classList.remove('leaving');
+  const sc = document.getElementById('screen-users');
+  sc.classList.remove('leaving');
+  sc.hidden = false;
+  void sc.offsetWidth;
+}
+
+function goBackToMasia() {
+  document.getElementById('screen-login').hidden = true;
+  document.getElementById('screen-login').classList.remove('leaving');
+  const sc = document.getElementById('screen-masia');
+  sc.classList.remove('leaving');
+  sc.hidden = false;
+  void sc.offsetWidth;
+}
+
+function showLoginScreen() {
+  const sc = document.getElementById('screen-login');
+  sc.hidden = false;
+  void sc.offsetWidth;
+  const errEl = document.getElementById('login-error');
+  if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+  const em = document.getElementById('login-email');
+  if (em) em.value = '';
+  const pw = document.getElementById('login-password');
+  if (pw) pw.value = '';
+  const btn = document.querySelector('#login-form button[type="submit"]');
+  if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+
+  const isComensal = (ROLE_MAP[state.user] || 'comensal') === 'comensal';
+  const masiaLabel = (isComensal && state.masia) ? MASIA_LABELS[state.masia] || state.masia : null;
+  if (masiaLabel) {
+    renderCrumb('crumb-login', [
+      { label: state.user, onClick: goBackToUsers },
+      { label: masiaLabel, onClick: goBackToMasia },
+      { label: 'Accés' },
+    ]);
+  } else {
+    renderCrumb('crumb-login', [
+      { label: state.user, onClick: goBackToUsers },
+      { label: 'Accés' },
+    ]);
+  }
+
+  setTimeout(() => { const em = document.getElementById('login-email'); if (em) em.focus(); }, 350);
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = e.target.querySelector('button[type="submit"]');
+
+  if (!email || !password) { errEl.textContent = 'Omple tots els camps'; errEl.hidden = false; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrant…';
+  errEl.hidden = true;
+
+  try {
+    const authData = await supabaseSignIn(email, password);
+    const meta = authData.user?.user_metadata || {};
+    const profile = { id: authData.user?.id, nom: meta.nom, rol: meta.rol, masia: meta.masia || null };
+    if (!profile.rol) throw new Error('Perfil sense rol — afegeix user_metadata a Supabase');
+
+    const expectedRole = ROLE_MAP[state.user] || 'comensal';
+    const profileRole  = (profile.rol || '').toLowerCase();
+    if (profileRole !== expectedRole) throw new Error(`Aquest compte és ${profile.rol}, no ${state.user}`);
+
+    const expiresAt = Date.now() + ((authData.expires_in || 3600) * 1000);
+    localStorage.setItem(STORAGE_ACCESS_TOKEN,  authData.access_token);
+    localStorage.setItem(STORAGE_REFRESH_TOKEN, authData.refresh_token);
+    localStorage.setItem(STORAGE_TOKEN_EXPIRES, String(expiresAt));
+    localStorage.setItem(STORAGE_USER_PROFILE,  JSON.stringify(profile));
+
+    state.authProfile = profile;
+    state.accessToken = authData.access_token;
+
+    const sc = document.getElementById('screen-login');
+    sc.classList.add('leaving');
+    setTimeout(() => { sc.hidden = true; sc.classList.remove('leaving'); }, 400);
+
+    updateHeaderUser();
+    applyRole(state.user);
+
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.hidden = false;
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
 
 // ── USER SELECTION & ROLE ──────────────────────────────────────────
 
@@ -120,12 +332,15 @@ function selectUser(name) {
 
   const role = ROLE_MAP[name] || 'comensal';
   if (role === 'comensal') {
+    renderCrumb('crumb-masia', [
+      { label: name, onClick: goBackToUsers },
+      { label: 'Masia' },
+    ]);
     const masiaSc = document.getElementById('screen-masia');
     masiaSc.hidden = false;
     void masiaSc.offsetWidth;
   } else {
-    document.getElementById('user-pill-name').textContent = name;
-    applyRole(name);
+    showLoginScreen();
   }
 }
 
@@ -137,21 +352,27 @@ function selectMasia(masiaId) {
   masiaSc.classList.add('leaving');
   setTimeout(() => { masiaSc.hidden = true; }, 400);
 
-  document.getElementById('user-pill-name').textContent = state.user;
-  applyRole(state.user);
+  showLoginScreen();
 }
 
 function showUserScreen() {
+  clearSession();
   state.user  = null;
   state.masia = null;
   localStorage.removeItem('uauu_inv_user');
   localStorage.removeItem(STORAGE_MASIA);
   document.getElementById('user-pill-name').textContent = '';
+  const roleEl = document.getElementById('user-pill-role');
+  if (roleEl) { roleEl.textContent = ''; roleEl.hidden = true; }
   document.body.removeAttribute('data-role');
 
   const masiaSc = document.getElementById('screen-masia');
   masiaSc.hidden = true;
   masiaSc.classList.remove('leaving');
+
+  const loginSc = document.getElementById('screen-login');
+  loginSc.hidden = true;
+  loginSc.classList.remove('leaving');
 
   const screen = document.getElementById('screen-users');
   screen.hidden = false;
@@ -159,31 +380,40 @@ function showUserScreen() {
   void screen.offsetWidth;
 }
 
-function initUserScreen() {
+async function initUserScreen() {
+  // 1. Intenta restaurar sessió Supabase
+  const restored = await tryRestoreSession();
+  if (restored) {
+    document.getElementById('screen-users').hidden = true;
+    updateHeaderUser();
+    applyRole(state.user);
+    return;
+  }
+
+  // 2. Sense sessió — comprova si hi ha selecció prèvia
   const savedUser  = localStorage.getItem('uauu_inv_user');
   const savedMasia = localStorage.getItem(STORAGE_MASIA);
-
   if (savedUser) {
     const role = ROLE_MAP[savedUser] || 'comensal';
     if (role === 'comensal' && savedMasia) {
       state.user  = savedUser;
       state.masia = savedMasia;
       document.getElementById('screen-users').hidden = true;
-      document.getElementById('user-pill-name').textContent = savedUser;
-      applyRole(savedUser);
+      showLoginScreen();
     } else {
       selectUser(savedUser);
     }
   }
 
+  // 3. Listeners
   document.querySelectorAll('.user-card[data-user]').forEach(card => {
     card.addEventListener('click', () => selectUser(card.dataset.user));
   });
   document.querySelectorAll('.user-card[data-masia]').forEach(card => {
     card.addEventListener('click', () => selectMasia(card.dataset.masia));
   });
-
-  document.getElementById('btn-switch-user').addEventListener('click', showUserScreen);
+  document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+  document.getElementById('btn-logout').addEventListener('click', showUserScreen);
 }
 
 // ── CATALOG AUTOCOMPLETE ───────────────────────────────────────────
