@@ -1,0 +1,230 @@
+/* ── ORDERS LIST ─────────────────────────────────────────────────── */
+
+.orders-filter-strip {
+  display: flex;
+  gap: 6px;
+  padding: 14px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.orders-filter-strip::-webkit-scrollbar { display: none; }
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 20px;
+}
+
+/* ── ORDER CARD ──────────────────────────────────────────────────── */
+
+.order-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .2s;
+}
+.order-card:hover { border-color: rgba(255,255,255,0.18); }
+
+.order-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-ref {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.order-date {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--text-dimmer);
+}
+
+.order-status-badge {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: var(--r-pill);
+  padding: 4px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.order-status-badge.status-pendent      { color: #D4956A; border-color: rgba(212,149,106,0.45); }
+.order-status-badge.status-en_curs      { color: #7BA4C8; border-color: rgba(123,164,200,0.45); }
+.order-status-badge.status-rebuda       { color: #8AB89A; border-color: rgba(138,184,154,0.45); }
+.order-status-badge.status-cancel_lada  { color: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.15); }
+
+.order-supplier {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.order-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.order-amount {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--white);
+}
+.order-amount:empty { display: none; }
+
+.order-edit-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .2s, background .2s;
+}
+.order-edit-btn:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+
+/* ── EXCEL IMPORT MODAL ──────────────────────────────────────────── */
+
+.import-hint {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(34,31,30,0.6);
+  line-height: 1.6;
+  padding: 0 2px;
+}
+.import-hint strong { font-weight: 500; color: rgba(34,31,30,0.85); }
+.import-hint code {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  background: rgba(34,31,30,0.07);
+  padding: 2px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+  color: rgba(34,31,30,0.7);
+}
+
+.file-drop-zone {
+  border: 1.5px dashed rgba(34,31,30,0.22);
+  border-radius: 16px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: border-color .2s, background .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.file-drop-zone:hover,
+.file-drop-zone.drag-over {
+  border-color: rgba(34,31,30,0.48);
+  background: rgba(34,31,30,0.04);
+}
+.file-drop-zone:focus-visible {
+  outline: 2px solid rgba(34,31,30,0.4);
+  outline-offset: 2px;
+}
+
+.file-drop-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(34,31,30,0.55);
+}
+
+.file-drop-hint {
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(34,31,30,0.35);
+}
+
+.import-preview {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(34,31,30,0.1);
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 360px;
+}
+
+.import-preview-table th {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(34,31,30,0.38);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(34,31,30,0.1);
+  white-space: nowrap;
+  background: rgba(34,31,30,0.03);
+}
+
+.import-preview-table td {
+  padding: 8px 12px;
+  color: rgba(34,31,30,0.75);
+  border-bottom: 1px solid rgba(34,31,30,0.06);
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.import-preview-table tr:last-child td { border-bottom: none; }
+
+.import-count {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(34,31,30,0.45);
+  padding: 4px 2px 0;
+}
