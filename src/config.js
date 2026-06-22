@@ -25,10 +25,17 @@ export const STATUS_LABELS = {
 };
 
 export const MASIA_LABELS = {
-  'ca-nalzina':      "Ca l'Alzina",
+  'ca-nalzina':      "Ca n'Alzina",
   'can-macia':       'Can Macià',
   'castell-de-tous': 'Castell de Tous',
   'mas-vivencs':     'Mas Vivencs',
+};
+
+export const MASIA_COLORS = {
+  'ca-nalzina':      '#B0B8C8',
+  'can-macia':       '#CEB08C',
+  'castell-de-tous': '#A8C4A0',
+  'mas-vivencs':     '#C8A8B8',
 };
 
 export const STATUS_CSS = {

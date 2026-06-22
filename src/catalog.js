@@ -454,6 +454,21 @@ export function saveNewProduct() {
         preu: price, categoria: category, codi: code,
       });
       sendToSheet(gasUrl, params);
+
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const histParams = new URLSearchParams({
+        action:    'inventari',
+        id:        String(now.getTime()),
+        data:      `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`,
+        hora:      `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+        comensal:  state.authProfile?.nom || state.user || '',
+        masia:     state.masia || '',
+        inventari: `[PRODUCTE]: ${name}`,
+        comentari: [category, supplier, price ? `${price}€` : ''].filter(Boolean).join(' · '),
+      });
+      sendToSheet(SHEET_APPEND_URL, histParams.toString());
+
       toast(`"${name}" afegit i enviat al full`);
     } else {
       toast(`"${name}" desat localment`);
