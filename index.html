@@ -238,6 +238,11 @@
       <div class="reports-list" id="reports-content"></div>
     </div>
 
+    <!-- VIEW: USUARIS (Admin) -->
+    <div id="view-users" class="view-panel" hidden>
+      <div class="users-manage-list" id="users-content"></div>
+    </div>
+
     <!-- VIEW: COMANDES (Coordinador + Admin) -->
     <div id="view-orders" class="view-panel" hidden>
       <div class="orders-filter-strip" id="orders-filter-strip">
@@ -306,6 +311,14 @@
         <path d="M4 9h16M8 15h8M8 19h5"/>
       </svg>
       Comandes
+    </button>
+    <button class="nav-tab role-admin-only" data-view="users" aria-label="Usuaris" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      Usuaris
     </button>
   </nav>
 
@@ -447,6 +460,64 @@
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-order">Desar comanda</button>
         <button class="btn-danger" id="btn-delete-order" hidden>Eliminar comanda</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: USUARI (Admin) ── -->
+  <div class="modal-overlay" id="modal-user" role="dialog" aria-modal="true" aria-labelledby="modal-user-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-user-title">Nou usuari</h2>
+        <button class="modal-close" id="btn-user-modal-close" aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-form" id="user-form" autocomplete="off" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="f-user-nom">Nom *</label>
+          <input class="form-input" id="f-user-nom" type="text" placeholder="Nom complet" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-user-email">Email *</label>
+          <input class="form-input" id="f-user-email" type="email" placeholder="usuari@uauu.cat" autocomplete="off" inputmode="email">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="f-user-password">Contrasenya <span id="user-pw-hint" class="form-hint-inline"></span></label>
+          <input class="form-input" id="f-user-password" type="text" placeholder="Mínim 6 caràcters" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="f-user-rol">Rol *</label>
+            <div class="form-select-wrap">
+              <select class="form-select" id="f-user-rol">
+                <option value="comensal">Comensal</option>
+                <option value="coordinador">Coordinador</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field" id="user-masia-field">
+            <label class="form-label" for="f-user-masia">Masia</label>
+            <div class="form-select-wrap">
+              <select class="form-select" id="f-user-masia">
+                <option value="">—</option>
+                <option value="ca-nalzina">Ca l'Alzina</option>
+                <option value="can-macia">Can Macià</option>
+                <option value="castell-de-tous">Castell de Tous</option>
+                <option value="mas-vivencs">Mas Vivencs</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="login-error" id="user-error" hidden></p>
+      </form>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-save-user">Desar usuari</button>
+        <button class="btn-danger" id="btn-delete-user" hidden>Eliminar usuari</button>
       </div>
     </div>
   </div>

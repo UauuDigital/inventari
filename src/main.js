@@ -15,6 +15,7 @@ const STORAGE_MASIA       = 'uauu_inv_masia';
 
 const SUPABASE_URL        = 'https://oeriszeicvdnagohnqvq.supabase.co';
 const SUPABASE_KEY        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lcmlzemVpY3ZkbmFnb2hucXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjM2MTAsImV4cCI6MjA5NzMzOTYxMH0.GyZe8TDZus51kyYeOViZMPKxXYHlynfvJiJ83S_2cu0';
+const MANAGE_USERS_URL    = SUPABASE_URL + '/functions/v1/manage-users';
 const STORAGE_ACCESS_TOKEN  = 'uauu_inv_access_token';
 const STORAGE_REFRESH_TOKEN = 'uauu_inv_refresh_token';
 const STORAGE_TOKEN_EXPIRES = 'uauu_inv_token_expires';
@@ -1281,6 +1282,9 @@ function renderNav() {
   } else if (state.view === 'catalog') {
     fab.hidden = false;
     fabLabel.textContent = 'Nou producte';
+  } else if (state.view === 'users') {
+    fab.hidden = false;
+    fabLabel.textContent = 'Nou usuari';
   } else {
     fab.hidden = true;
   }
@@ -1580,6 +1584,157 @@ async function renderReports() {
   }
 }
 
+// ── GESTIÓ D'USUARIS (Admin) ───────────────────────────────────────
+
+const ROL_LABELS = { comensal: 'Comensal', coordinador: 'Coordinador', admin: 'Admin' };
+
+async function callManageUsers(action, payload = {}) {
+  const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);
+  if (!token) throw new Error('Sessió no iniciada');
+  const res = await fetch(MANAGE_USERS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+
+async function renderUsers() {
+  const el = document.getElementById('users-content');
+  if (!el) return;
+  el.innerHTML = `<div class="reports-loading">Carregant usuaris…</div>`;
+
+  try {
+    const { users } = await callManageUsers('list');
+    state.usersCache = users || [];
+
+    if (!users.length) {
+      el.innerHTML = `<div class="reports-loading">Cap usuari registrat.</div>`;
+      return;
+    }
+
+    const order = { admin: 0, coordinador: 1, comensal: 2 };
+    const sorted = [...users].sort((a, b) =>
+      (order[a.rol] ?? 9) - (order[b.rol] ?? 9) || (a.nom || '').localeCompare(b.nom || ''));
+
+    el.innerHTML = sorted.map(u => {
+      const masiaTxt = u.masia ? (MASIA_LABELS[u.masia] || u.masia) : '';
+      return `
+        <button class="user-manage-card" data-edit-user="${esc(u.id)}">
+          <div class="user-manage-main">
+            <span class="user-manage-name">${esc(u.nom || '(sense nom)')}</span>
+            <span class="user-manage-email">${esc(u.email || '')}</span>
+            ${masiaTxt ? `<span class="user-manage-masia">${esc(masiaTxt)}</span>` : ''}
+          </div>
+          <span class="user-manage-rol rol-${esc(u.rol)}">${esc(ROL_LABELS[u.rol] || u.rol || '—')}</span>
+        </button>`;
+    }).join('');
+
+  } catch (err) {
+    el.innerHTML = `<div class="reports-loading" style="color:var(--low)">${esc(err.message)}</div>`;
+  }
+}
+
+function openUserModal(user = null) {
+  state.editingUserId = user?.id || null;
+  document.getElementById('modal-user-title').textContent = user ? 'Editar usuari' : 'Nou usuari';
+  document.getElementById('btn-delete-user').hidden = !user;
+  document.getElementById('user-pw-hint').textContent = user ? '(deixa-ho buit per no canviar)' : '*';
+
+  document.getElementById('f-user-nom').value      = user?.nom   ?? '';
+  document.getElementById('f-user-email').value    = user?.email ?? '';
+  document.getElementById('f-user-password').value = '';
+  document.getElementById('f-user-rol').value      = user?.rol   ?? 'comensal';
+  document.getElementById('f-user-masia').value    = user?.masia ?? '';
+
+  const errEl = document.getElementById('user-error');
+  errEl.hidden = true; errEl.textContent = '';
+  updateUserMasiaVisibility();
+
+  document.getElementById('modal-user').classList.add('open');
+  setTimeout(() => document.getElementById('f-user-nom').focus(), 380);
+}
+
+function closeUserModal() {
+  document.getElementById('modal-user').classList.remove('open');
+  state.editingUserId = null;
+}
+
+function updateUserMasiaVisibility() {
+  const rol = document.getElementById('f-user-rol').value;
+  document.getElementById('user-masia-field').style.visibility = (rol === 'comensal') ? 'visible' : 'hidden';
+}
+
+async function saveUser() {
+  const nom      = document.getElementById('f-user-nom').value.trim();
+  const email    = document.getElementById('f-user-email').value.trim();
+  const password = document.getElementById('f-user-password').value;
+  const rol      = document.getElementById('f-user-rol').value;
+  const masia    = (rol === 'comensal') ? document.getElementById('f-user-masia').value : '';
+  const errEl    = document.getElementById('user-error');
+  const btn      = document.getElementById('btn-save-user');
+  const editing  = state.editingUserId;
+
+  if (!nom || !email || (!editing && !password)) {
+    errEl.textContent = 'Omple nom, email i contrasenya';
+    errEl.hidden = false;
+    return;
+  }
+
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Desant…';
+  errEl.hidden = true;
+
+  try {
+    if (editing) {
+      const payload = { id: editing, email, nom, rol, masia };
+      if (password) payload.password = password;
+      await callManageUsers('update', payload);
+      toast('Usuari actualitzat');
+    } else {
+      await callManageUsers('create', { email, password, nom, rol, masia });
+      toast('Usuari creat');
+    }
+    closeUserModal();
+    renderUsers();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+async function deleteUser() {
+  const id = state.editingUserId;
+  if (!id) return;
+  const u = (state.usersCache || []).find(x => x.id === id);
+  if (!confirm(`Eliminar l'usuari "${u?.nom || u?.email || ''}"?\nAquesta acció no es pot desfer.`)) return;
+
+  const btn = document.getElementById('btn-delete-user');
+  btn.disabled = true;
+  try {
+    await callManageUsers('delete', { id });
+    toast('Usuari eliminat');
+    closeUserModal();
+    renderUsers();
+  } catch (err) {
+    const errEl = document.getElementById('user-error');
+    errEl.textContent = err.message;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function renderCats() {
   const wrap = document.getElementById('cat-manage-wrap');
   if (!wrap) return;
@@ -1771,6 +1926,7 @@ function setView(view) {
   if (view === 'orders')  renderOrders();
   if (view === 'catalog') renderCatalogView();
   if (view === 'reports') renderReports();
+  if (view === 'users')   renderUsers();
 }
 
 // ── EVENT DELEGATION ───────────────────────────────────────────────
@@ -1789,6 +1945,14 @@ document.addEventListener('click', e => {
   if (editOrder) {
     const o = state.orders.find(x => x.id === editOrder.dataset.editOrder);
     if (o) openOrderModal(o);
+    return;
+  }
+
+  // Edit user button (Admin)
+  const editUser = e.target.closest('[data-edit-user]');
+  if (editUser) {
+    const u = (state.usersCache || []).find(x => x.id === editUser.dataset.editUser);
+    if (u) openUserModal(u);
     return;
   }
 
@@ -1858,6 +2022,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'modal-item')   { closeItemModal();   return; }
   if (e.target.id === 'modal-cat')    { closeCatModal();    return; }
   if (e.target.id === 'modal-order')  { closeOrderModal();  return; }
+  if (e.target.id === 'modal-user')   { closeUserModal();   return; }
   if (e.target.id === 'modal-import') { closeImportModal(); return; }
   if (e.target.id === 'modal-qty')          { closeQtyModal();         return; }
   if (e.target.id === 'modal-new-product')  { closeNewProductModal();   return; }
@@ -1871,6 +2036,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('modal-item').classList.contains('open'))   { closeItemModal();   return; }
     if (document.getElementById('modal-cat').classList.contains('open'))    { closeCatModal();    return; }
     if (document.getElementById('modal-order').classList.contains('open'))  { closeOrderModal();  return; }
+    if (document.getElementById('modal-user').classList.contains('open'))   { closeUserModal();   return; }
     if (document.getElementById('modal-import').classList.contains('open')) { closeImportModal(); return; }
     if (document.getElementById('modal-qty').classList.contains('open'))           { closeQtyModal();          return; }
     if (document.getElementById('modal-new-product').classList.contains('open'))  { closeNewProductModal();    return; }
@@ -1913,6 +2079,7 @@ function init() {
   document.getElementById('btn-add').addEventListener('click', () => {
     if (state.view === 'orders')  openOrderModal();
     else if (state.view === 'catalog') openNewProductModal();
+    else if (state.view === 'users')   openUserModal();
     else openItemModal();
   });
 
@@ -1932,6 +2099,13 @@ function init() {
   document.getElementById('btn-save-order').addEventListener('click', saveOrder);
   document.getElementById('btn-delete-order').addEventListener('click', deleteOrder);
   document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); saveOrder(); });
+
+  // Modal usuari (Admin)
+  document.getElementById('btn-user-modal-close').addEventListener('click', closeUserModal);
+  document.getElementById('btn-save-user').addEventListener('click', saveUser);
+  document.getElementById('btn-delete-user').addEventListener('click', deleteUser);
+  document.getElementById('f-user-rol').addEventListener('change', updateUserMasiaVisibility);
+  document.getElementById('user-form').addEventListener('submit', e => { e.preventDefault(); saveUser(); });
 
   // Modal escàner
   document.getElementById('btn-scan-close').addEventListener('click', closeScanModal);
