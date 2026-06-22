@@ -211,6 +211,7 @@ export function applyRole(name) {
 
   if (role === 'comensal')         setView('catalog');
   else if (role === 'coordinador') setView('reports');
+  else if (role === 'admin')       setView('reports');
   else                             setView('orders');
 }
 

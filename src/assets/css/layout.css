@@ -210,13 +210,12 @@ body[data-role="comensal"] .row-qty-unit { grid-template-columns: 1fr; }
 body[data-role="comensal"] .field-unit   { display: none !important; }
 body[data-role="comensal"] .row-adv      { display: none !important; }
 body[data-role="coordinador"] .role-coord-only   { display: flex !important; }
-body[data-role="admin"]       .role-coord-only   { display: flex !important; }
 body[data-role="admin"]       .role-admin-only   { display: flex !important; }
 
 /* nav-tab overrides (flex is set via .role-*-only, but tabs are flex by default) */
 body[data-role="comensal"]   .role-comensal-only.nav-tab { display: flex !important; }
 body[data-role="coordinador"] .role-coord-only.nav-tab   { display: flex !important; }
-body[data-role="admin"]       .role-coord-only.nav-tab   { display: flex !important; }
+body[data-role="admin"]       .role-admin-only.nav-tab   { display: flex !important; }
 body[data-role="admin"]       .role-admin-only.icon-btn  { display: flex !important; }
 
 /* El coordinador no gestiona articles ni el FAB */
