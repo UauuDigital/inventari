@@ -1,5 +1,5 @@
 import { state, loadData } from './config.js';
-import { getCat, filteredItems, fmtNum, esc } from './helpers.js';
+import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit } from './auth.js';
 import {
   openItemModal, closeItemModal, saveItem, deleteItem,
@@ -224,6 +224,8 @@ function init() {
   loadData();
   render();
   initUserScreen();
+  drainOfflineQueue();
+  window.addEventListener('online', drainOfflineQueue);
   document.getElementById('btn-logout').addEventListener('click', showUserScreen);
 
   document.getElementById('btn-search').addEventListener('click', toggleSearch);

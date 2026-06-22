@@ -81,10 +81,13 @@ export const state = {
   editingUserId:     null,
 };
 
+const _itemsKey = () => state.masia ? `${STORAGE_ITEMS}_${state.masia}` : STORAGE_ITEMS;
+const _catsKey  = () => state.masia ? `${STORAGE_CATS}_${state.masia}`  : STORAGE_CATS;
+
 export function loadData() {
   try {
-    state.items        = JSON.parse(localStorage.getItem(STORAGE_ITEMS))     || [];
-    state.categories   = JSON.parse(localStorage.getItem(STORAGE_CATS))      || [...DEFAULT_CATS];
+    state.items        = JSON.parse(localStorage.getItem(_itemsKey()))       || [];
+    state.categories   = JSON.parse(localStorage.getItem(_catsKey()))        || [...DEFAULT_CATS];
     state.orders       = JSON.parse(localStorage.getItem(STORAGE_ORDERS))    || [];
     state.catalogExtra = JSON.parse(localStorage.getItem(STORAGE_CAT_EXTRA)) || [];
   } catch {
@@ -95,6 +98,6 @@ export function loadData() {
   }
 }
 
-export function saveItems()  { localStorage.setItem(STORAGE_ITEMS,  JSON.stringify(state.items)); }
-export function saveCats()   { localStorage.setItem(STORAGE_CATS,   JSON.stringify(state.categories)); }
+export function saveItems()  { localStorage.setItem(_itemsKey(), JSON.stringify(state.items)); }
+export function saveCats()   { localStorage.setItem(_catsKey(),  JSON.stringify(state.categories)); }
 export function saveOrders() { localStorage.setItem(STORAGE_ORDERS, JSON.stringify(state.orders)); }

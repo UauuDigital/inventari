@@ -2,9 +2,9 @@ import {
   SUPABASE_URL, SUPABASE_KEY,
   STORAGE_ACCESS_TOKEN, STORAGE_REFRESH_TOKEN, STORAGE_TOKEN_EXPIRES, STORAGE_USER_PROFILE,
   STORAGE_MASIA, MASIA_LABELS,
-  state,
+  state, loadData,
 } from './config.js';
-import { setView } from './main.js';
+import { setView, render } from './main.js';
 
 // ── SUPABASE AUTH ────────────────────────────────────────────────────
 
@@ -204,6 +204,8 @@ export function applyRole(name) {
   const role = ROLE_MAP[name] || 'comensal';
   document.body.dataset.role = role;
 
+  loadData();
+
   const importBtn = document.getElementById('btn-import-excel');
   const gasBtn    = document.getElementById('btn-gas-config');
   if (importBtn) importBtn.hidden = (role !== 'admin');
@@ -213,6 +215,8 @@ export function applyRole(name) {
   else if (role === 'coordinador') setView('reports');
   else if (role === 'admin')       setView('reports');
   else                             setView('orders');
+
+  render();
 }
 
 export function selectUser(name) {

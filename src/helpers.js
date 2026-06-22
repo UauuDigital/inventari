@@ -83,12 +83,33 @@ export function findCol(headers, candidates) {
   return -1;
 }
 
-export function sendToSheet(gasUrl, params) {
-  const url = `${gasUrl}?${params}`;
+const OFFLINE_QUEUE_KEY = 'uauu_inv_offline_queue';
+
+function _fireIframe(url) {
   const iframe = document.createElement('iframe');
   iframe.setAttribute('aria-hidden', 'true');
   iframe.style.cssText = 'position:fixed;width:0;height:0;opacity:0;pointer-events:none';
   document.body.appendChild(iframe);
   iframe.src = url;
   setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 8000);
+}
+
+export function sendToSheet(gasUrl, params) {
+  const url = `${gasUrl}?${params}`;
+  if (!navigator.onLine) {
+    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+    queue.push(url);
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+    toast('Sense connexió — s\'enviarà quan hi hagi WiFi');
+    return;
+  }
+  _fireIframe(url);
+}
+
+export function drainOfflineQueue() {
+  const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+  if (!queue.length) return;
+  queue.forEach(url => _fireIframe(url));
+  localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  toast(`${queue.length} ${queue.length === 1 ? 'enviament pendent enviat' : 'enviaments pendents enviats'}`);
 }
