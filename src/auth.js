@@ -270,6 +270,14 @@ export function showUserScreen() {
 }
 
 export async function initUserScreen() {
+  document.querySelectorAll('.user-card[data-user]').forEach(card => {
+    card.addEventListener('click', () => selectUser(card.dataset.user));
+  });
+  document.querySelectorAll('.user-card[data-masia]').forEach(card => {
+    card.addEventListener('click', () => selectMasia(card.dataset.masia));
+  });
+  document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+
   const restored = await tryRestoreSession();
   if (restored) {
     document.getElementById('screen-users').hidden = true;
@@ -291,12 +299,4 @@ export async function initUserScreen() {
       selectUser(savedUser);
     }
   }
-
-  document.querySelectorAll('.user-card[data-user]').forEach(card => {
-    card.addEventListener('click', () => selectUser(card.dataset.user));
-  });
-  document.querySelectorAll('.user-card[data-masia]').forEach(card => {
-    card.addEventListener('click', () => selectMasia(card.dataset.masia));
-  });
-  document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
 }

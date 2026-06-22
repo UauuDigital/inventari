@@ -1,6 +1,7 @@
 import { state, CAT_COLORS, saveItems, saveCats } from './config.js';
 import { uid, esc, fmtNum, toast } from './helpers.js';
-import { render, renderItems, renderStatsStrip } from './main.js';
+import { render, renderItems } from './main.js';
+import { renderStatsStrip } from './stats.js';
 
 // ── CATEGORIES ───────────────────────────────────────────────────────
 
