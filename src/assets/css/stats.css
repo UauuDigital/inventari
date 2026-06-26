@@ -270,3 +270,229 @@
   border-radius: 10px;
   padding: 10px 14px;
 }
+
+/* ── Botó "Genera comanda" a la targeta d'historial ─────────────────── */
+
+.btn-gen-comanda {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,.22);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.btn-gen-comanda:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.38); }
+
+/* ── Vista editar comanda (tema fosc, vista nativa) ──────────────────── */
+
+#view-comanda-edit {
+  display: flex;
+  flex-direction: column;
+}
+
+.comanda-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.comanda-edit-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: .04em;
+  cursor: pointer;
+  padding: 6px 0;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .15s;
+}
+.comanda-edit-back:hover { color: var(--text); }
+.comanda-edit-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  letter-spacing: -.02em;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comanda-edit-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 20px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.comanda-edit-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px calc(14px + var(--safe-bot));
+  border-top: 1px solid var(--border);
+}
+.comanda-edit-actions .btn-primary  { flex: 1; }
+.comanda-edit-actions .btn-secondary { flex: 1; }
+
+/* Botons adaptats al fons fosc */
+#view-comanda-edit .btn-primary {
+  background: var(--text);
+  color: var(--dark);
+}
+#view-comanda-edit .btn-primary:hover { background: rgba(255,255,255,.88); }
+#view-comanda-edit .btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.18);
+  color: var(--text-dim);
+}
+#view-comanda-edit .btn-secondary:hover {
+  border-color: rgba(255,255,255,.38);
+  color: var(--text);
+}
+#view-comanda-edit .btn-primary[hidden],
+#view-comanda-edit .btn-secondary[hidden] { display: none; }
+
+/* Contingut de la comanda */
+.coord-order-meta {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 0 0 6px;
+}
+.coord-order-note {
+  font-size: 11px;
+  color: var(--text-dimmer);
+  margin-bottom: 12px;
+}
+.coord-order-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 20px 0;
+  text-align: center;
+}
+.coord-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.coord-order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.06);
+}
+.coord-order-row.is-ok { opacity: .35; }
+.coord-order-name  { flex: 1; font-size: 14px; color: var(--text); }
+.coord-order-stock { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.coord-order-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  padding: 4px 8px 4px 6px;
+}
+.coord-order-qty {
+  width: 48px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+}
+.coord-order-qty-unit { font-size: 11px; color: var(--text-dim); }
+
+/* ── Print area (oculta en pantalla, visible en imprimir) ────────────── */
+
+#print-area { display: none; }
+
+@media print {
+  body > * { display: none !important; }
+  #print-area { display: block !important; }
+}
+
+.print-comanda {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #111;
+  padding: 20mm 18mm;
+}
+.print-comanda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #111;
+  padding-bottom: 10mm;
+  margin-bottom: 8mm;
+}
+.print-comanda-title {
+  font-size: 22pt;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: -.02em;
+}
+.print-comanda-org {
+  font-size: 11pt;
+  color: #444;
+  margin: 0;
+}
+.print-comanda-info {
+  font-size: 10pt;
+  text-align: right;
+  line-height: 1.7;
+}
+.print-comanda-info p { margin: 0; }
+.print-comanda-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11pt;
+  margin-bottom: 12mm;
+}
+.print-comanda-table th {
+  border-bottom: 1.5px solid #111;
+  padding: 4mm 3mm;
+  text-align: left;
+  font-size: 9pt;
+  font-family: Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.print-comanda-table td {
+  padding: 3mm 3mm;
+  border-bottom: .5px solid #ccc;
+  vertical-align: top;
+}
+.print-comanda-table tfoot td {
+  border-top: 1.5px solid #111;
+  border-bottom: none;
+  padding-top: 3mm;
+}
+.print-comanda-table .tc { text-align: center; }
+.print-comanda-table .tr { text-align: right; }
+.print-comanda-sigs {
+  display: flex;
+  gap: 20mm;
+  margin-top: 20mm;
+}
+.print-comanda-sig { flex: 1; font-size: 10pt; }
+.print-comanda-sig-line {
+  border-bottom: 1px solid #555;
+  height: 12mm;
+  margin-bottom: 3mm;
+}
+.print-comanda-sig p { margin: 0; color: #555; }
+

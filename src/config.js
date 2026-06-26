@@ -2,6 +2,7 @@ export const CATALOG_URL         = 'https://docs.google.com/spreadsheets/d/1Vc3X
 export const OPEN_FOOD_FACTS_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 export const SHEET_APPEND_URL    = 'https://script.google.com/macros/s/AKfycbztMwSVooLa8kyrfc4w8nwozximqD_mwDztLQ4lvAY99MvUr6pgsS9Pt5i1F-D_nUoiQg/exec';
 export const INVENTARI_URL       = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=1640722155';
+export const CASAMENTS_URL       = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=CASAMENTS_GID';
 
 export const STORAGE_ITEMS          = 'uauu_inv_items';
 export const STORAGE_CATS           = 'uauu_inv_cats';

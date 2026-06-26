@@ -220,5 +220,4 @@ body[data-role="admin"]       .role-admin-only.icon-btn  { display: flex !import
 
 /* El coordinador no gestiona articles ni el FAB */
 body[data-role="coordinador"] .fab                { display: none !important; }
-body[data-role="coordinador"] #btn-search         { display: none !important; }
 body[data-role="coordinador"] .stats-strip        { display: none !important; }

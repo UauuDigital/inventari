@@ -228,3 +228,71 @@
   color: rgba(34,31,30,0.45);
   padding: 4px 2px 0;
 }
+
+/* ── Botons d'acció de la targeta ────────────────────────────────────── */
+
+.order-card-actions {
+  display: flex;
+  gap: 4px;
+}
+.order-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, color .15s;
+}
+.order-icon-btn:hover { background: rgba(255,255,255,.1); color: var(--white); }
+.order-icon-btn--danger:hover { background: rgba(176,32,32,.15); border-color: rgba(176,32,32,.3); color: #e06060; }
+
+/* ── Taula articles de comanda (format estructurat) ──────────────────── */
+
+#order-desc-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.order-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(34,31,30,.04);
+  border-radius: 8px;
+}
+.order-desc-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dark);
+}
+.order-desc-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34,31,30,.07);
+  border: 1px solid rgba(34,31,30,.12);
+  border-radius: 7px;
+  padding: 3px 8px 3px 6px;
+}
+.order-desc-qty {
+  width: 50px;
+  background: transparent;
+  border: none;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+}
+.order-desc-qty-unit {
+  font-size: 11px;
+  color: rgba(34,31,30,.45);
+}
+
