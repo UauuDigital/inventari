@@ -1,5 +1,5 @@
-import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems } from './config.js';
-import { esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems, saveOrders } from './config.js';
+import { esc, fmtNum, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { setView } from './main.js';
 
 // ── HISTORIAL DELETE (document-level, attached once) ─────────────────
@@ -13,6 +13,16 @@ document.addEventListener('click', e => {
   _historialRows = _historialRows.filter(r => r[0] !== id);
   _renderHistorialCards();
   toast('Entrada eliminada');
+});
+
+// ── COMANDA COORDINADOR (document-level, attached once) ───────────────
+let _coordOrderData = null;
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-gencomanda]');
+  if (!btn) return;
+  const row = _historialRows.find(r => r[0] === btn.dataset.gencomanda);
+  if (row) _openCoordOrderEdit(row);
 });
 
 // ── STATS STRIP ──────────────────────────────────────────────────────
@@ -192,9 +202,11 @@ function _cardHtml(r, role) {
   const authorHtml = authorLine
     ? `<span class="report-count-badge" style="font-size:10px;color:var(--text-dim)">${esc(authorLine)}</span>`
     : '';
-  const delBtn = role === 'admin' ? _deleteBtn(id) : '';
-
-  const isProducte = (inventari || '').startsWith('[PRODUCTE]: ');
+  const isProducte    = (inventari || '').startsWith('[PRODUCTE]: ');
+  const delBtn        = role === 'admin' ? _deleteBtn(id) : '';
+  const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
+    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">Genera comanda</button>`
+    : '';
 
   if (isProducte) {
     const nomProducte = inventari.slice('[PRODUCTE]: '.length);
@@ -234,8 +246,9 @@ function _cardHtml(r, role) {
           <span class="report-date-time">${esc(date)} · ${esc(hora)}</span>
           ${authorHtml}
         </div>
-        <div style="display:flex;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px">
           <span class="report-count-badge">${items.length} productes</span>
+          ${genComandaBtn}
           ${delBtn}
         </div>
       </div>
@@ -380,4 +393,85 @@ export async function renderReports() {
   } catch {
     el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant historial. Comprova la connexió.</div>`;
   }
+}
+
+// ── MODAL COMANDA COORDINADOR ─────────────────────────────────────────
+
+function _parseInventariItems(inventari) {
+  return (inventari || '').split(' | ')
+    .filter(Boolean)
+    .map(seg => {
+      const sep = seg.indexOf(': ');
+      if (sep < 0) return null;
+      const name = seg.slice(0, sep).trim();
+      const qty  = parseFloat(seg.slice(sep + 2)) || 0;
+      return { name, qty, orderQty: Math.max(0, 100 - qty) };
+    })
+    .filter(Boolean);
+}
+
+function _openCoordOrderEdit(row) {
+  const [id, date, hora, comensal, masiaVal, inventari] = row;
+  const masiaLabel = MASIA_LABELS[masiaVal] || masiaVal || '';
+  const items = _parseInventariItems(inventari);
+  _coordOrderData = { id, date, hora, masia: masiaVal, masiaLabel, comensal, items };
+  _renderCoordOrderEdit();
+  setView('comanda-edit');
+}
+
+function _renderCoordOrderEdit() {
+  const { date, hora, masiaLabel, comensal, items } = _coordOrderData;
+  document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
+  document.getElementById('comanda-edit-body').innerHTML = `
+    <p class="coord-order-meta">
+      Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
+      · <span style="color:var(--text-dim)">${esc(comensal)}</span>
+    </p>
+    <p class="coord-order-note">Mínim 100 u. per producte. Edita les quantitats si cal.</p>
+    <div class="coord-order-list" id="coord-order-list">
+      ${items.map((item, i) => `
+        <div class="coord-order-row${item.orderQty === 0 ? ' is-ok' : ''}">
+          <span class="coord-order-name">${esc(item.name)}</span>
+          <span class="coord-order-stock">${item.qty} u</span>
+          <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
+            <input class="coord-order-qty" type="number" min="0" step="1"
+                   value="${item.orderQty}" data-idx="${i}">
+            <span class="coord-order-qty-unit">u</span>
+          </label>
+        </div>`).join('')}
+    </div>`;
+}
+
+export function coordOrderAccept() {
+  if (!_coordOrderData) return;
+  document.querySelectorAll('.coord-order-qty').forEach(input => {
+    const i = parseInt(input.dataset.idx);
+    _coordOrderData.items[i].orderQty = Math.max(0, parseFloat(input.value) || 0);
+  });
+  const { date, hora, masiaLabel, comensal } = _coordOrderData;
+  const orderItems = _coordOrderData.items.filter(i => i.orderQty > 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const desc  = orderItems.length === 0
+    ? 'Cap producte per demanar'
+    : orderItems.map(i => `${i.name}: ${i.orderQty} u`).join(' | ');
+  state.orders.unshift({
+    id:        uid(),
+    ref:       masiaLabel,
+    date:      today,
+    supplier:  masiaLabel,
+    status:    'pendent',
+    desc,
+    amount:    0,
+    notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  saveOrders();
+  _coordOrderData = null;
+  setView('orders');
+}
+
+export function closeCoordOrderModal() {
+  _coordOrderData = null;
+  setView('reports');
 }

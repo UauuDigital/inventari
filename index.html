@@ -243,6 +243,24 @@
       <div class="users-manage-list" id="users-content"></div>
     </div>
 
+    <!-- VIEW: EDITAR COMANDA (Coordinador) -->
+    <div id="view-comanda-edit" class="view-panel" hidden>
+      <div class="comanda-edit-header">
+        <button class="comanda-edit-back" id="btn-comanda-back-hist" aria-label="Tornar a l'historial">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Historial
+        </button>
+        <h2 class="comanda-edit-title" id="comanda-edit-title">Comanda</h2>
+      </div>
+      <div class="comanda-edit-body" id="comanda-edit-body"></div>
+      <div class="comanda-edit-actions">
+        <button class="btn btn-secondary" id="btn-comanda-cancel">Cancel·lar</button>
+        <button class="btn btn-primary"   id="btn-comanda-accept">Genera comanda →</button>
+      </div>
+    </div>
+
     <!-- VIEW: CASAMENTS (Coordinador + Admin) -->
     <div id="view-casaments" class="view-panel" hidden>
       <div id="casaments-content"></div>
@@ -458,8 +476,9 @@
           </div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-order-desc">Articles / Descripció *</label>
+          <label class="form-label" id="label-order-desc" for="f-order-desc">Articles / Descripció *</label>
           <textarea class="form-textarea" id="f-order-desc" placeholder="Detall dels articles demanats…" style="min-height:90px"></textarea>
+          <div id="order-desc-table" hidden></div>
         </div>
         <div class="form-field">
           <label class="form-label" for="f-order-amount">Import total (€)</label>
@@ -690,6 +709,10 @@
     </div>
     <div id="barcode-reader"></div>
   </div>
+
+
+  <!-- ── ÀREA D'IMPRESSIÓ ── -->
+  <div id="print-area" aria-hidden="true"></div>
 
   <!-- ── TOAST ── -->
   <div class="toast" id="toast" aria-live="polite"></div>

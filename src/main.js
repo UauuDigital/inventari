@@ -13,13 +13,16 @@ import {
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
 } from './catalog.js';
-import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder } from './orders.js';
+import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
 import {
   openUserModal, closeUserModal, saveUser, deleteUser,
   renderUsers, updateUserMasiaVisibility,
 } from './users.js';
-import { renderStats, renderStatsStrip, renderReports, sendInventoryReport } from './stats.js';
+import {
+  renderStats, renderStatsStrip, renderReports, sendInventoryReport,
+  closeCoordOrderModal, coordOrderAccept,
+} from './stats.js';
 import { renderCasamentsView } from './casaments.js';
 
 // ── RENDER ───────────────────────────────────────────────────────────
@@ -152,6 +155,12 @@ document.addEventListener('click', e => {
     return;
   }
 
+  const printOrderBtn = e.target.closest('[data-print-order]');
+  if (printOrderBtn) { printOrder(printOrderBtn.dataset.printOrder); return; }
+
+  const delOrderBtn = e.target.closest('[data-delete-order-direct]');
+  if (delOrderBtn) { deleteOrderDirect(delOrderBtn.dataset.deleteOrderDirect); return; }
+
   const editUser = e.target.closest('[data-edit-user]');
   if (editUser) {
     const u = (state.usersCache || []).find(x => x.id === editUser.dataset.editUser);
@@ -269,6 +278,11 @@ function init() {
 
   // Modal escàner
   document.getElementById('btn-scan-close').addEventListener('click', closeScanModal);
+
+  // Vista editar comanda (coordinador)
+  document.getElementById('btn-comanda-back-hist').addEventListener('click', closeCoordOrderModal);
+  document.getElementById('btn-comanda-cancel').addEventListener('click', closeCoordOrderModal);
+  document.getElementById('btn-comanda-accept').addEventListener('click', coordOrderAccept);
 
   // Modal configuració GAS
   document.getElementById('btn-gas-config').addEventListener('click', openGasModal);
