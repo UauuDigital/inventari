@@ -5,6 +5,8 @@ import {
 import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { ensureCategory } from './items.js';
 
+let _catalogQuery = '';
+
 // ── CATALOG LOAD ─────────────────────────────────────────────────────
 
 export async function loadCatalog() {
@@ -279,6 +281,8 @@ export function renderCatalogView() {
     return;
   }
 
+  _catalogQuery = '';
+
   const groups = new Map();
   state.catalog.forEach((p, i) => {
     const cat = p.category || 'Sense categoria';
@@ -288,6 +292,8 @@ export function renderCatalogView() {
 
   const html = [`
     <div class="catalog-list">
+    <input class="catalog-view-search" id="catalog-view-search" type="search"
+           placeholder="Cercar producte…" autocomplete="off" aria-label="Cercar producte">
     <button class="catalog-scan-btn" id="btn-scan-barcode">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
@@ -298,7 +304,7 @@ export function renderCatalogView() {
     </button>
   `];
   groups.forEach((entries, catName) => {
-    html.push(`<div class="catalog-section-title">${esc(catName)}</div>`);
+    html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
     entries.forEach(({ p, i }) => {
       const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
       const qty = existing != null ? fmtNum(existing.quantity) : '';
@@ -312,6 +318,31 @@ export function renderCatalogView() {
   });
   html.push('</div>');
   panel.innerHTML = html.join('');
+
+  document.getElementById('catalog-view-search').addEventListener('input', e => {
+    _catalogQuery = e.target.value.trim().toLowerCase();
+    _filterCatalogView(panel);
+  });
+}
+
+function _filterCatalogView(panel) {
+  const q = _catalogQuery;
+  let lastSection = null;
+  let sectionVisible = false;
+
+  panel.querySelectorAll('.catalog-list > *').forEach(el => {
+    if (el.classList.contains('catalog-section-title')) {
+      if (lastSection) lastSection.hidden = !sectionVisible;
+      lastSection = el;
+      sectionVisible = false;
+    } else if (el.classList.contains('catalog-btn')) {
+      const name = el.querySelector('.catalog-btn-name').textContent.toLowerCase();
+      const show = !q || name.includes(q);
+      el.hidden = !show;
+      if (show) sectionVisible = true;
+    }
+  });
+  if (lastSection) lastSection.hidden = !sectionVisible;
 }
 
 // ── QTY MODAL ────────────────────────────────────────────────────────
