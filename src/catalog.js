@@ -5,6 +5,8 @@ import {
 import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { ensureCategory } from './items.js';
 
+let _catalogQuery = '';
+
 // ── CATALOG LOAD ─────────────────────────────────────────────────────
 
 export async function loadCatalog() {
@@ -292,6 +294,8 @@ export function renderCatalogView() {
   const role     = document.body.dataset.role || 'comensal';
   const isEditor = role === 'admin' || role === 'coordinador';
 
+  _catalogQuery = '';
+
   const groups = new Map();
   state.catalog.forEach((p, i) => {
     const cat = p.category || 'Sense categoria';
@@ -305,7 +309,9 @@ export function renderCatalogView() {
 
   if (!isEditor) {
     html.push(`
-      <button class="catalog-scan-btn" id="btn-scan-barcode">
+      <input class="catalog-view-search" id="catalog-view-search" type="search"
+           placeholder="Cercar producte…" autocomplete="off" aria-label="Cercar producte">
+    <button class="catalog-scan-btn" id="btn-scan-barcode">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
           <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
@@ -317,7 +323,7 @@ export function renderCatalogView() {
   }
 
   groups.forEach((entries, catName) => {
-    html.push(`<div class="catalog-section-title">${esc(catName)}</div>`);
+    html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
     entries.forEach(({ p, i }) => {
       if (isEditor) {
         const isExtra = state.catalogExtra.some(e => e.id === p.id);
@@ -345,6 +351,31 @@ export function renderCatalogView() {
   });
   html.push('</div>');
   panel.innerHTML = html.join('');
+
+  document.getElementById('catalog-view-search').addEventListener('input', e => {
+    _catalogQuery = e.target.value.trim().toLowerCase();
+    _filterCatalogView(panel);
+  });
+}
+
+function _filterCatalogView(panel) {
+  const q = _catalogQuery;
+  let lastSection = null;
+  let sectionVisible = false;
+
+  panel.querySelectorAll('.catalog-list > *').forEach(el => {
+    if (el.classList.contains('catalog-section-title')) {
+      if (lastSection) lastSection.hidden = !sectionVisible;
+      lastSection = el;
+      sectionVisible = false;
+    } else if (el.classList.contains('catalog-btn')) {
+      const name = el.querySelector('.catalog-btn-name').textContent.toLowerCase();
+      const show = !q || name.includes(q);
+      el.hidden = !show;
+      if (show) sectionVisible = true;
+    }
+  });
+  if (lastSection) lastSection.hidden = !sectionVisible;
 }
 
 // ── QTY MODAL ────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
-import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems } from './config.js';
-import { esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems, saveOrders } from './config.js';
+import { esc, fmtNum, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
 let _editingHistorialId    = null;
@@ -26,6 +26,26 @@ document.addEventListener('click', e => {
     const row = _historialRows.find(r => r[0] === id);
     if (row) openEditHistorialModal(row);
   }
+});
+
+// ── COMANDA COORDINADOR (document-level, attached once) ───────────────
+let _coordOrderData = null;
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-gencomanda]');
+  if (!btn) return;
+  const row = _historialRows.find(r => r[0] === btn.dataset.gencomanda);
+  if (row) _openCoordOrderEdit(row);
+});
+
+// ── COMANDA COORDINADOR (document-level, attached once) ───────────────
+let _coordOrderData = null;
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-gencomanda]');
+  if (!btn) return;
+  const row = _historialRows.find(r => r[0] === btn.dataset.gencomanda);
+  if (row) _openCoordOrderEdit(row);
 });
 
 // ── STATS STRIP ──────────────────────────────────────────────────────
@@ -213,6 +233,11 @@ function _cardHtml(r, role) {
   const authorHtml = authorLine
     ? `<span class="report-count-badge" style="font-size:10px;color:var(--text-dim)">${esc(authorLine)}</span>`
     : '';
+  const isProducte    = (inventari || '').startsWith('[PRODUCTE]: ');
+  const delBtn        = role === 'admin' ? _deleteBtn(id) : '';
+  const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
+    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">Genera comanda</button>`
+    : '';
   const canEdit = role === 'admin' || role === 'coordinador';
   const delBtn  = role === 'admin' ? _deleteBtn(id) : '';
 
@@ -257,9 +282,10 @@ function _cardHtml(r, role) {
           <span class="report-date-time">${esc(date)} · ${esc(hora)}</span>
           ${authorHtml}
         </div>
-        <div style="display:flex;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px">
           <span class="report-count-badge">${items.length} productes</span>
           ${editBtn}
+          ${genComandaBtn}
           ${delBtn}
         </div>
       </div>
@@ -325,7 +351,7 @@ export async function renderReports() {
       return;
     }
 
-    const masiaIdx = findCol(headers, ['masia']);
+    const masiaIdx = findCol(headers, [['masia']]);
     let data = rows.slice(1).filter(r => r.length > 1 && r[0]);
 
     if (role === 'comensal' && state.masia && masiaIdx >= 0) {
@@ -406,76 +432,83 @@ export async function renderReports() {
   }
 }
 
-// ── HISTORIAL EDIT MODAL ─────────────────────────────────────────────
+// ── MODAL COMANDA COORDINADOR ─────────────────────────────────────────
 
-function openEditHistorialModal(row) {
-  const [id, date, hora, comensal, masiaVal, inventari, comentari] = row;
-
-  const masiaLabel = masiaVal ? (MASIA_LABELS[masiaVal] || masiaVal) : '';
-  document.getElementById('edit-historial-meta').textContent =
-    [date, hora, comensal, masiaLabel].filter(Boolean).join(' · ');
-
-  const items = (inventari || '').split(' | ').filter(Boolean).map(item => {
-    const sep = item.indexOf(': ');
-    const name   = sep > -1 ? item.slice(0, sep) : item;
-    const qtyStr = sep > -1 ? item.slice(sep + 2) : '';
-    const match  = qtyStr.trim().match(/^([\d.,]+)\s*(.*)$/);
-    return { name, num: match ? match[1] : qtyStr, unit: match ? match[2].trim() : '' };
-  });
-
-  document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
-      <span style="flex:1;font-size:13px">${esc(item.name)}</span>
-      <input type="number" min="0" step="any" class="form-input"
-             data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
-             value="${esc(item.num)}"
-             style="width:72px;text-align:right;padding:5px 8px;font-size:13px">
-      <span style="font-size:12px;color:var(--text-dim);min-width:20px">${esc(item.unit)}</span>
-    </div>
-  `).join('');
-
-  document.getElementById('edit-historial-comment').value = comentari || '';
-  _editingHistorialId    = id;
-  _editingHistorialItems = items;
-
-  document.getElementById('modal-edit-historial').classList.add('open');
+function _parseInventariItems(inventari) {
+  return (inventari || '').split(' | ')
+    .filter(Boolean)
+    .map(seg => {
+      const sep = seg.indexOf(': ');
+      if (sep < 0) return null;
+      const name = seg.slice(0, sep).trim();
+      const qty  = parseFloat(seg.slice(sep + 2)) || 0;
+      return { name, qty, orderQty: Math.max(0, 100 - qty) };
+    })
+    .filter(Boolean);
 }
 
-export function closeEditHistorialModal() {
-  document.getElementById('modal-edit-historial').classList.remove('open');
-  _editingHistorialId    = null;
-  _editingHistorialItems = [];
+function _openCoordOrderEdit(row) {
+  const [id, date, hora, comensal, masiaVal, inventari] = row;
+  const masiaLabel = MASIA_LABELS[masiaVal] || masiaVal || '';
+  const items = _parseInventariItems(inventari);
+  _coordOrderData = { id, date, hora, masia: masiaVal, masiaLabel, comensal, items };
+  _renderCoordOrderEdit();
+  setView('comanda-edit');
 }
 
-export function saveEditHistorial() {
-  if (!_editingHistorialId) return;
+function _renderCoordOrderEdit() {
+  const { date, hora, masiaLabel, comensal, items } = _coordOrderData;
+  document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
+  document.getElementById('comanda-edit-body').innerHTML = `
+    <p class="coord-order-meta">
+      Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
+      · <span style="color:var(--text-dim)">${esc(comensal)}</span>
+    </p>
+    <p class="coord-order-note">Mínim 100 u. per producte. Edita les quantitats si cal.</p>
+    <div class="coord-order-list" id="coord-order-list">
+      ${items.map((item, i) => `
+        <div class="coord-order-row${item.orderQty === 0 ? ' is-ok' : ''}">
+          <span class="coord-order-name">${esc(item.name)}</span>
+          <span class="coord-order-stock">${item.qty} u</span>
+          <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
+            <input class="coord-order-qty" type="number" min="0" step="1"
+                   value="${item.orderQty}" data-idx="${i}">
+            <span class="coord-order-qty-unit">u</span>
+          </label>
+        </div>`).join('')}
+    </div>`;
+}
 
-  const newInventari = _editingHistorialItems.map((item, i) => {
-    const input = document.querySelector(`[data-hist-idx="${i}"]`);
-    const val   = input ? input.value.trim() : item.num;
-    const unit  = input ? (input.dataset.histUnit || '') : item.unit;
-    return `${item.name}: ${val}${unit ? ' ' + unit : ''}`;
-  }).join(' | ');
-
-  const comentari = document.getElementById('edit-historial-comment').value.trim();
-
-  const params = new URLSearchParams({
-    action:    'update-historial',
-    id:        _editingHistorialId,
-    inventari: newInventari,
-    comentari,
+export function coordOrderAccept() {
+  if (!_coordOrderData) return;
+  document.querySelectorAll('.coord-order-qty').forEach(input => {
+    const i = parseInt(input.dataset.idx);
+    _coordOrderData.items[i].orderQty = Math.max(0, parseFloat(input.value) || 0);
   });
-  sendToSheet(SHEET_APPEND_URL, params.toString());
+  const { date, hora, masiaLabel, comensal } = _coordOrderData;
+  const orderItems = _coordOrderData.items.filter(i => i.orderQty > 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const desc  = orderItems.length === 0
+    ? 'Cap producte per demanar'
+    : orderItems.map(i => `${i.name}: ${i.orderQty} u`).join(' | ');
+  state.orders.unshift({
+    id:        uid(),
+    ref:       masiaLabel,
+    date:      today,
+    supplier:  masiaLabel,
+    status:    'pendent',
+    desc,
+    amount:    0,
+    notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  saveOrders();
+  _coordOrderData = null;
+  setView('orders');
+}
 
-  const rowIdx = _historialRows.findIndex(r => r[0] === _editingHistorialId);
-  if (rowIdx >= 0) {
-    const updated = [..._historialRows[rowIdx]];
-    updated[5] = newInventari;
-    updated[6] = comentari;
-    _historialRows[rowIdx] = updated;
-  }
-
-  closeEditHistorialModal();
-  _renderHistorialCards();
-  toast('Inventari actualitzat');
+export function closeCoordOrderModal() {
+  _coordOrderData = null;
+  setView('reports');
 }

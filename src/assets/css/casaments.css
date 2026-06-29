@@ -1,0 +1,107 @@
+/* ── Casaments ────────────────────────────────────────────────────────── */
+
+.casaments-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 0;
+}
+
+.casaments-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.casaments-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border, rgba(255,255,255,.12));
+  background: var(--surface, rgba(255,255,255,.06));
+  color: var(--text, #fff);
+  font-size: 14px;
+  outline: none;
+}
+.casaments-search-input:focus {
+  border-color: var(--accent, #B0B8C8);
+}
+
+.casaments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 80px;
+}
+
+.casament-card {
+  background: var(--surface, rgba(255,255,255,.06));
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  transition: opacity .2s;
+}
+
+.casament-card.is-past {
+  opacity: .4;
+}
+
+.casament-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.casament-nom {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text, #fff);
+}
+
+.casament-finca {
+  font-size: 12px;
+  color: var(--text-dim, rgba(255,255,255,.5));
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.casament-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-dim, rgba(255,255,255,.5));
+  margin-bottom: 4px;
+}
+
+.casament-intol {
+  font-size: 12px;
+  color: var(--text, #fff);
+  background: rgba(0,0,0,.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.casaments-empty {
+  padding: 56px 0;
+  text-align: center;
+  color: var(--text-dim, rgba(255,255,255,.5));
+  font-size: 14px;
+}
+
+.masia-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
