@@ -38,16 +38,6 @@ document.addEventListener('click', e => {
   if (row) _openCoordOrderEdit(row);
 });
 
-// ── COMANDA COORDINADOR (document-level, attached once) ───────────────
-let _coordOrderData = null;
-
-document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-gencomanda]');
-  if (!btn) return;
-  const row = _historialRows.find(r => r[0] === btn.dataset.gencomanda);
-  if (row) _openCoordOrderEdit(row);
-});
-
 // ── STATS STRIP ──────────────────────────────────────────────────────
 
 export function renderStatsStrip() {
@@ -511,4 +501,78 @@ export function coordOrderAccept() {
 export function closeCoordOrderModal() {
   _coordOrderData = null;
   setView('reports');
+}
+
+// ── HISTORIAL EDIT MODAL ─────────────────────────────────────────────
+
+function openEditHistorialModal(row) {
+  const [id, date, hora, comensal, masiaVal, inventari, comentari] = row;
+
+  const masiaLabel = masiaVal ? (MASIA_LABELS[masiaVal] || masiaVal) : '';
+  document.getElementById('edit-historial-meta').textContent =
+    [date, hora, comensal, masiaLabel].filter(Boolean).join(' · ');
+
+  const items = (inventari || '').split(' | ').filter(Boolean).map(item => {
+    const sep = item.indexOf(': ');
+    const name   = sep > -1 ? item.slice(0, sep) : item;
+    const qtyStr = sep > -1 ? item.slice(sep + 2) : '';
+    const match  = qtyStr.trim().match(/^([\d.,]+)\s*(.*)$/);
+    return { name, num: match ? match[1] : qtyStr, unit: match ? match[2].trim() : '' };
+  });
+
+  document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <span style="flex:1;font-size:13px">${esc(item.name)}</span>
+      <input type="number" min="0" step="any" class="form-input"
+             data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
+             value="${esc(item.num)}"
+             style="width:72px;text-align:right;padding:5px 8px;font-size:13px">
+      <span style="font-size:12px;color:var(--text-dim);min-width:20px">${esc(item.unit)}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('edit-historial-comment').value = comentari || '';
+  _editingHistorialId    = id;
+  _editingHistorialItems = items;
+
+  document.getElementById('modal-edit-historial').classList.add('open');
+}
+
+export function closeEditHistorialModal() {
+  document.getElementById('modal-edit-historial').classList.remove('open');
+  _editingHistorialId    = null;
+  _editingHistorialItems = [];
+}
+
+export function saveEditHistorial() {
+  if (!_editingHistorialId) return;
+
+  const newInventari = _editingHistorialItems.map((item, i) => {
+    const input = document.querySelector(`[data-hist-idx="${i}"]`);
+    const val   = input ? input.value.trim() : item.num;
+    const unit  = input ? (input.dataset.histUnit || '') : item.unit;
+    return `${item.name}: ${val}${unit ? ' ' + unit : ''}`;
+  }).join(' | ');
+
+  const comentari = document.getElementById('edit-historial-comment').value.trim();
+
+  const params = new URLSearchParams({
+    action:    'update-historial',
+    id:        _editingHistorialId,
+    inventari: newInventari,
+    comentari,
+  });
+  sendToSheet(SHEET_APPEND_URL, params.toString());
+
+  const rowIdx = _historialRows.findIndex(r => r[0] === _editingHistorialId);
+  if (rowIdx >= 0) {
+    const updated = [..._historialRows[rowIdx]];
+    updated[5] = newInventari;
+    updated[6] = comentari;
+    _historialRows[rowIdx] = updated;
+  }
+
+  closeEditHistorialModal();
+  _renderHistorialCards();
+  toast('Inventari actualitzat');
 }
