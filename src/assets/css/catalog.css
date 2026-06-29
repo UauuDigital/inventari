@@ -173,6 +173,34 @@
   text-overflow: ellipsis;
 }
 
+/* ── SCAN FIELD (botó escàner dins formulari) ────────────────────── */
+
+.scan-field-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.scan-field-wrap .form-input {
+  flex: 1;
+  width: auto;
+}
+.scan-field-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  background: rgba(34,31,30,0.05);
+  border: 1px solid rgba(34,31,30,0.14);
+  border-radius: 11px;
+  color: rgba(34,31,30,0.5);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.scan-field-btn:hover  { background: rgba(34,31,30,0.1); border-color: rgba(34,31,30,0.28); color: rgba(34,31,30,0.8); }
+.scan-field-btn:active { transform: scale(0.96); }
+
 /* ── SCAN BUTTON ─────────────────────────────────────────────────── */
 
 .catalog-scan-btn {

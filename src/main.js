@@ -8,7 +8,7 @@ import {
 } from './items.js';
 import {
   loadCatalog, initCatalogSearch, renderCatalogView,
-  openScanModal, closeScanModal,
+  openScanModal, closeScanModal, openScanModalForField,
   openQtyModal,  closeQtyModal,  saveQty,
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
@@ -203,6 +203,7 @@ document.addEventListener('click', e => {
   if (tab) { setView(tab.dataset.view); return; }
 
   if (e.target.closest('#btn-scan-barcode')) { openScanModal(); return; }
+  if (e.target.closest('#btn-scan-np-code')) { openScanModalForField('f-np-code'); return; }
 
   const catalogEditBtn = e.target.closest('[data-catalog-edit]');
   if (catalogEditBtn) { openEditProductModal(parseInt(catalogEditBtn.dataset.catalogEdit)); return; }

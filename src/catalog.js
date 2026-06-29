@@ -5,7 +5,8 @@ import {
 import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { ensureCategory } from './items.js';
 
-let _catalogQuery = '';
+let _catalogQuery  = '';
+let _scanFillTarget = null;
 
 // ── CATALOG LOAD ─────────────────────────────────────────────────────
 
@@ -186,6 +187,11 @@ function loadHtml5QrCode() {
   });
 }
 
+export async function openScanModalForField(fieldId) {
+  _scanFillTarget = fieldId;
+  await openScanModal();
+}
+
 export async function openScanModal() {
   document.getElementById('modal-scan').classList.add('open');
   document.getElementById('scan-status-text').textContent = 'Apunta la càmera al codi de barres';
@@ -244,6 +250,15 @@ async function handleBarcode(code) {
   if (state.scannerInstance) {
     try { await state.scannerInstance.stop(); state.scannerInstance.clear(); state.scannerInstance = null; } catch {}
   }
+
+  if (_scanFillTarget) {
+    const el = document.getElementById(_scanFillTarget);
+    if (el) el.value = code;
+    _scanFillTarget = null;
+    closeScanModal();
+    return;
+  }
+
   const statusEl = document.getElementById('scan-status-text');
   if (statusEl) statusEl.textContent = 'Buscant producte…';
 
