@@ -5,8 +5,9 @@ import {
 import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { ensureCategory } from './items.js';
 
-let _catalogQuery  = '';
-let _scanFillTarget = null;
+let _catalogQuery   = '';
+let _scanFillTarget  = null;
+let _pendingCreate   = null;
 
 // ── CATALOG LOAD ─────────────────────────────────────────────────────
 
@@ -218,6 +219,12 @@ export async function openScanModal() {
 
 export async function closeScanModal() {
   document.getElementById('modal-scan').classList.remove('open');
+  document.getElementById('barcode-reader').hidden = false;
+  document.getElementById('scan-result').hidden     = true;
+  const statusEl = document.getElementById('scan-status-text');
+  if (statusEl) statusEl.textContent = 'Apunta la càmera al codi';
+  _pendingCreate  = null;
+  _scanFillTarget = null;
   if (state.scannerInstance) {
     try {
       await state.scannerInstance.stop();
@@ -225,6 +232,13 @@ export async function closeScanModal() {
     } catch {}
     state.scannerInstance = null;
   }
+}
+
+export function scanCreateProduct() {
+  const data = _pendingCreate;
+  _pendingCreate = null;
+  closeScanModal();
+  if (data) openNewProductModal(data);
 }
 
 async function lookupOpenFoodFacts(code) {
@@ -271,18 +285,18 @@ async function handleBarcode(code) {
   }
 
   const offProduct = await lookupOpenFoodFacts(code);
-  if (offProduct) {
-    closeScanModal();
-    toast(`Trobat a Open Food Facts: ${offProduct.name}`);
-    openNewProductModal({ ...offProduct, code });
-    return;
-  }
 
-  if (statusEl) statusEl.textContent = 'Producte no trobat — afegeix-lo manualment';
-  setTimeout(() => {
-    closeScanModal();
-    openNewProductModal({ code });
-  }, 900);
+  document.getElementById('barcode-reader').hidden = true;
+  document.getElementById('scan-result').hidden     = false;
+  const msgEl = document.getElementById('scan-result-msg');
+
+  if (offProduct) {
+    _pendingCreate = { ...offProduct, code };
+    msgEl.textContent = `"${offProduct.name}" no és al nostre catàleg però existeix a la base de dades pública. Vols afegir-lo?`;
+  } else {
+    _pendingCreate = { code };
+    msgEl.textContent = `El codi ${code} no és al nostre catàleg. Vols crear un producte nou a partir d'aquest codi?`;
+  }
 }
 
 // ── CATALOG VIEW (Comensal) ──────────────────────────────────────────
