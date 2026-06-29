@@ -1,7 +1,7 @@
 import { state, CAT_COLORS, saveItems, saveCats } from './config.js';
 import { uid, esc, fmtNum, toast } from './helpers.js';
 import { render, renderItems } from './main.js';
-import { renderStatsStrip } from './stats.js';
+import { renderStatsStrip, renderStats } from './stats.js';
 
 // ── CATEGORIES ───────────────────────────────────────────────────────
 
@@ -193,4 +193,5 @@ export function updateQty(id, delta) {
   saveItems();
   renderItems();
   renderStatsStrip();
+  if (state.view === 'stats') renderStats();
 }

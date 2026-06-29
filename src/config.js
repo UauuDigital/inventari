@@ -7,6 +7,7 @@ export const STORAGE_ITEMS          = 'uauu_inv_items';
 export const STORAGE_CATS           = 'uauu_inv_cats';
 export const STORAGE_ORDERS         = 'uauu_inv_orders';
 export const STORAGE_CAT_EXTRA      = 'uauu_inv_catalog_extra';
+export const STORAGE_CAT_EDITS      = 'uauu_inv_catalog_edits';
 export const STORAGE_MASIA          = 'uauu_inv_masia';
 export const STORAGE_ACCESS_TOKEN   = 'uauu_inv_access_token';
 export const STORAGE_REFRESH_TOKEN  = 'uauu_inv_refresh_token';
@@ -72,6 +73,7 @@ export const state = {
   editingOrderId:    null,
   importRows:        [],
   editingCatalogIdx: null,
+  editingCatalogProductIdx: null,
   catalogExtra:      [],
   maxCatalogId:      0,
   scannerInstance:   null,

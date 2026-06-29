@@ -1,5 +1,5 @@
 import {
-  CATALOG_URL, OPEN_FOOD_FACTS_URL, SHEET_APPEND_URL, STORAGE_CAT_EXTRA,
+  CATALOG_URL, OPEN_FOOD_FACTS_URL, SHEET_APPEND_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS,
   state, saveItems,
 } from './config.js';
 import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
@@ -35,6 +35,16 @@ export async function loadCatalog() {
       }));
 
     state.maxCatalogId = state.catalog.reduce((max, p) => Math.max(max, p.id || 0), 0);
+
+    // Apply local edits (overrides for products from the main sheet)
+    const catalogEdits = JSON.parse(localStorage.getItem(STORAGE_CAT_EDITS) || '{}');
+    if (Object.keys(catalogEdits).length > 0) {
+      state.catalog = state.catalog.map(p => {
+        const e = catalogEdits[p.id];
+        return e ? { ...p, ...e } : p;
+      });
+    }
+
     state.catalogReady = true;
   } catch {
     /* offline o sheet privat */
@@ -279,6 +289,9 @@ export function renderCatalogView() {
     return;
   }
 
+  const role     = document.body.dataset.role || 'comensal';
+  const isEditor = role === 'admin' || role === 'coordinador';
+
   const groups = new Map();
   state.catalog.forEach((p, i) => {
     const cat = p.category || 'Sense categoria';
@@ -286,28 +299,48 @@ export function renderCatalogView() {
     groups.get(cat).push({ p, i });
   });
 
-  const html = [`
-    <div class="catalog-list">
-    <button class="catalog-scan-btn" id="btn-scan-barcode">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
-        <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
-        <line x1="17" y1="12" x2="17" y2="12.01"/>
-      </svg>
-      Escaneja codi de barres
-    </button>
-  `];
+  const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
+  const html = [`<div class="catalog-list">`];
+
+  if (!isEditor) {
+    html.push(`
+      <button class="catalog-scan-btn" id="btn-scan-barcode">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
+          <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="17" y1="12" x2="17" y2="12.01"/>
+        </svg>
+        Escaneja codi de barres
+      </button>
+    `);
+  }
+
   groups.forEach((entries, catName) => {
     html.push(`<div class="catalog-section-title">${esc(catName)}</div>`);
     entries.forEach(({ p, i }) => {
-      const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
-      const qty = existing != null ? fmtNum(existing.quantity) : '';
-      html.push(`
-        <button class="catalog-btn" data-catalog="${i}">
-          <span class="catalog-btn-name">${esc(p.name)}</span>
-          <span class="catalog-btn-qty${qty ? ' has-qty' : ''}">${qty || '—'}</span>
-        </button>
-      `);
+      if (isEditor) {
+        const isExtra = state.catalogExtra.some(e => e.id === p.id);
+        html.push(`
+          <div class="catalog-btn catalog-edit-row">
+            <span class="catalog-btn-name">${esc(p.name)}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
+              ${p.price ? `<span class="catalog-btn-qty" style="font-size:11px">${p.price}€</span>` : ''}
+              <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="Editar ${esc(p.name)}">${editSvg}</button>
+            </div>
+          </div>
+        `);
+      } else {
+        const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
+        const qty = existing != null ? fmtNum(existing.quantity) : '';
+        html.push(`
+          <button class="catalog-btn" data-catalog="${i}">
+            <span class="catalog-btn-name">${esc(p.name)}</span>
+            <span class="catalog-btn-qty${qty ? ' has-qty' : ''}">${qty || '—'}</span>
+          </button>
+        `);
+      }
     });
   });
   html.push('</div>');
@@ -408,6 +441,12 @@ export function testGasUrl() {
 // ── NOU PRODUCTE (Comensal) ──────────────────────────────────────────
 
 export function openNewProductModal(prefill = {}) {
+  state.editingCatalogProductIdx = null;
+  document.getElementById('modal-np-title').textContent = 'Nou producte';
+  document.getElementById('btn-save-new-product').textContent = 'Afegir al catàleg';
+  const delBtn = document.getElementById('btn-delete-product');
+  if (delBtn) delBtn.hidden = true;
+
   document.getElementById('f-np-name').value     = prefill.name     || '';
   document.getElementById('f-np-category').value = prefill.category || '';
   document.getElementById('f-np-supplier').value = prefill.supplier || '';
@@ -416,6 +455,84 @@ export function openNewProductModal(prefill = {}) {
   document.getElementById('modal-new-product').classList.add('open');
   const focusField = prefill.name ? 'f-np-category' : 'f-np-name';
   setTimeout(() => document.getElementById(focusField).focus(), 380);
+}
+
+export function openEditProductModal(idx) {
+  const product = state.catalog[idx];
+  if (!product) return;
+  state.editingCatalogProductIdx = idx;
+
+  document.getElementById('modal-np-title').textContent = 'Editar producte';
+  document.getElementById('btn-save-new-product').textContent = 'Desar canvis';
+
+  document.getElementById('f-np-name').value     = product.name     || '';
+  document.getElementById('f-np-category').value = product.category || '';
+  document.getElementById('f-np-supplier').value = product.supplier || '';
+  document.getElementById('f-np-price').value    = product.price    || '';
+  document.getElementById('f-np-code').value     = product.code     || '';
+
+  const isExtra = state.catalogExtra.some(e => e.id === product.id);
+  const delBtn = document.getElementById('btn-delete-product');
+  if (delBtn) delBtn.hidden = !isExtra;
+
+  document.getElementById('modal-new-product').classList.add('open');
+  setTimeout(() => document.getElementById('f-np-name').focus(), 380);
+}
+
+export function saveEditProduct() {
+  const idx = state.editingCatalogProductIdx;
+  if (idx === null) return;
+  const original = state.catalog[idx];
+
+  const name     = document.getElementById('f-np-name').value.trim();
+  const category = document.getElementById('f-np-category').value.trim();
+  const supplier = document.getElementById('f-np-supplier').value.trim();
+  const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
+  const code     = document.getElementById('f-np-code').value.trim();
+
+  if (!name) {
+    const el = document.getElementById('f-np-name');
+    el.focus();
+    el.style.borderColor = 'rgba(176,32,32,0.5)';
+    setTimeout(() => { el.style.borderColor = ''; }, 1200);
+    return;
+  }
+
+  const updated = { ...original, name, category, supplier, price, code };
+  state.catalog[idx] = updated;
+
+  const extraIdx = state.catalogExtra.findIndex(p => p.id === original.id);
+  if (extraIdx >= 0) {
+    state.catalogExtra[extraIdx] = updated;
+    localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+  } else {
+    const edits = JSON.parse(localStorage.getItem(STORAGE_CAT_EDITS) || '{}');
+    edits[original.id] = { name, category, supplier, price, code };
+    localStorage.setItem(STORAGE_CAT_EDITS, JSON.stringify(edits));
+  }
+
+  closeNewProductModal();
+  renderCatalogView();
+  toast(`"${name}" actualitzat`);
+}
+
+export function deleteEditProduct() {
+  const idx = state.editingCatalogProductIdx;
+  if (idx === null) return;
+  const product = state.catalog[idx];
+
+  const extraIdx = state.catalogExtra.findIndex(p => p.id === product.id);
+  if (extraIdx < 0) return;
+
+  if (!confirm(`Eliminar "${product.name}" del catàleg?`)) return;
+
+  state.catalogExtra.splice(extraIdx, 1);
+  localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+  state.catalog.splice(idx, 1);
+
+  closeNewProductModal();
+  renderCatalogView();
+  toast(`"${product.name}" eliminat del catàleg`);
 }
 
 export function closeNewProductModal() {

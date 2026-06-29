@@ -103,9 +103,9 @@
       <div class="users-grid">
         <button class="user-card" data-masia="ca-nalzina">
           <div class="user-card-icon">
-            <img src="src/assets/logo-ca-nalzina.png" alt="Ca l'Alzina" class="masia-card-logo">
+            <img src="src/assets/logo-ca-nalzina.png" alt="Ca n'Alzina" class="masia-card-logo">
           </div>
-          <span class="user-card-name">Ca l'Alzina</span>
+          <span class="user-card-name">Ca n'Alzina</span>
         </button>
         <button class="user-card" data-masia="can-macia">
           <div class="user-card-icon">
@@ -298,7 +298,14 @@
       Resum
     </button>
     <!-- Tabs Coordinador / Admin -->
-    <button class="nav-tab role-comensal-only role-coord-only role-admin-only" data-view="reports" aria-label="Historial" hidden>
+    <button class="nav-tab" data-view="catalog" id="catalog-mgmt-tab" aria-label="Catàleg" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      Catàleg
+    </button>
+    <button class="nav-tab" data-view="reports" aria-label="Historial" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="4" y="3" width="16" height="19" rx="2"/>
         <path d="M4 9h16M8 6h.01M8 13h8M8 17h5"/>
@@ -505,7 +512,7 @@
             <div class="form-select-wrap">
               <select class="form-select" id="f-user-masia">
                 <option value="">—</option>
-                <option value="ca-nalzina">Ca l'Alzina</option>
+                <option value="ca-nalzina">Ca n'Alzina</option>
                 <option value="can-macia">Can Macià</option>
                 <option value="castell-de-tous">Castell de Tous</option>
                 <option value="mas-vivencs">Mas Vivencs</option>
@@ -634,6 +641,7 @@
       </form>
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-new-product">Afegir al catàleg</button>
+        <button class="btn-danger" id="btn-delete-product" hidden>Eliminar producte</button>
       </div>
     </div>
   </div>
@@ -676,6 +684,32 @@
       </button>
     </div>
     <div id="barcode-reader"></div>
+  </div>
+
+  <!-- ── MODAL: EDITAR INVENTARI HISTORIAL ── -->
+  <div class="modal-overlay" id="modal-edit-historial" role="dialog" aria-modal="true" aria-labelledby="modal-edit-historial-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-edit-historial-title">Editar inventari</h2>
+        <button class="modal-close" id="btn-edit-historial-close" aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-form" style="padding-top:4px">
+        <p id="edit-historial-meta" style="font-size:12px;color:var(--text-dim);margin:0 0 14px"></p>
+        <div id="edit-historial-items" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+        <div class="form-field">
+          <label class="form-label" for="edit-historial-comment">Comentari</label>
+          <textarea class="form-textarea" id="edit-historial-comment" placeholder="Comentari opcional…" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-edit-historial-save">Desar canvis</button>
+      </div>
+    </div>
   </div>
 
   <!-- ── TOAST ── -->

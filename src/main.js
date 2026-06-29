@@ -12,6 +12,7 @@ import {
   openQtyModal,  closeQtyModal,  saveQty,
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
+  openEditProductModal, saveEditProduct, deleteEditProduct,
 } from './catalog.js';
 import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
@@ -19,7 +20,7 @@ import {
   openUserModal, closeUserModal, saveUser, deleteUser,
   renderUsers, updateUserMasiaVisibility,
 } from './users.js';
-import { renderStats, renderStatsStrip, renderReports, sendInventoryReport } from './stats.js';
+import { renderStats, renderStatsStrip, renderReports, sendInventoryReport, saveEditHistorial, closeEditHistorialModal } from './stats.js';
 
 // ── RENDER ───────────────────────────────────────────────────────────
 
@@ -191,6 +192,9 @@ document.addEventListener('click', e => {
 
   if (e.target.closest('#btn-scan-barcode')) { openScanModal(); return; }
 
+  const catalogEditBtn = e.target.closest('[data-catalog-edit]');
+  if (catalogEditBtn) { openEditProductModal(parseInt(catalogEditBtn.dataset.catalogEdit)); return; }
+
   const catalogBtn = e.target.closest('.catalog-btn[data-catalog]');
   if (catalogBtn) { openQtyModal(parseInt(catalogBtn.dataset.catalog)); return; }
 
@@ -199,9 +203,10 @@ document.addEventListener('click', e => {
   if (e.target.id === 'modal-order')       { closeOrderModal();      return; }
   if (e.target.id === 'modal-user')        { closeUserModal();       return; }
   if (e.target.id === 'modal-import')      { closeImportModal();     return; }
-  if (e.target.id === 'modal-qty')         { closeQtyModal();        return; }
-  if (e.target.id === 'modal-new-product') { closeNewProductModal(); return; }
-  if (e.target.id === 'modal-gas')         { closeGasModal();        return; }
+  if (e.target.id === 'modal-qty')              { closeQtyModal();              return; }
+  if (e.target.id === 'modal-new-product')      { closeNewProductModal();       return; }
+  if (e.target.id === 'modal-gas')              { closeGasModal();              return; }
+  if (e.target.id === 'modal-edit-historial')   { closeEditHistorialModal();    return; }
 });
 
 document.addEventListener('keydown', e => {
@@ -212,9 +217,10 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('modal-user').classList.contains('open'))        { closeUserModal();       return; }
   if (document.getElementById('modal-import').classList.contains('open'))      { closeImportModal();     return; }
   if (document.getElementById('modal-qty').classList.contains('open'))         { closeQtyModal();        return; }
-  if (document.getElementById('modal-new-product').classList.contains('open')) { closeNewProductModal(); return; }
-  if (document.getElementById('modal-gas').classList.contains('open'))         { closeGasModal();        return; }
-  if (document.getElementById('modal-scan').classList.contains('open'))        { closeScanModal();       return; }
+  if (document.getElementById('modal-new-product').classList.contains('open'))    { closeNewProductModal();    return; }
+  if (document.getElementById('modal-gas').classList.contains('open'))           { closeGasModal();           return; }
+  if (document.getElementById('modal-edit-historial').classList.contains('open')){ closeEditHistorialModal();  return; }
+  if (document.getElementById('modal-scan').classList.contains('open'))          { closeScanModal();           return; }
   if (state.searchOpen) toggleSearch();
 });
 
@@ -275,15 +281,27 @@ function init() {
   document.getElementById('btn-test-gas').addEventListener('click', testGasUrl);
   document.getElementById('gas-form').addEventListener('submit', e => { e.preventDefault(); saveGasUrl(); });
 
-  // Modal nou producte
+  // Modal nou producte / editar producte
   document.getElementById('btn-np-close').addEventListener('click', closeNewProductModal);
-  document.getElementById('btn-save-new-product').addEventListener('click', saveNewProduct);
-  document.getElementById('new-product-form').addEventListener('submit', e => { e.preventDefault(); saveNewProduct(); });
+  document.getElementById('btn-save-new-product').addEventListener('click', () => {
+    if (state.editingCatalogProductIdx !== null) saveEditProduct();
+    else saveNewProduct();
+  });
+  document.getElementById('new-product-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (state.editingCatalogProductIdx !== null) saveEditProduct();
+    else saveNewProduct();
+  });
+  document.getElementById('btn-delete-product').addEventListener('click', deleteEditProduct);
 
   // Modal quantitat
   document.getElementById('btn-qty-close').addEventListener('click', closeQtyModal);
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);
   document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); saveQty(); });
+
+  // Modal editar historial
+  document.getElementById('btn-edit-historial-close').addEventListener('click', closeEditHistorialModal);
+  document.getElementById('btn-edit-historial-save').addEventListener('click', saveEditHistorial);
 
   // Modal importació
   document.getElementById('btn-import-excel').addEventListener('click', openImportModal);

@@ -206,10 +206,14 @@ export function applyRole(name) {
 
   loadData();
 
-  const importBtn = document.getElementById('btn-import-excel');
-  const gasBtn    = document.getElementById('btn-gas-config');
-  if (importBtn) importBtn.hidden = (role !== 'admin');
-  if (gasBtn)    gasBtn.hidden    = (role !== 'admin');
+  const importBtn      = document.getElementById('btn-import-excel');
+  const gasBtn         = document.getElementById('btn-gas-config');
+  const reportsTab     = document.querySelector('.nav-tab[data-view="reports"]');
+  const catalogMgmtTab = document.getElementById('catalog-mgmt-tab');
+  if (importBtn)      importBtn.hidden      = (role !== 'admin');
+  if (gasBtn)         gasBtn.hidden         = (role !== 'admin');
+  if (reportsTab)     reportsTab.hidden     = false;
+  if (catalogMgmtTab) catalogMgmtTab.hidden = (role === 'comensal');
 
   if (role === 'comensal')         setView('catalog');
   else if (role === 'coordinador') setView('reports');
@@ -259,8 +263,10 @@ export function showUserScreen() {
   localStorage.removeItem('uauu_inv_user');
   localStorage.removeItem(STORAGE_MASIA);
   document.getElementById('user-pill-name').textContent = '';
-  const roleEl = document.getElementById('user-pill-role');
-  if (roleEl) { roleEl.textContent = ''; roleEl.hidden = true; }
+  const roleEl     = document.getElementById('user-pill-role');
+  const reportsTab = document.querySelector('.nav-tab[data-view="reports"]');
+  if (roleEl)     { roleEl.textContent = ''; roleEl.hidden = true; }
+  if (reportsTab) reportsTab.hidden = true;
   document.body.removeAttribute('data-role');
 
   document.getElementById('screen-masia').hidden = true;

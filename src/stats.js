@@ -1,18 +1,31 @@
 import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems } from './config.js';
 import { esc, fmtNum, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+
+// ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
+let _editingHistorialId    = null;
+let _editingHistorialItems = [];
 import { setView } from './main.js';
 
-// ── HISTORIAL DELETE (document-level, attached once) ─────────────────
+// ── HISTORIAL DELETE / EDIT (document-level, attached once) ──────────
 document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-delete-historial]');
-  if (!btn) return;
-  const id = btn.dataset.deleteHistorial;
-  if (!confirm('Eliminar aquesta entrada permanentment?\nAquesta acció no es pot desfer.')) return;
-  const params = new URLSearchParams({ action: 'delete-historial', id });
-  sendToSheet(SHEET_APPEND_URL, params.toString());
-  _historialRows = _historialRows.filter(r => r[0] !== id);
-  _renderHistorialCards();
-  toast('Entrada eliminada');
+  const delBtn = e.target.closest('[data-delete-historial]');
+  if (delBtn) {
+    const id = delBtn.dataset.deleteHistorial;
+    if (!confirm('Eliminar aquesta entrada permanentment?\nAquesta acció no es pot desfer.')) return;
+    const params = new URLSearchParams({ action: 'delete-historial', id });
+    sendToSheet(SHEET_APPEND_URL, params.toString());
+    _historialRows = _historialRows.filter(r => r[0] !== id);
+    _renderHistorialCards();
+    toast('Entrada eliminada');
+    return;
+  }
+
+  const editBtn = e.target.closest('[data-edit-historial]');
+  if (editBtn) {
+    const id  = editBtn.dataset.editHistorial;
+    const row = _historialRows.find(r => r[0] === id);
+    if (row) openEditHistorialModal(row);
+  }
 });
 
 // ── STATS STRIP ──────────────────────────────────────────────────────
@@ -71,7 +84,11 @@ export function renderStats() {
       items.forEach(item => {
         html += `<div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
-          <span class="stats-cat-count">${fmtNum(item.quantity)} ${esc(item.unit || 'u')}</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button class="qty-btn" data-qty="${item.id}" data-delta="-1"${item.quantity === 0 ? ' disabled' : ''} aria-label="Reduir">−</button>
+            <span class="stats-cat-count" style="min-width:44px;text-align:center">${fmtNum(item.quantity)} ${esc(item.unit || 'u')}</span>
+            <button class="qty-btn" data-qty="${item.id}" data-delta="1" aria-label="Augmentar">+</button>
+          </div>
         </div>`;
       });
     });
@@ -179,9 +196,13 @@ let _historialFilter = new Set(['tot']);
 let _historialSearch = '';
 
 const _deleteIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>`;
+const _editIcon   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
 function _deleteBtn(id) {
   return `<button class="cat-delete-btn" data-delete-historial="${esc(id)}" title="Eliminar permanentment" style="margin-left:6px;flex-shrink:0">${_deleteIcon}</button>`;
+}
+function _editBtn(id) {
+  return `<button class="cat-delete-btn" data-edit-historial="${esc(id)}" title="Editar" style="margin-left:6px;flex-shrink:0;opacity:.7">${_editIcon}</button>`;
 }
 
 function _cardHtml(r, role) {
@@ -192,7 +213,8 @@ function _cardHtml(r, role) {
   const authorHtml = authorLine
     ? `<span class="report-count-badge" style="font-size:10px;color:var(--text-dim)">${esc(authorLine)}</span>`
     : '';
-  const delBtn = role === 'admin' ? _deleteBtn(id) : '';
+  const canEdit = role === 'admin' || role === 'coordinador';
+  const delBtn  = role === 'admin' ? _deleteBtn(id) : '';
 
   const isProducte = (inventari || '').startsWith('[PRODUCTE]: ');
 
@@ -215,6 +237,7 @@ function _cardHtml(r, role) {
       </div>`;
   }
 
+  const editBtn   = canEdit ? _editBtn(id) : '';
   const cardStyle = masiaColor ? `border-left:3px solid ${masiaColor};` : '';
   const items     = (inventari || '').split(' | ').filter(Boolean);
   const itemsHtml = items.map(item => {
@@ -236,6 +259,7 @@ function _cardHtml(r, role) {
         </div>
         <div style="display:flex;align-items:center">
           <span class="report-count-badge">${items.length} productes</span>
+          ${editBtn}
           ${delBtn}
         </div>
       </div>
@@ -301,7 +325,7 @@ export async function renderReports() {
       return;
     }
 
-    const masiaIdx = findCol(headers, 'masia');
+    const masiaIdx = findCol(headers, ['masia']);
     let data = rows.slice(1).filter(r => r.length > 1 && r[0]);
 
     if (role === 'comensal' && state.masia && masiaIdx >= 0) {
@@ -380,4 +404,78 @@ export async function renderReports() {
   } catch {
     el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant historial. Comprova la connexió.</div>`;
   }
+}
+
+// ── HISTORIAL EDIT MODAL ─────────────────────────────────────────────
+
+function openEditHistorialModal(row) {
+  const [id, date, hora, comensal, masiaVal, inventari, comentari] = row;
+
+  const masiaLabel = masiaVal ? (MASIA_LABELS[masiaVal] || masiaVal) : '';
+  document.getElementById('edit-historial-meta').textContent =
+    [date, hora, comensal, masiaLabel].filter(Boolean).join(' · ');
+
+  const items = (inventari || '').split(' | ').filter(Boolean).map(item => {
+    const sep = item.indexOf(': ');
+    const name   = sep > -1 ? item.slice(0, sep) : item;
+    const qtyStr = sep > -1 ? item.slice(sep + 2) : '';
+    const match  = qtyStr.trim().match(/^([\d.,]+)\s*(.*)$/);
+    return { name, num: match ? match[1] : qtyStr, unit: match ? match[2].trim() : '' };
+  });
+
+  document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <span style="flex:1;font-size:13px">${esc(item.name)}</span>
+      <input type="number" min="0" step="any" class="form-input"
+             data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
+             value="${esc(item.num)}"
+             style="width:72px;text-align:right;padding:5px 8px;font-size:13px">
+      <span style="font-size:12px;color:var(--text-dim);min-width:20px">${esc(item.unit)}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('edit-historial-comment').value = comentari || '';
+  _editingHistorialId    = id;
+  _editingHistorialItems = items;
+
+  document.getElementById('modal-edit-historial').classList.add('open');
+}
+
+export function closeEditHistorialModal() {
+  document.getElementById('modal-edit-historial').classList.remove('open');
+  _editingHistorialId    = null;
+  _editingHistorialItems = [];
+}
+
+export function saveEditHistorial() {
+  if (!_editingHistorialId) return;
+
+  const newInventari = _editingHistorialItems.map((item, i) => {
+    const input = document.querySelector(`[data-hist-idx="${i}"]`);
+    const val   = input ? input.value.trim() : item.num;
+    const unit  = input ? (input.dataset.histUnit || '') : item.unit;
+    return `${item.name}: ${val}${unit ? ' ' + unit : ''}`;
+  }).join(' | ');
+
+  const comentari = document.getElementById('edit-historial-comment').value.trim();
+
+  const params = new URLSearchParams({
+    action:    'update-historial',
+    id:        _editingHistorialId,
+    inventari: newInventari,
+    comentari,
+  });
+  sendToSheet(SHEET_APPEND_URL, params.toString());
+
+  const rowIdx = _historialRows.findIndex(r => r[0] === _editingHistorialId);
+  if (rowIdx >= 0) {
+    const updated = [..._historialRows[rowIdx]];
+    updated[5] = newInventari;
+    updated[6] = comentari;
+    _historialRows[rowIdx] = updated;
+  }
+
+  closeEditHistorialModal();
+  _renderHistorialCards();
+  toast('Inventari actualitzat');
 }
