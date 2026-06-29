@@ -23,6 +23,7 @@ import {
 import {
   renderStats, renderStatsStrip, renderReports, sendInventoryReport,
   closeCoordOrderModal, coordOrderAccept,
+  closeEditHistorialModal, saveEditHistorial,
 } from './stats.js';
 import { renderCasamentsView } from './casaments.js';
 

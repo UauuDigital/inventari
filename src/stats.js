@@ -229,9 +229,6 @@ function _cardHtml(r, role) {
     ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">Genera comanda</button>`
     : '';
   const canEdit = role === 'admin' || role === 'coordinador';
-  const delBtn  = role === 'admin' ? _deleteBtn(id) : '';
-
-  const isProducte = (inventari || '').startsWith('[PRODUCTE]: ');
 
   if (isProducte) {
     const nomProducte = inventari.slice('[PRODUCTE]: '.length);
