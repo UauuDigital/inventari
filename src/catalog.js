@@ -25,6 +25,7 @@ export async function loadCatalog() {
     const iCat   = findCol(headers, ['categoria', 'category', 'cat']);
     const iSupp  = findCol(headers, ['proveidor', 'proveedor', 'proveïdor', 'supplier', 'prove']);
     const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
+    const iMin   = findCol(headers, ['min', 'mínim', 'minim', 'min stock', 'estoc mínim']);
 
     state.catalog = rows.slice(1)
       .filter(r => String(r[iName] ?? '').trim())
@@ -34,6 +35,7 @@ export async function loadCatalog() {
         name:     String(r[iName]  ?? '').trim(),
         category: String(r[iCat]   ?? '').trim(),
         supplier: String(r[iSupp]  ?? '').trim(),
+        minStock: parseFloat(String(r[iMin] ?? '0').replace(',', '.')) || 0,
       }));
 
     state.maxCatalogId = state.catalog.reduce((max, p) => Math.max(max, p.id || 0), 0);

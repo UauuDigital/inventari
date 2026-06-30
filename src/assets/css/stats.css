@@ -393,7 +393,10 @@
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.06);
 }
-.coord-order-row.is-ok { opacity: .35; }
+.coord-order-row.is-ok  { opacity: .35; }
+.coord-order-row.is-low { border-color: rgba(200,48,48,.45); background: rgba(200,48,48,.1); }
+.coord-order-row.is-low .coord-order-name  { color: var(--danger); }
+.coord-order-row.is-low .coord-order-stock { color: var(--danger); opacity: .8; }
 .coord-order-name  { flex: 1; font-size: 14px; color: var(--text); }
 .coord-order-stock { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
 .coord-order-qty-wrap {

@@ -1,5 +1,6 @@
 import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems, saveOrders } from './config.js';
 import { esc, fmtNum, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+import { loadCatalog } from './catalog.js';
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
 let _editingHistorialId    = null;
@@ -240,12 +241,16 @@ function _cardHtml(r, role) {
   const cardStyle = masiaColor ? `border-left:3px solid ${masiaColor};` : '';
   const items     = (inventari || '').split(' | ').filter(Boolean);
   const itemsHtml = items.map(item => {
-    const sep  = item.indexOf(': ');
-    const name = sep > -1 ? item.slice(0, sep) : item;
-    const qty  = sep > -1 ? item.slice(sep + 2) : '';
+    const sep      = item.indexOf(': ');
+    const name     = sep > -1 ? item.slice(0, sep) : item;
+    const qty      = sep > -1 ? item.slice(sep + 2) : '';
+    const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
+    const minStock = catEntry?.minStock || 0;
+    const isLow    = minStock > 0 && parseFloat(qty) < minStock;
+    const lowStyle = isLow ? ` style="color:var(--danger)"` : '';
     return `<div class="stats-cat-row">
-      <span class="stats-cat-name">${esc(name)}</span>
-      <span class="stats-cat-count">${esc(qty)}</span>
+      <span class="stats-cat-name"${lowStyle}>${esc(name)}</span>
+      <span class="stats-cat-count"${lowStyle}>${esc(qty)}</span>
     </div>`;
   }).join('');
   const comentariHtml = comentari ? `<div class="report-comment">${esc(comentari)}</div>` : '';
@@ -333,6 +338,7 @@ export async function renderReports() {
     }
 
     _historialRows = [...data].reverse();
+    await loadCatalog();
 
     if (!_historialRows.length) {
       el.innerHTML = `
@@ -414,9 +420,11 @@ function _parseInventariItems(inventari) {
     .map(seg => {
       const sep = seg.indexOf(': ');
       if (sep < 0) return null;
-      const name = seg.slice(0, sep).trim();
-      const qty  = parseFloat(seg.slice(sep + 2)) || 0;
-      return { name, qty, orderQty: Math.max(0, 100 - qty) };
+      const name     = seg.slice(0, sep).trim();
+      const qty      = parseFloat(seg.slice(sep + 2)) || 0;
+      const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
+      const minStock = catEntry?.minStock || 0;
+      return { name, qty, minStock, orderQty: Math.max(0, 100 - qty) };
     })
     .filter(Boolean);
 }
@@ -430,6 +438,19 @@ function _openCoordOrderEdit(row) {
   setView('comanda-edit');
 }
 
+function _updateCoordOrderRowClass(row) {
+  const qty      = parseFloat(row.dataset.qty)      || 0;
+  const minStock = parseFloat(row.dataset.minstock)  || 0;
+  const input    = row.querySelector('.coord-order-qty');
+  const orderQty = parseFloat(input?.value)          || 0;
+  row.classList.remove('is-ok', 'is-low');
+  if (minStock > 0 && qty + orderQty < minStock) {
+    row.classList.add('is-low');
+  } else if (orderQty === 0) {
+    row.classList.add('is-ok');
+  }
+}
+
 function _renderCoordOrderEdit() {
   const { date, hora, masiaLabel, comensal, items } = _coordOrderData;
   document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
@@ -440,17 +461,31 @@ function _renderCoordOrderEdit() {
     </p>
     <p class="coord-order-note">Mínim 100 u. per producte. Edita les quantitats si cal.</p>
     <div class="coord-order-list" id="coord-order-list">
-      ${items.map((item, i) => `
-        <div class="coord-order-row${item.orderQty === 0 ? ' is-ok' : ''}">
+      ${items.map((item, i) => {
+        const isLow = item.minStock > 0 && item.qty + item.orderQty < item.minStock;
+        const isOk  = !isLow && item.orderQty === 0;
+        const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
+        const stock = item.minStock > 0
+          ? `${item.qty} u / mín. ${item.minStock}`
+          : `${item.qty} u`;
+        return `
+        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}">
           <span class="coord-order-name">${esc(item.name)}</span>
-          <span class="coord-order-stock">${item.qty} u</span>
+          <span class="coord-order-stock">${stock}</span>
           <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
             <input class="coord-order-qty" type="number" min="0" step="1"
                    value="${item.orderQty}" data-idx="${i}">
             <span class="coord-order-qty-unit">u</span>
           </label>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
+
+  document.getElementById('coord-order-list').addEventListener('input', e => {
+    const input = e.target.closest('.coord-order-qty');
+    if (!input) return;
+    _updateCoordOrderRowClass(input.closest('.coord-order-row'));
+  });
 }
 
 export function coordOrderAccept() {
