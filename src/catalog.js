@@ -14,7 +14,7 @@ let _pendingCreate   = null;
 export async function loadCatalog() {
   if (state.catalogReady) return;
   try {
-    const res  = await fetch(CATALOG_URL);
+    const res  = await fetch(CATALOG_URL + '&t=' + Date.now(), { cache: 'no-store' });
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length < 2) return;
@@ -57,6 +57,11 @@ export async function loadCatalog() {
   if (state.catalogExtra.length > 0) {
     const sheetNames = new Set(state.catalog.map(p => p.name.toLowerCase()));
     const fresh = state.catalogExtra.filter(p => !sheetNames.has(p.name.toLowerCase()));
+    // Remove from catalogExtra items that were deleted from the sheet
+    if (fresh.length !== state.catalogExtra.length) {
+      state.catalogExtra = fresh;
+      localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(fresh));
+    }
     state.catalog = [...state.catalog, ...fresh];
     fresh.forEach(p => { if ((p.id || 0) > state.maxCatalogId) state.maxCatalogId = p.id; });
     if (fresh.length > 0) state.catalogReady = true;
@@ -614,6 +619,7 @@ export function saveNewProduct() {
     const category = document.getElementById('f-np-category').value.trim();
     const supplier = document.getElementById('f-np-supplier').value.trim();
     const code     = document.getElementById('f-np-code').value.trim();
+    const minStock = parseFloat(document.getElementById('f-np-minstock').value) || 0;
 
     if (!name) {
       const el = document.getElementById('f-np-name');
@@ -625,7 +631,7 @@ export function saveNewProduct() {
 
     state.maxCatalogId++;
     const newId   = state.maxCatalogId;
-    const product = { id: newId, code, name, category, supplier };
+    const product = { id: newId, code, name, category, supplier, minStock };
 
     state.catalog.push(product);
     state.catalogExtra.push(product);
@@ -635,8 +641,9 @@ export function saveNewProduct() {
     const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
     if (gasUrl) {
       const params = new URLSearchParams({
+        action: 'add-producte',
         id: newId, producte: name, proveidor: supplier,
-        categoria: category, codi: code,
+        categoria: category, codi: code, min: minStock,
       });
       sendToSheet(gasUrl, params);
 
