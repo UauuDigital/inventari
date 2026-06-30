@@ -22,7 +22,6 @@ function rowsToItems(rows) {
   const iQty   = findCol(headers, ['quantitat', 'quantity', 'qty', 'estoc', 'stock']);
   const iUnit  = findCol(headers, ['unitat', 'unit']);
   const iMin   = findCol(headers, ['mínim', 'minim', 'min stock', 'estoc mínim']);
-  const iPrice = findCol(headers, ['preu', 'price', 'cost']);
 
   if (iName === -1) throw new Error('Columna "Nom" no trobada. Comprova les capçaleres.');
 
@@ -34,7 +33,6 @@ function rowsToItems(rows) {
       quantity: parseFloat(String(r[iQty]   || '0').replace(',', '.')) || 0,
       unit:     String(r[iUnit] || '').trim(),
       minStock: parseFloat(String(r[iMin]   || '0').replace(',', '.')) || 0,
-      price:    parseFloat(String(r[iPrice] || '0').replace(',', '.')) || 0,
     }));
 }
 
@@ -67,7 +65,6 @@ export async function processImportFile(file) {
     { k: 'category', l: 'Categoria' },
     { k: 'quantity', l: 'Quantitat' },
     { k: 'unit',     l: 'Unitat' },
-    { k: 'price',    l: 'Preu' },
   ];
   const sample = state.importRows.slice(0, 5);
 
@@ -99,7 +96,6 @@ export function confirmImport() {
       existing.quantity  = row.quantity;
       existing.unit      = row.unit     || existing.unit;
       existing.minStock  = row.minStock || existing.minStock;
-      existing.price     = row.price    || existing.price;
       existing.category  = catId;
       existing.updatedAt = new Date().toISOString();
       updated++;
@@ -108,7 +104,7 @@ export function confirmImport() {
         id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         name: row.name, category: catId,
         quantity: row.quantity, unit: row.unit,
-        minStock: row.minStock, price: row.price, notes: '',
+        minStock: row.minStock, notes: '',
       });
       created++;
     }

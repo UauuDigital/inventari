@@ -23,7 +23,6 @@ export async function loadCatalog() {
     const iId    = headers.indexOf('id');
     const iName  = findCol(headers, ['producte', 'nom', 'name', 'article']);
     const iCat   = findCol(headers, ['categoria', 'category', 'cat']);
-    const iPrice = findCol(headers, ['preu', 'price', 'cost']);
     const iSupp  = findCol(headers, ['proveidor', 'proveedor', 'proveïdor', 'supplier', 'prove']);
     const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
 
@@ -34,7 +33,6 @@ export async function loadCatalog() {
         code:     String(r[iCode]  ?? '').trim(),
         name:     String(r[iName]  ?? '').trim(),
         category: String(r[iCat]   ?? '').trim(),
-        price:    parseFloat(String(r[iPrice] ?? '0').replace(',', '.')) || 0,
         supplier: String(r[iSupp]  ?? '').trim(),
       }));
 
@@ -118,8 +116,6 @@ function selectCatalogProduct(product) {
   catSel.innerHTML = state.categories
     .map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   catSel.value = catId;
-
-  if (product.price) document.getElementById('f-price').value = product.price;
 
   closeProductDropdown();
   document.getElementById('f-quantity').focus();
@@ -361,7 +357,6 @@ export function renderCatalogView() {
             <span class="catalog-btn-name">${esc(p.name)}</span>
             <div style="display:flex;align-items:center;gap:6px">
               ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
-              ${p.price ? `<span class="catalog-btn-qty" style="font-size:11px">${p.price}€</span>` : ''}
               <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="Editar ${esc(p.name)}">${editSvg}</button>
             </div>
           </div>
@@ -451,8 +446,7 @@ export function saveQty() {
     state.items.unshift({
       id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       name: product.name, category: catId,
-      quantity: qty, unit: '', minStock: 0,
-      price: product.price || 0, notes: '',
+      quantity: qty, unit: '', minStock: 0, notes: '',
     });
   }
 
@@ -492,7 +486,7 @@ export function testGasUrl() {
            || localStorage.getItem('uauu_inv_gas_url') || '';
   if (!url) { toast('Enganxa primer la URL'); return; }
   const params = new URLSearchParams({
-    id: 0, producte: 'TEST_CONNEXIO', proveidor: '', preu: 0, categoria: 'TEST', codi: '',
+    id: 0, producte: 'TEST_CONNEXIO', proveidor: '', categoria: 'TEST', codi: '',
   });
   window.open(`${url}?${params}`, '_blank');
   toast('Comprova si ha aparegut una fila TEST al full');
@@ -510,7 +504,6 @@ export function openNewProductModal(prefill = {}) {
   document.getElementById('f-np-name').value     = prefill.name     || '';
   document.getElementById('f-np-category').value = prefill.category || '';
   document.getElementById('f-np-supplier').value = prefill.supplier || '';
-  document.getElementById('f-np-price').value    = prefill.price    || '';
   document.getElementById('f-np-code').value     = prefill.code     || '';
   document.getElementById('modal-new-product').classList.add('open');
   const focusField = prefill.name ? 'f-np-category' : 'f-np-name';
@@ -528,7 +521,6 @@ export function openEditProductModal(idx) {
   document.getElementById('f-np-name').value     = product.name     || '';
   document.getElementById('f-np-category').value = product.category || '';
   document.getElementById('f-np-supplier').value = product.supplier || '';
-  document.getElementById('f-np-price').value    = product.price    || '';
   document.getElementById('f-np-code').value     = product.code     || '';
 
   const isExtra = state.catalogExtra.some(e => e.id === product.id);
@@ -547,7 +539,6 @@ export function saveEditProduct() {
   const name     = document.getElementById('f-np-name').value.trim();
   const category = document.getElementById('f-np-category').value.trim();
   const supplier = document.getElementById('f-np-supplier').value.trim();
-  const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
   const code     = document.getElementById('f-np-code').value.trim();
 
   if (!name) {
@@ -558,7 +549,7 @@ export function saveEditProduct() {
     return;
   }
 
-  const updated = { ...original, name, category, supplier, price, code };
+  const updated = { ...original, name, category, supplier, code };
   state.catalog[idx] = updated;
 
   const extraIdx = state.catalogExtra.findIndex(p => p.id === original.id);
@@ -567,7 +558,7 @@ export function saveEditProduct() {
     localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
   } else {
     const edits = JSON.parse(localStorage.getItem(STORAGE_CAT_EDITS) || '{}');
-    edits[original.id] = { name, category, supplier, price, code };
+    edits[original.id] = { name, category, supplier, code };
     localStorage.setItem(STORAGE_CAT_EDITS, JSON.stringify(edits));
   }
 
@@ -604,7 +595,6 @@ export function saveNewProduct() {
     const name     = document.getElementById('f-np-name').value.trim();
     const category = document.getElementById('f-np-category').value.trim();
     const supplier = document.getElementById('f-np-supplier').value.trim();
-    const price    = parseFloat(document.getElementById('f-np-price').value) || 0;
     const code     = document.getElementById('f-np-code').value.trim();
 
     if (!name) {
@@ -617,7 +607,7 @@ export function saveNewProduct() {
 
     state.maxCatalogId++;
     const newId   = state.maxCatalogId;
-    const product = { id: newId, code, name, category, supplier, price };
+    const product = { id: newId, code, name, category, supplier };
 
     state.catalog.push(product);
     state.catalogExtra.push(product);
@@ -628,7 +618,7 @@ export function saveNewProduct() {
     if (gasUrl) {
       const params = new URLSearchParams({
         id: newId, producte: name, proveidor: supplier,
-        preu: price, categoria: category, codi: code,
+        categoria: category, codi: code,
       });
       sendToSheet(gasUrl, params);
 
@@ -642,7 +632,7 @@ export function saveNewProduct() {
         comensal:  state.authProfile?.nom || state.user || '',
         masia:     state.masia || '',
         inventari: `[PRODUCTE]: ${name}`,
-        comentari: [category, supplier, price ? `${price}€` : ''].filter(Boolean).join(' · '),
+        comentari: [category, supplier].filter(Boolean).join(' · '),
       });
       sendToSheet(SHEET_APPEND_URL, histParams.toString());
 

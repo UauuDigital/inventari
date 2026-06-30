@@ -67,7 +67,6 @@ export function renderOrders() {
       ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
       ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
       <div class="order-card-footer">
-        <span class="order-amount">${o.amount ? '€' + parseFloat(o.amount).toFixed(2) : ''}</span>
         <div class="order-card-actions">
           <button class="order-icon-btn" data-print-order="${o.id}" aria-label="Imprimir comanda">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -105,7 +104,6 @@ export function openOrderModal(order = null) {
   document.getElementById('f-order-date').value     = order?.date     ?? new Date().toISOString().slice(0, 10);
   document.getElementById('f-order-supplier').value = order?.supplier ?? '';
   document.getElementById('f-order-status').value   = order?.status   ?? 'pendent';
-  document.getElementById('f-order-amount').value   = order?.amount   ?? '';
   document.getElementById('f-order-notes').value    = order?.notes    ?? '';
 
   const structured = _parseStructuredDesc(order?.desc ?? '');
@@ -155,7 +153,6 @@ export function saveOrder() {
     supplier:  document.getElementById('f-order-supplier').value.trim(),
     status:    document.getElementById('f-order-status').value,
     desc,
-    amount:    parseFloat(document.getElementById('f-order-amount').value) || 0,
     notes:     document.getElementById('f-order-notes').value.trim(),
     updatedAt: new Date().toISOString(),
   };
@@ -198,7 +195,6 @@ export function printOrder(id) {
   if (!o) return;
 
   const today   = new Date().toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-  const fmtAmt  = o.amount ? `€${parseFloat(o.amount).toFixed(2)}` : '—';
   const structured = _parseStructuredDesc(o.desc ?? '');
 
   const bodyHtml = structured
@@ -239,7 +235,6 @@ export function printOrder(id) {
       </div>
       ${bodyHtml}
       ${o.notes ? `<p style="font-size:10pt;color:#555;margin-top:6mm"><em>Notes: ${esc(o.notes)}</em></p>` : ''}
-      ${o.amount ? `<p style="font-size:11pt;text-align:right;margin-top:4mm"><strong>Import total: ${fmtAmt}</strong></p>` : ''}
       <div class="print-comanda-sigs">
         <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>Responsable</p></div>
         <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>Proveïdor</p></div>

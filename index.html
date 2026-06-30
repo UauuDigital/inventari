@@ -390,10 +390,6 @@
             <label class="form-label" for="f-min-stock">Estoc mínim</label>
             <input class="form-input" id="f-min-stock" type="number" min="0" step="any" placeholder="—">
           </div>
-          <div class="form-field">
-            <label class="form-label" for="f-price">Preu/u (€)</label>
-            <input class="form-input" id="f-price" type="number" min="0" step="0.01" placeholder="—">
-          </div>
         </div>
         <div class="form-field">
           <label class="form-label" for="f-category">Categoria</label>
@@ -485,10 +481,6 @@
           <div id="order-desc-table" hidden></div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-order-amount">Import total (€)</label>
-          <input class="form-input" id="f-order-amount" type="number" min="0" step="0.01" placeholder="—">
-        </div>
-        <div class="form-field">
           <label class="form-label" for="f-order-notes">Notes</label>
           <textarea class="form-textarea" id="f-order-notes" placeholder="Observacions…"></textarea>
         </div>
@@ -573,7 +565,7 @@
       <div class="modal-form" id="import-body">
         <p class="import-hint">
           Puja un fitxer <strong>.xlsx</strong> o <strong>.csv</strong> amb les columnes:<br>
-          <code>Nom · Categoria · Quantitat · Unitat · Estoc Mínim · Preu</code>
+          <code>Nom · Categoria · Quantitat · Unitat · Estoc Mínim</code>
         </p>
         <div class="file-drop-zone" id="file-drop-zone" tabindex="0" role="button" aria-label="Seleccionar fitxer">
           <input type="file" id="f-import-file" accept=".xlsx,.xls,.csv" hidden>
@@ -657,10 +649,6 @@
           <div class="form-field">
             <label class="form-label" for="f-np-supplier">Proveïdor</label>
             <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="f-np-price">Preu (€)</label>
-            <input class="form-input" id="f-np-price" type="number" min="0" step="0.01" placeholder="—">
           </div>
         </div>
         <div class="form-field">

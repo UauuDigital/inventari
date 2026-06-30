@@ -118,7 +118,6 @@ export function openItemModal(item = null) {
   document.getElementById('f-quantity').value  = item != null   ? item.quantity : '';
   document.getElementById('f-unit').value      = item?.unit     ?? '';
   document.getElementById('f-min-stock').value = item?.minStock ? item.minStock : '';
-  document.getElementById('f-price').value     = item?.price    ? item.price    : '';
   document.getElementById('f-category').value  = item?.category ?? state.categories[0]?.id ?? '';
   document.getElementById('f-notes').value     = item?.notes    ?? '';
 
@@ -145,14 +144,11 @@ export function saveItem() {
 
   const qty   = parseFloat(document.getElementById('f-quantity').value);
   const min   = parseFloat(document.getElementById('f-min-stock').value);
-  const price = parseFloat(document.getElementById('f-price').value);
-
   const data = {
     name,
     quantity:  isNaN(qty)   ? 0 : Math.max(0, qty),
     unit:      document.getElementById('f-unit').value.trim(),
     minStock:  isNaN(min)   ? 0 : Math.max(0, min),
-    price:     isNaN(price) ? 0 : Math.max(0, price),
     category:  document.getElementById('f-category').value,
     notes:     document.getElementById('f-notes').value.trim(),
     updatedAt: new Date().toISOString(),

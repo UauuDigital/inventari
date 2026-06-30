@@ -45,17 +45,12 @@ export function renderStatsStrip() {
   const total     = state.items.length;
   const lowCount  = state.items.filter(i => i.minStock > 0 && i.quantity <= i.minStock && i.quantity > 0).length;
   const zeroCount = state.items.filter(i => i.quantity === 0).length;
-  const totalVal  = state.items.reduce((s, i) => s + i.quantity * (i.price || 0), 0);
-
   const card3 = (lowCount + zeroCount) > 0
     ? `<div class="stat-card is-warn">
          <span class="stat-value">${lowCount + zeroCount}</span>
          <span class="stat-label">Estoc baix</span>
        </div>`
-    : `<div class="stat-card">
-         <span class="stat-value">${totalVal > 0 ? '€' + Math.round(totalVal) : '—'}</span>
-         <span class="stat-label">Valor est.</span>
-       </div>`;
+    : '';
 
   strip.innerHTML = `
     <div class="stat-card">
@@ -108,18 +103,10 @@ export function renderStats() {
     return;
   }
 
-  const totalVal  = state.items.reduce((s, i) => s + i.quantity * (i.price || 0), 0);
   const lowItems  = state.items.filter(i => i.minStock > 0 && i.quantity <= i.minStock);
   const zeroItems = state.items.filter(i => i.quantity === 0);
 
   el.innerHTML = `
-    ${totalVal > 0 ? `
-      <div class="stats-total-row">
-        <span class="stats-total-label">Valor total estoc</span>
-        <span class="stats-total-val">€${totalVal.toLocaleString('ca', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
-      </div>
-    ` : ''}
-
     <div class="stats-section-title">Per categoria</div>
 
     ${state.categories.map(cat => {
@@ -485,7 +472,6 @@ export function coordOrderAccept() {
     supplier:  masiaLabel,
     status:    'pendent',
     desc,
-    amount:    0,
     notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
