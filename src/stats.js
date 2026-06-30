@@ -538,16 +538,21 @@ function openEditHistorialModal(row) {
     return { name, num: match ? match[1] : qtyStr, unit: match ? match[2].trim() : '' };
   });
 
-  document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
-      <span style="flex:1;font-size:13px">${esc(item.name)}</span>
-      <input type="number" min="0" step="any" class="form-input"
-             data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
-             value="${esc(item.num)}"
-             style="width:72px;text-align:right;padding:5px 8px;font-size:13px">
-      <span style="font-size:12px;color:var(--text-dim);min-width:20px">${esc(item.unit)}</span>
-    </div>
-  `).join('');
+  document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => {
+    const catEntry = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+    const minStock = catEntry?.minStock || 0;
+    const isLow    = minStock > 0 && parseFloat(item.num) < minStock;
+    return `
+    <div class="edit-hist-row${isLow ? ' is-low' : ''}">
+      <span class="edit-hist-name">${esc(item.name)}</span>
+      <div class="edit-hist-qty-wrap">
+        <input type="number" min="0" step="any" class="edit-hist-input"
+               data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
+               value="${esc(item.num)}">
+        ${item.unit ? `<span class="edit-hist-unit">${esc(item.unit)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 
   document.getElementById('edit-historial-comment').value = comentari || '';
   _editingHistorialId    = id;
