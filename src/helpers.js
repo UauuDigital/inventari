@@ -8,17 +8,100 @@ export function getCat(id) {
   return state.categories.find(c => c.id === id);
 }
 
+export function matchesTags(haystack, tags) {
+  if (!tags.length) return true;
+  const groups = {};
+  tags.forEach(t => { (groups[t.type] = groups[t.type] || []).push(t.value); });
+  return Object.values(groups).every(vals => vals.some(v => haystack.includes(v)));
+}
+
 export function filteredItems() {
   let list = state.items;
   if (state.filter) list = list.filter(i => i.category === state.filter);
-  if (state.search) {
-    const q = state.search.toLowerCase();
-    list = list.filter(i =>
-      i.name.toLowerCase().includes(q) ||
-      (i.notes || '').toLowerCase().includes(q)
-    );
+  if (state.search.length) {
+    list = list.filter(i => {
+      const catName  = (getCat(i.category)?.name || '').toLowerCase();
+      const haystack = [i.name, catName, i.notes || ''].join(' ').toLowerCase();
+      return matchesTags(haystack, state.search);
+    });
   }
   return list;
+}
+
+export function createTagSearch(container, onChange, placeholder = 'Filtra…', getSuggestions = null) {
+  container.classList.add('tag-search-widget');
+  container.innerHTML = `<div class="tsw-inner"><input class="tsw-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${esc(placeholder)}"></div>${getSuggestions ? '<div class="tsw-suggestions"></div>' : ''}`;
+  const inner   = container.querySelector('.tsw-inner');
+  const input   = container.querySelector('.tsw-input');
+  const sugsEl  = container.querySelector('.tsw-suggestions');
+  let tags = []; // [{value, type, label}]
+
+  function _renderSuggestions() {
+    if (!sugsEl) return;
+    const all = getSuggestions();
+    const byType = {};
+    all.filter(s => !tags.some(t => t.value === s.value && t.type === s.type))
+       .forEach(s => { (byType[s.type] = byType[s.type] || []).push(s); });
+    sugsEl.innerHTML = Object.entries(byType).map(([type, items]) => `
+      <div class="tsw-sug-group">
+        <span class="tsw-sug-label">${esc(type)}</span>
+        <div class="tsw-sug-pills">
+          ${items.map(s => `<button class="tsw-sug-pill" data-val="${esc(s.value)}" data-type="${esc(s.type)}" data-label="${esc(s.label)}" type="button">${esc(s.label)}</button>`).join('')}
+        </div>
+      </div>`).join('');
+    sugsEl.hidden = !Object.keys(byType).length;
+  }
+
+  function _render() {
+    inner.querySelectorAll('.tsw-tag').forEach(el => el.remove());
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tsw-tag';
+      chip.innerHTML = `${esc(tag.label || tag.value)}<button class="tsw-tag-del" data-i="${i}" tabindex="-1" aria-label="Eliminar filtre">×</button>`;
+      inner.insertBefore(chip, input);
+    });
+    onChange([...tags]);
+    _renderSuggestions();
+  }
+
+  function _add(value, type = 'text', label = null) {
+    const val = value.trim().toLowerCase();
+    if (val && !tags.some(t => t.value === val && t.type === type)) {
+      tags.push({ value: val, type, label: label || val });
+      _render();
+    }
+    input.value = '';
+  }
+
+  if (sugsEl) {
+    sugsEl.addEventListener('click', e => {
+      const pill = e.target.closest('.tsw-sug-pill');
+      if (pill) _add(pill.dataset.val, pill.dataset.type, pill.dataset.label);
+    });
+  }
+
+  inner.addEventListener('click', e => {
+    const del = e.target.closest('.tsw-tag-del');
+    if (del) { tags.splice(parseInt(del.dataset.i), 1); _render(); return; }
+    input.focus();
+  });
+
+  input.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault(); _add(input.value, 'text');
+    } else if (e.key === 'Backspace' && !input.value && tags.length) {
+      tags.pop(); _render();
+    }
+  });
+
+  input.addEventListener('blur', () => { if (input.value.trim()) _add(input.value, 'text'); });
+
+  _renderSuggestions();
+
+  return {
+    focus() { input.focus(); },
+    clear()  { tags = []; input.value = ''; _render(); },
+  };
 }
 
 export function fmtNum(n) {

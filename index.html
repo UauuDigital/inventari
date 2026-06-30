@@ -193,7 +193,7 @@
       </div>
     </div>
     <div class="search-bar" id="search-bar">
-      <input class="search-input" id="search-input" type="search" placeholder="Cerca articles…" autocomplete="off" aria-label="Cerca articles">
+      <div id="search-tag-input"></div>
     </div>
   </header>
 
@@ -643,12 +643,14 @@
         </div>
         <div class="form-field">
           <label class="form-label" for="f-np-category">Categoria</label>
-          <input class="form-input" id="f-np-category" type="text" placeholder="p.ex. Alimentació">
+          <input class="form-input" id="f-np-category" type="text" placeholder="p.ex. Alimentació" list="dl-np-categories" autocomplete="off">
+          <datalist id="dl-np-categories"></datalist>
         </div>
         <div class="form-row">
           <div class="form-field">
             <label class="form-label" for="f-np-supplier">Proveïdor</label>
-            <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor">
+            <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor" list="dl-np-suppliers" autocomplete="off">
+            <datalist id="dl-np-suppliers"></datalist>
           </div>
         </div>
         <div class="form-field">

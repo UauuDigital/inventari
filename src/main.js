@@ -1,5 +1,5 @@
 import { state, loadData } from './config.js';
-import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue } from './helpers.js';
+import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, createTagSearch } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit } from './auth.js';
 import {
   openItemModal, closeItemModal, saveItem, deleteItem,
@@ -127,15 +127,17 @@ export function setView(view) {
   if (view === 'users')     renderUsers();
 }
 
+let _itemTagSearch = null;
+
 export function toggleSearch() {
   state.searchOpen = !state.searchOpen;
   document.getElementById('search-bar').classList.toggle('open', state.searchOpen);
   document.getElementById('btn-search').classList.toggle('active', state.searchOpen);
   if (state.searchOpen) {
-    setTimeout(() => document.getElementById('search-input').focus(), 280);
+    setTimeout(() => _itemTagSearch?.focus(), 280);
   } else {
-    state.search = '';
-    document.getElementById('search-input').value = '';
+    state.search = [];
+    _itemTagSearch?.clear();
     renderItems();
   }
 }
@@ -249,10 +251,12 @@ function init() {
   document.getElementById('btn-logout').addEventListener('click', showUserScreen);
 
   document.getElementById('btn-search').addEventListener('click', toggleSearch);
-  document.getElementById('search-input').addEventListener('input', e => {
-    state.search = e.target.value.trim();
-    renderItems();
-  });
+  _itemTagSearch = createTagSearch(
+    document.getElementById('search-tag-input'),
+    tags => { state.search = tags; renderItems(); },
+    'Filtra per nom o categoria…',
+    () => state.categories.map(c => ({ value: c.name.toLowerCase(), label: c.name, type: 'Categoria' }))
+  );
 
   document.getElementById('btn-add').addEventListener('click', () => {
     if (state.view === 'orders')       openOrderModal();

@@ -60,7 +60,7 @@ export const state = {
   items:             [],
   categories:        [],
   view:              'list',
-  search:            '',
+  search:            [],
   filter:            null,
   editingId:         null,
   searchOpen:        false,
