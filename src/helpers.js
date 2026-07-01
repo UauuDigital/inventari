@@ -158,28 +158,38 @@ export function toast(msg) {
 }
 
 export function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (!lines.length) return [];
-  const delim = lines[0].includes(';') ? ';' : ',';
-  return lines.map(line => {
-    const cells = [];
-    let inQuote = false;
-    let cell = '';
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') { cell += '"'; i++; }
-        else inQuote = !inQuote;
-      } else if (ch === delim && !inQuote) {
-        cells.push(cell.trim());
-        cell = '';
-      } else {
-        cell += ch;
-      }
+  if (!text) return [];
+  const semiIdx = text.indexOf(';');
+  const nlIdx   = text.indexOf('\n');
+  const delim   = semiIdx > 0 && semiIdx < nlIdx ? ';' : ',';
+  const rows   = [];
+  let cells    = [];
+  let cell     = '';
+  let inQuote  = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch   = text[i];
+    const next = text[i + 1];
+
+    if (ch === '"') {
+      if (inQuote && next === '"') { cell += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === delim && !inQuote) {
+      cells.push(cell.trim());
+      cell = '';
+    } else if ((ch === '\n' || (ch === '\r' && next === '\n')) && !inQuote) {
+      if (ch === '\r') i++;
+      cells.push(cell.trim());
+      if (cells.some(c => c)) rows.push(cells);
+      cells = [];
+      cell  = '';
+    } else {
+      cell += ch;
     }
-    cells.push(cell.trim());
-    return cells;
-  });
+  }
+  cells.push(cell.trim());
+  if (cells.some(c => c)) rows.push(cells);
+  return rows;
 }
 
 export function findCol(headers, candidates) {

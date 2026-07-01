@@ -1,6 +1,8 @@
 import { CASAMENTS_URL, MASIA_COLORS, MASIA_LABELS } from './config.js';
 import { esc, parseCSV, findCol } from './helpers.js';
 
+const MASIES = ['ca-nalzina', 'can-macia', 'castell-de-tous', 'mas-vivencs'];
+
 function _masiaKey(finca) {
   const f = finca.toLowerCase();
   if (f.includes('alzina') || f.includes('nalzina')) return 'ca-nalzina';
@@ -23,18 +25,18 @@ function _parseDate(str) {
   return 0;
 }
 
-function _fmtDate(str) {
+function _fmtTime(str) {
   const ts = _parseDate(str);
   if (!ts) return str;
-  return new Date(ts).toLocaleDateString('ca-ES', {
-    weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+  const d = new Date(ts);
+  return d.toLocaleString('ca-ES', {
+    day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 }
 
-let _casaments = [];
-let _filter    = 'totes';
-let _search    = '';
+let _casaments   = [];
+let _selectedMasia = null;
 
 function _parseRows(rows) {
   if (rows.length < 2) return [];
@@ -42,7 +44,7 @@ function _parseRows(rows) {
   const iAdults = findCol(headers, ['adults']);
   const iFinca  = findCol(headers, ['finca']);
   const iData   = findCol(headers, ['hora', 'cerim']);
-  const iIntol  = findCol(headers, ['intol', 'al·l', 'observ']);
+  const iIntol  = findCol(headers, ['intol', 'al·l', 'al.l', 'observ']);
   const iNom    = findCol(headers, ['nombre', 'nom']);
   if (iFinca < 0 || iNom < 0) return [];
 
@@ -51,109 +53,133 @@ function _parseRows(rows) {
     .map(r => {
       const finca   = (r[iFinca]  || '').trim();
       const dataStr = iData >= 0 ? (r[iData] || '').trim() : '';
+      const nomRaw = iNom >= 0 ? (r[iNom] || '').trim() : '';
+      const nomNet = nomRaw.replace(/^B\d+\s+[A-Z]{2,3}\s+/i, '').trim();
       return {
-        nom:     iNom    >= 0 ? (r[iNom]    || '').trim() : '',
-        adults:  iAdults >= 0 ? (r[iAdults] || '').trim() : '',
+        nom:    nomNet || nomRaw,
+        adults: iAdults >= 0 ? parseInt(r[iAdults] || '0') || 0 : 0,
         finca,
         masiaId: _masiaKey(finca),
         data:    dataStr,
         sortTs:  _parseDate(dataStr),
-        intol:   iIntol  >= 0 ? (r[iIntol]  || '').trim() : '',
+        intol:   iIntol >= 0 ? (r[iIntol] || '').trim() : '',
       };
     })
     .filter(c => c.finca || c.nom)
     .sort((a, b) => a.sortTs - b.sortTs);
 }
 
-function _renderCards() {
-  const list = document.getElementById('casaments-list');
-  if (!list) return;
-  const now = Date.now();
-  let data  = _casaments;
+// ── LEVEL 1: masia cards ──────────────────────────────────────────────────
 
-  if (_filter !== 'totes') data = data.filter(c => c.masiaId === _filter);
-  if (_search) {
-    const q = _search.toLowerCase();
-    data = data.filter(c =>
-      c.nom.toLowerCase().includes(q) ||
-      c.intol.toLowerCase().includes(q) ||
-      c.finca.toLowerCase().includes(q)
-    );
+function _renderMasies() {
+  const el = document.getElementById('casaments-content');
+  if (!el) return;
+
+  const totals = {};
+  const counts = {};
+  for (const id of MASIES) { totals[id] = 0; counts[id] = 0; }
+
+  for (const c of _casaments) {
+    if (c.masiaId && totals[c.masiaId] !== undefined) {
+      totals[c.masiaId] += c.adults;
+      counts[c.masiaId]++;
+    }
   }
 
-  if (!data.length) {
-    list.innerHTML = `<div class="casaments-empty">Sense casaments</div>`;
-    return;
-  }
-
-  list.innerHTML = data.map(c => {
-    const past  = c.sortTs && c.sortTs < now;
-    const color = c.masiaId ? (MASIA_COLORS[c.masiaId] || '#ccc') : '#ccc';
-    const label = c.masiaId ? (MASIA_LABELS[c.masiaId] || c.finca) : c.finca;
-    return `<div class="casament-card${past ? ' is-past' : ''}">
-      <div class="casament-card-header">
-        <span class="casament-nom">${esc(c.nom)}</span>
-        <span class="casament-finca">
-          <span class="masia-dot" style="background:${esc(color)}"></span>${esc(label)}
-        </span>
-      </div>
-      <div class="casament-card-meta">
-        ${c.data   ? `<span class="casament-date">${esc(_fmtDate(c.data))}</span>` : ''}
-        ${c.adults ? `<span class="casament-adults">${esc(c.adults)} adults</span>` : ''}
-      </div>
-      ${c.intol ? `<div class="casament-intol">${esc(c.intol)}</div>` : ''}
+  el.innerHTML = `
+    <div class="cas-masies-grid">
+      ${MASIES.map(id => {
+        const color = MASIA_COLORS[id] || '#ccc';
+        const label = MASIA_LABELS[id] || id;
+        return `
+        <button class="cas-masia-card" data-masia="${id}">
+          <span class="cas-masia-dot" style="background:${esc(color)}"></span>
+          <span class="cas-masia-name">${esc(label)}</span>
+          <span class="cas-masia-adults">${totals[id]} adults</span>
+          <span class="cas-masia-count">${counts[id]} casament${counts[id] !== 1 ? 's' : ''}</span>
+        </button>`;
+      }).join('')}
     </div>`;
-  }).join('');
+
+  el.querySelectorAll('[data-masia]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _selectedMasia = btn.dataset.masia;
+      _renderDetall();
+    });
+  });
 }
+
+// ── LEVEL 2: wedding list for one masia ──────────────────────────────────
+
+function _renderDetall() {
+  const el = document.getElementById('casaments-content');
+  if (!el) return;
+
+  const label  = MASIA_LABELS[_selectedMasia] || _selectedMasia;
+  const color  = MASIA_COLORS[_selectedMasia] || '#ccc';
+  const llista = _casaments.filter(c => c.masiaId === _selectedMasia);
+  const total  = llista.reduce((s, c) => s + c.adults, 0);
+  el.innerHTML = `
+    <div class="cas-detall-header">
+      <button class="cas-back-btn" id="cas-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Tornar
+      </button>
+      <span class="cas-detall-title">
+        <span class="cas-masia-dot" style="background:${esc(color)}"></span>
+        ${esc(label)}
+      </span>
+      <span class="cas-detall-total">${total} adults</span>
+    </div>
+    <div class="cas-detall-list">
+      ${llista.length ? llista.map(c => {
+        const intolHtml = c.intol ? esc(c.intol).replace(/\n/g, '<br>') : '';
+        return `
+        <div class="cas-item">
+          <div class="cas-item-row">
+            <span class="cas-item-nom">${esc(c.nom)}</span>
+            <span class="cas-item-meta">
+              ${c.adults ? `<span class="cas-item-adults">${c.adults} adults</span>` : ''}
+              ${c.data   ? `<span class="cas-item-hora">${esc(_fmtTime(c.data))}</span>` : ''}
+            </span>
+          </div>
+          ${intolHtml ? `
+          <details class="cas-intol-details">
+            <summary class="cas-intol-summary">Comentaris</summary>
+            <div class="cas-intol-body">${intolHtml}</div>
+          </details>` : '<p class="cas-intol-none">Sense intoleràncies registrades</p>'}
+        </div>`;
+      }).join('') : '<p class="cas-empty">Sense casaments per a aquesta finca</p>'}
+    </div>`;
+
+  document.getElementById('cas-back').addEventListener('click', () => {
+    _selectedMasia = null;
+    _renderMasies();
+  });
+}
+
+// ── ENTRY POINT ──────────────────────────────────────────────────────────
 
 export async function renderCasamentsView() {
   const el = document.getElementById('casaments-content');
   if (!el) return;
 
+  if (_casaments.length) {
+    _selectedMasia ? _renderDetall() : _renderMasies();
+    return;
+  }
+
   el.innerHTML = `<div class="reports-loading">Carregant casaments…</div>`;
 
   try {
-    const res  = await fetch(CASAMENTS_URL);
+    const res  = await fetch(`${CASAMENTS_URL}&t=${Date.now()}`, { cache: 'no-store' });
     const text = await res.text();
-    const rows = parseCSV(text);
-    _casaments = _parseRows(rows);
+    _casaments = _parseRows(parseCSV(text));
   } catch {
     el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant casaments. Comprova la connexió.</div>`;
     return;
   }
 
-  _filter = 'totes';
-  _search = '';
-
-  const masiesPresents = [...new Set(_casaments.map(c => c.masiaId).filter(Boolean))];
-
-  el.innerHTML = `
-    <div class="casaments-toolbar">
-      <div class="casaments-filters" id="casaments-filters">
-        <button class="filter-pill active" data-casaments-filter="totes">Totes</button>
-        ${masiesPresents.map(id =>
-          `<button class="filter-pill" data-casaments-filter="${esc(id)}">${esc(MASIA_LABELS[id] || id)}</button>`
-        ).join('')}
-      </div>
-      <input id="casaments-search" class="casaments-search-input" type="search"
-             placeholder="Cercar per nom, intol·lerància…" autocomplete="off">
-    </div>
-    <div class="casaments-list" id="casaments-list"></div>`;
-
-  _renderCards();
-
-  document.getElementById('casaments-filters').addEventListener('click', e => {
-    const btn = e.target.closest('[data-casaments-filter]');
-    if (!btn) return;
-    _filter = btn.dataset.casamentsFilter;
-    document.querySelectorAll('[data-casaments-filter]').forEach(b =>
-      b.classList.toggle('active', b === btn)
-    );
-    _renderCards();
-  });
-
-  document.getElementById('casaments-search').addEventListener('input', e => {
-    _search = e.target.value.trim();
-    _renderCards();
-  });
+  _selectedMasia = null;
+  _renderMasies();
 }
