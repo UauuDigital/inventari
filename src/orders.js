@@ -223,14 +223,13 @@ export function printOrder(id) {
       <div class="print-comanda-header">
         <div>
           <h1 class="print-comanda-title">Comanda</h1>
-          <p class="print-comanda-org">Uauu Digital</p>
+          <p class="print-comanda-org">UAUU Wedding &amp; Events</p>
         </div>
         <div class="print-comanda-info">
-          ${o.ref      ? `<p><strong>Referència:</strong> ${esc(o.ref)}</p>`        : ''}
-          ${o.supplier ? `<p><strong>Proveïdor:</strong> ${esc(o.supplier)}</p>`    : ''}
-          ${o.date     ? `<p><strong>Data comanda:</strong> ${fmtDate(o.date)}</p>` : ''}
+          ${o.ref  ? `<p><strong>Referència:</strong> ${esc(o.ref)}</p>`        : ''}
+          ${o.date ? `<p><strong>Data comanda:</strong> ${fmtDate(o.date)}</p>` : ''}
           <p><strong>Data impressió:</strong> ${today}</p>
-          <p><strong>Estat:</strong> ${esc(STATUS_LABELS[o.status] || o.status)}</p>
+          ${state.authProfile?.nom ? `<p><strong>Coordinador:</strong> ${esc(state.authProfile.nom)}</p>` : ''}
         </div>
       </div>
       ${bodyHtml}

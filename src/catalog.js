@@ -435,8 +435,8 @@ export function openQtyModal(idx) {
 
   const boxesField = document.getElementById('qty-boxes-field');
   const unitsLabel = document.getElementById('qty-units-label');
-  boxesField.hidden = upb === 0;
-  unitsLabel.textContent = unit.charAt(0).toUpperCase() + unit.slice(1) + (unit.endsWith('a') || unit.endsWith('e') ? 's' : 's');
+  boxesField.hidden = false;
+  unitsLabel.textContent = unit ? (unit.charAt(0).toUpperCase() + unit.slice(1)) : 'Unitats';
 
   const boxesInput = document.getElementById('f-qty-boxes');
   const unitsInput = document.getElementById('f-qty-value');
@@ -444,8 +444,7 @@ export function openQtyModal(idx) {
   unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
 
   document.getElementById('modal-qty').classList.add('open');
-  const focusEl = upb > 0 ? boxesInput : unitsInput;
-  setTimeout(() => { focusEl.focus(); focusEl.select(); }, 350);
+  setTimeout(() => { unitsInput.focus(); unitsInput.select(); }, 350);
 }
 
 export function closeQtyModal() {
@@ -461,14 +460,14 @@ export function saveQty() {
   const boxesVal  = document.getElementById('f-qty-boxes').value;
   const unitsVal  = document.getElementById('f-qty-value').value;
 
-  if (unitsVal === '' && (upb === 0 || boxesVal === '')) {
-    document.getElementById('f-qty-value').focus();
+  if (boxesVal === '' && unitsVal === '') {
+    document.getElementById('f-qty-boxes').focus();
     return;
   }
 
-  const boxes     = upb > 0 ? (parseFloat(boxesVal) || 0) : 0;
-  const loose     = parseFloat(unitsVal) || 0;
-  const total     = upb > 0 ? boxes * upb + loose : loose;
+  const boxes = parseFloat(boxesVal) || 0;
+  const loose = parseFloat(unitsVal) || 0;
+  const total = upb > 0 ? boxes * upb + loose : loose || boxes;
 
   const catId     = ensureCategory(product.category);
   const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());

@@ -171,6 +171,39 @@
   color: var(--white);
 }
 
+/* ── STATS QTY INPUTS ────────────────────────────────────────────── */
+
+.stats-qty-inputs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.stats-qty-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  padding: 4px 8px 4px 6px;
+}
+.stats-qty-input {
+  width: 40px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+  font-family: var(--font-sans);
+}
+.stats-qty-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* ── SEND REPORT BUTTON ──────────────────────────────────────────── */
 
 .inv-comment-input {
@@ -480,8 +513,15 @@
 #print-area { display: none; }
 
 @media print {
-  body > * { display: none !important; }
-  #print-area { display: block !important; }
+  body * { visibility: hidden !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  #print-area {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: #fff !important;
+    z-index: 99999 !important;
+  }
 }
 
 .print-comanda {

@@ -237,3 +237,7 @@ body[data-role="coordinador"]:not([data-view="orders"]) .fab { display: none !im
 body[data-role="coordinador"][data-view="orders"] .fab       { display: flex !important; }
 body[data-role="coordinador"] #btn-search         { display: none !important; }
 body[data-role="coordinador"] .stats-strip        { display: none !important; }
+
+@media print {
+  .fab { display: none !important; }
+}

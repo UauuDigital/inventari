@@ -29,6 +29,24 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── STATS QTY INPUTS (document-level, attached once) ─────────────────
+document.addEventListener('change', e => {
+  const input = e.target.closest('.stats-qty-input');
+  if (!input) return;
+  const item = state.items.find(i => i.id === input.dataset.itemId);
+  if (!item) return;
+  const val = parseFloat(input.value) || 0;
+  if (input.dataset.field === 'loose') item.looseUnits = val;
+  else item.boxes = val;
+  const upb   = item.unitsPerBox || 0;
+  const loose = item.looseUnits != null ? item.looseUnits : 0;
+  const boxes = item.boxes || 0;
+  item.quantity  = upb > 0 ? boxes * upb + loose : loose || boxes;
+  item.updatedAt = new Date().toISOString();
+  saveItems();
+  renderStatsStrip();
+});
+
 // ── COMANDA COORDINADOR (document-level, attached once) ───────────────
 let _coordOrderData = null;
 
@@ -88,12 +106,24 @@ export function renderStats() {
     groups.forEach((items, catName) => {
       html += `<div class="stats-section-title">${esc(catName)}</div>`;
       items.forEach(item => {
+        const looseVal = item.looseUnits != null ? item.looseUnits : item.quantity;
+        const boxesVal = item.boxes || '';
+        const unitLbl  = item.unit || 'u';
         html += `<div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
-          <div style="display:flex;align-items:center;gap:4px">
-            <button class="qty-btn" data-qty="${item.id}" data-delta="-1"${item.quantity === 0 ? ' disabled' : ''} aria-label="Reduir">−</button>
-            <span class="stats-cat-count" style="min-width:44px;text-align:center">${fmtNum(item.quantity)} ${esc(item.unit || 'u')}</span>
-            <button class="qty-btn" data-qty="${item.id}" data-delta="1" aria-label="Augmentar">+</button>
+          <div class="stats-qty-inputs">
+            <div class="stats-qty-field">
+              <input type="number" min="0" class="stats-qty-input"
+                     data-item-id="${esc(item.id)}" data-field="loose"
+                     value="${looseVal}" placeholder="0">
+              <span class="stats-qty-unit">${esc(unitLbl)}</span>
+            </div>
+            <div class="stats-qty-field">
+              <input type="number" min="0" class="stats-qty-input"
+                     data-item-id="${esc(item.id)}" data-field="boxes"
+                     value="${boxesVal}" placeholder="0">
+              <span class="stats-qty-unit">c</span>
+            </div>
           </div>
         </div>`;
       });
@@ -129,7 +159,7 @@ export function renderStats() {
         <div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <span class="stats-cat-count" style="color:var(--low)">
-            ${fmtNum(item.quantity)} / mín ${fmtNum(item.minStock)} ${esc(item.unit || '')}
+            ${fmtQtyDisplay(item)} / mín ${fmtNum(item.minStock)}
           </span>
         </div>
       `).join('')}
@@ -422,10 +452,13 @@ function _parseInventariItems(inventari) {
       if (sep < 0) return null;
       const name     = seg.slice(0, sep).trim();
       const qtyStr   = seg.slice(sep + 2).trim();
-      const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
-      const minStock = catEntry?.minStock || 0;
-      const qty      = parseTotalQty(qtyStr, catEntry?.unitsPerBox || 0);
-      return { name, qty, qtyStr, minStock, orderQty: Math.max(0, minStock > qty ? minStock - qty : 0) };
+      const catEntry    = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
+      const minStock    = catEntry?.minStock || 0;
+      const upb         = catEntry?.unitsPerBox || 0;
+      const qty         = parseTotalQty(qtyStr, upb);
+      const deficit     = Math.max(0, minStock - qty);
+      const orderQty    = upb > 0 ? Math.ceil(deficit / upb) : deficit;
+      return { name, qty, qtyStr, minStock, upb, orderQty };
     })
     .filter(Boolean);
 }
@@ -442,10 +475,12 @@ function _openCoordOrderEdit(row) {
 function _updateCoordOrderRowClass(row) {
   const qty      = parseFloat(row.dataset.qty)      || 0;
   const minStock = parseFloat(row.dataset.minstock)  || 0;
+  const upb      = parseFloat(row.dataset.upb)       || 0;
   const input    = row.querySelector('.coord-order-qty');
   const orderQty = parseFloat(input?.value)          || 0;
+  const orderUnits = upb > 0 ? orderQty * upb : orderQty;
   row.classList.remove('is-ok', 'is-low');
-  if (minStock > 0 && qty + orderQty < minStock) {
+  if (minStock > 0 && qty + orderUnits < minStock) {
     row.classList.add('is-low');
   } else if (orderQty === 0) {
     row.classList.add('is-ok');
@@ -460,7 +495,6 @@ function _renderCoordOrderEdit() {
       Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
       · <span style="color:var(--text-dim)">${esc(comensal)}</span>
     </p>
-    <p class="coord-order-note">Mínim 100 u. per producte. Edita les quantitats si cal.</p>
     <div class="coord-order-list" id="coord-order-list">
       ${items.map((item, i) => {
         const isLow = item.minStock > 0 && item.qty + item.orderQty < item.minStock;
@@ -469,14 +503,15 @@ function _renderCoordOrderEdit() {
         const stock = item.minStock > 0
           ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
           : `${item.qtyStr || item.qty}`;
+        const orderUnit = item.upb > 0 ? 'c' : 'u';
         return `
-        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}">
+        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
           <span class="coord-order-name">${esc(item.name)}</span>
           <span class="coord-order-stock">${stock}</span>
           <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
             <input class="coord-order-qty" type="number" min="0" step="1"
                    value="${item.orderQty}" data-idx="${i}">
-            <span class="coord-order-qty-unit">u</span>
+            <span class="coord-order-qty-unit">${orderUnit}</span>
           </label>
         </div>`;
       }).join('')}
@@ -532,25 +567,42 @@ function openEditHistorialModal(row) {
     [date, hora, comensal, masiaLabel].filter(Boolean).join(' · ');
 
   const items = (inventari || '').split(' | ').filter(Boolean).map(item => {
-    const sep = item.indexOf(': ');
+    const sep    = item.indexOf(': ');
     const name   = sep > -1 ? item.slice(0, sep) : item;
-    const qtyStr = sep > -1 ? item.slice(sep + 2) : '';
-    const match  = qtyStr.trim().match(/^([\d.,]+)\s*(.*)$/);
-    return { name, num: match ? match[1] : qtyStr, unit: match ? match[2].trim() : '' };
+    const qtyStr = sep > -1 ? item.slice(sep + 2).trim() : '';
+    const boxM   = qtyStr.replace(/\s/g, '').match(/^(\d+(?:\.\d+)?)c/);
+    const boxes  = boxM ? parseFloat(boxM[1]) : 0;
+    const looseM = qtyStr.replace(/\s/g, '').match(/\+(\d+(?:\.\d+)?)[^0-9+]/) ||
+                   (!boxM ? qtyStr.match(/^(\d+(?:\.\d+)?)/) : null);
+    const loose  = looseM ? parseFloat(looseM[1]) : 0;
+    const unitM  = qtyStr.match(/(\d+(?:\.\d+)?)([a-zA-ZàèéíïòóúüçÀ-ž]+)\s*$/);
+    const unit   = unitM ? unitM[2] : '';
+    return { name, boxes, loose, unit, qtyStr };
   });
 
   document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => {
-    const catEntry = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
-    const minStock = catEntry?.minStock || 0;
-    const isLow    = minStock > 0 && parseFloat(item.num) < minStock;
+    const catEntry  = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+    const minStock  = catEntry?.minStock || 0;
+    const upb       = catEntry?.unitsPerBox || 0;
+    const total     = upb > 0 ? item.boxes * upb + item.loose : item.loose || item.boxes;
+    const isLow     = minStock > 0 && total < minStock;
+    const unitLabel = item.unit || catEntry?.unit || 'u';
     return `
     <div class="edit-hist-row${isLow ? ' is-low' : ''}">
       <span class="edit-hist-name">${esc(item.name)}</span>
-      <div class="edit-hist-qty-wrap">
-        <input type="number" min="0" step="any" class="edit-hist-input"
-               data-hist-idx="${i}" data-hist-unit="${esc(item.unit)}"
-               value="${esc(item.num)}">
-        ${item.unit ? `<span class="edit-hist-unit">${esc(item.unit)}</span>` : ''}
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <div class="edit-hist-qty-wrap">
+          <input type="number" min="0" step="any" class="edit-hist-input"
+                 data-hist-idx="${i}" data-hist-type="loose"
+                 placeholder="0" value="${item.loose || ''}">
+          <span class="edit-hist-unit">${esc(unitLabel)}</span>
+        </div>
+        <div class="edit-hist-qty-wrap">
+          <input type="number" min="0" step="any" class="edit-hist-input"
+                 data-hist-idx="${i}" data-hist-type="boxes"
+                 placeholder="0" value="${item.boxes || ''}">
+          <span class="edit-hist-unit">c</span>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -572,10 +624,17 @@ export function saveEditHistorial() {
   if (!_editingHistorialId) return;
 
   const newInventari = _editingHistorialItems.map((item, i) => {
-    const input = document.querySelector(`[data-hist-idx="${i}"]`);
-    const val   = input ? input.value.trim() : item.num;
-    const unit  = input ? (input.dataset.histUnit || '') : item.unit;
-    return `${item.name}: ${val}${unit ? ' ' + unit : ''}`;
+    const looseInput = document.querySelector(`[data-hist-idx="${i}"][data-hist-type="loose"]`);
+    const boxesInput = document.querySelector(`[data-hist-idx="${i}"][data-hist-type="boxes"]`);
+    const loose = parseFloat(looseInput?.value) || 0;
+    const boxes = parseFloat(boxesInput?.value) || 0;
+    const catEntry  = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+    const unitLabel = item.unit || catEntry?.unit || 'u';
+    const parts = [];
+    if (loose > 0) parts.push(`${loose}${unitLabel}`);
+    if (boxes > 0) parts.push(`${boxes}c`);
+    const qtyStr = parts.join(' + ') || '0';
+    return `${item.name}: ${qtyStr}`;
   }).join(' | ');
 
   const comentari = document.getElementById('edit-historial-comment').value.trim();
