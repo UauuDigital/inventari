@@ -35,12 +35,15 @@ function _fmtTime(str) {
   });
 }
 
-let _casaments   = [];
+let _casaments     = [];
 let _selectedMasia = null;
+let _lastUpdated   = null;
 
 function _parseRows(rows) {
   if (rows.length < 2) return [];
-  const headers = rows[0].map(h => h.toLowerCase().trim());
+  const rawHeaders = rows[0];
+  _lastUpdated = rawHeaders[8] ? rawHeaders[8].trim() : null;
+  const headers = rawHeaders.map(h => h.toLowerCase().trim());
   const iAdults = findCol(headers, ['adults']);
   const iFinca  = findCol(headers, ['finca']);
   const iData   = findCol(headers, ['hora', 'cerim']);
@@ -69,6 +72,59 @@ function _parseRows(rows) {
     .sort((a, b) => a.sortTs - b.sortTs);
 }
 
+// ── UPDATED BANNER ───────────────────────────────────────────────────────
+
+function _buildUpdatedBanner() {
+  if (!_lastUpdated) {
+    return `<div class="cas-update-banner cas-update--old">
+      <span class="cas-update-icon">⚠</span>
+      <span class="cas-update-text">Sense data d'actualització</span>
+    </div>`;
+  }
+
+  // Google Sheets escriu DD/MM/YYYY HH:MM:SS — cal parsejar manualment
+  function _parseSheetDate(s) {
+    const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0)).getTime();
+    return Date.parse(s);
+  }
+  const ts   = _parseSheetDate(_lastUpdated);
+  if (!ts) return `<div class="cas-update-banner cas-update--ok">
+    <span class="cas-update-text">Actualitzat: ${esc(_lastUpdated)}</span>
+  </div>`;
+
+  const days = Math.floor((Date.now() - ts) / 86400000);
+  const fmt  = new Date(ts).toLocaleDateString('ca-ES', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
+
+  if (days > 30) {
+    return `<div class="cas-update-banner cas-update--old">
+      <span class="cas-update-icon">⚠</span>
+      <div>
+        <span class="cas-update-label">Dades desactualitzades</span>
+        <span class="cas-update-text">Última actualització fa ${days} dies — ${esc(fmt)}</span>
+      </div>
+    </div>`;
+  }
+  if (days > 7) {
+    return `<div class="cas-update-banner cas-update--warn">
+      <span class="cas-update-icon">●</span>
+      <div>
+        <span class="cas-update-label">Actualització fa ${days} dies</span>
+        <span class="cas-update-text">${esc(fmt)}</span>
+      </div>
+    </div>`;
+  }
+  return `<div class="cas-update-banner cas-update--ok">
+    <span class="cas-update-icon">●</span>
+    <div>
+      <span class="cas-update-label">Al dia</span>
+      <span class="cas-update-text">${esc(fmt)}</span>
+    </div>
+  </div>`;
+}
+
 // ── LEVEL 1: masia cards ──────────────────────────────────────────────────
 
 function _renderMasies() {
@@ -86,7 +142,9 @@ function _renderMasies() {
     }
   }
 
+  const updatedBanner = _buildUpdatedBanner();
   el.innerHTML = `
+    ${updatedBanner}
     <div class="cas-masies-grid">
       ${MASIES.map(id => {
         const color = MASIA_COLORS[id] || '#ccc';
