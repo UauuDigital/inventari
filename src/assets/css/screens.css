@@ -410,6 +410,40 @@
   color: #9cc2e6;
 }
 
+/* ── MASIA INVENTORY TAG ─────────────────────────────────────────── */
+
+.masia-inv-tag {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.masia-inv-tag--current {
+  background: rgba(60,160,80,.15);
+  border-color: rgba(60,160,80,.35);
+  color: #5dbe78;
+}
+.masia-inv-tag--last {
+  background: rgba(200,148,40,.15);
+  border-color: rgba(200,148,40,.35);
+  color: #d4a843;
+}
+.masia-inv-tag--old {
+  background: rgba(200,48,48,.15);
+  border-color: rgba(200,48,48,.35);
+  color: #e06060;
+}
+.masia-inv-tag--never {
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.12);
+  color: var(--text-dimmer);
+}
+
 .form-hint-inline {
   font-weight: 400;
   font-size: 11px;

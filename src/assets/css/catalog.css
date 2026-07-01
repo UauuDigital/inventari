@@ -226,6 +226,16 @@
   line-height: 1.7;
 }
 
+/* Qty modal dual layout */
+.qty-dual-row {
+  display: flex;
+  gap: 12px;
+}
+.qty-dual-row .form-field {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Qty modal big input */
 .qty-big-input {
   font-family: var(--font-serif) !important;

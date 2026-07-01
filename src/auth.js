@@ -1,10 +1,11 @@
 import {
   SUPABASE_URL, SUPABASE_KEY,
   STORAGE_ACCESS_TOKEN, STORAGE_REFRESH_TOKEN, STORAGE_TOKEN_EXPIRES, STORAGE_USER_PROFILE,
-  STORAGE_MASIA, MASIA_LABELS,
+  STORAGE_MASIA, MASIA_LABELS, INVENTARI_URL,
   state, loadData,
 } from './config.js';
 import { setView, render } from './main.js';
+import { parseCSV } from './helpers.js';
 
 // ── SUPABASE AUTH ────────────────────────────────────────────────────
 
@@ -75,6 +76,67 @@ export function updateHeaderUser() {
   if (nameEl) nameEl.textContent = profile.nom || state.user;
   const roleEl = document.getElementById('user-pill-role');
   if (roleEl) { roleEl.textContent = profile.rol || ''; roleEl.hidden = !profile.rol; }
+}
+
+// ── MASIA INVENTORY TAGS ─────────────────────────────────────────────
+
+function _startOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function _loadMasiaTags() {
+  try {
+    const res  = await fetch(INVENTARI_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length < 2) return;
+
+    const headers  = rows[0].map(h => String(h).toLowerCase().trim());
+    const iMasia   = headers.indexOf('masia');
+    const iData    = headers.indexOf('data');
+    if (iMasia < 0 || iData < 0) return;
+
+    const lastDate = {};
+    rows.slice(1).forEach(r => {
+      const masia = String(r[iMasia] || '').trim();
+      const data  = String(r[iData]  || '').trim();
+      if (!masia || !data) return;
+      const d = new Date(data);
+      if (isNaN(d)) return;
+      if (!lastDate[masia] || d > lastDate[masia]) lastDate[masia] = d;
+    });
+
+    const now         = new Date();
+    const thisWeek    = _startOfWeek(now);
+    const lastWeek    = new Date(thisWeek); lastWeek.setDate(lastWeek.getDate() - 7);
+
+    document.querySelectorAll('.user-card[data-masia]').forEach(card => {
+      card.querySelector('.masia-inv-tag')?.remove();
+      const masiaId = card.dataset.masia;
+      const d       = lastDate[masiaId];
+
+      let cls, label;
+      if (!d) {
+        cls = 'never'; label = 'Sense inventari';
+      } else if (d >= thisWeek) {
+        cls = 'current'; label = 'Aquesta setmana';
+      } else if (d >= lastWeek) {
+        cls = 'last'; label = 'Setmana passada';
+      } else {
+        cls = 'old'; label = 'Fa 2+ setmanes';
+      }
+
+      const tag = document.createElement('span');
+      tag.className = `masia-inv-tag masia-inv-tag--${cls}`;
+      tag.textContent = label;
+      card.appendChild(tag);
+    });
+  } catch { /* offline o error — no mostrem tags */ }
 }
 
 // ── LOGIN / ROLE SCREENS ─────────────────────────────────────────────
@@ -240,6 +302,7 @@ export function selectUser(name) {
     const masiaSc = document.getElementById('screen-masia');
     masiaSc.hidden = false;
     void masiaSc.offsetWidth;
+    _loadMasiaTags();
   } else {
     showLoginScreen();
   }

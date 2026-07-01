@@ -1,5 +1,5 @@
 import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems, saveOrders } from './config.js';
-import { esc, fmtNum, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { loadCatalog } from './catalog.js';
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
@@ -165,7 +165,7 @@ export function sendInventoryReport() {
 
   const commentEl  = document.getElementById('inv-comment');
   const comment    = commentEl ? commentEl.value.trim() : '';
-  const inventariStr = state.items.map(i => `${i.name}: ${fmtNum(i.quantity)} ${i.unit || 'u'}`).join(' | ');
+  const inventariStr = state.items.map(i => `${i.name}: ${fmtQtyDisplay(i)}`).join(' | ');
 
   const params = new URLSearchParams({
     action:    'inventari',
@@ -246,7 +246,7 @@ function _cardHtml(r, role) {
     const qty      = sep > -1 ? item.slice(sep + 2) : '';
     const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
     const minStock = catEntry?.minStock || 0;
-    const isLow    = minStock > 0 && parseFloat(qty) < minStock;
+    const isLow    = minStock > 0 && parseTotalQty(qty, catEntry?.unitsPerBox || 0) < minStock;
     const lowStyle = isLow ? ` style="color:var(--danger)"` : '';
     return `<div class="stats-cat-row">
       <span class="stats-cat-name"${lowStyle}>${esc(name)}</span>
@@ -421,10 +421,11 @@ function _parseInventariItems(inventari) {
       const sep = seg.indexOf(': ');
       if (sep < 0) return null;
       const name     = seg.slice(0, sep).trim();
-      const qty      = parseFloat(seg.slice(sep + 2)) || 0;
+      const qtyStr   = seg.slice(sep + 2).trim();
       const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
       const minStock = catEntry?.minStock || 0;
-      return { name, qty, minStock, orderQty: Math.max(0, 100 - qty) };
+      const qty      = parseTotalQty(qtyStr, catEntry?.unitsPerBox || 0);
+      return { name, qty, qtyStr, minStock, orderQty: Math.max(0, minStock > qty ? minStock - qty : 0) };
     })
     .filter(Boolean);
 }
@@ -466,8 +467,8 @@ function _renderCoordOrderEdit() {
         const isOk  = !isLow && item.orderQty === 0;
         const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
         const stock = item.minStock > 0
-          ? `${item.qty} u / mín. ${item.minStock}`
-          : `${item.qty} u`;
+          ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
+          : `${item.qtyStr || item.qty}`;
         return `
         <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}">
           <span class="coord-order-name">${esc(item.name)}</span>

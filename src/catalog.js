@@ -2,7 +2,7 @@ import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, SHEET_APPEND_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS,
   state, saveItems,
 } from './config.js';
-import { uid, esc, fmtNum, toast, parseCSV, findCol, sendToSheet, createTagSearch, matchesTags } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, createTagSearch, matchesTags } from './helpers.js';
 import { ensureCategory } from './items.js';
 
 let _catalogTags    = [];
@@ -26,16 +26,20 @@ export async function loadCatalog() {
     const iSupp  = findCol(headers, ['proveidor', 'proveedor', 'proveïdor', 'supplier', 'prove']);
     const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
     const iMin   = findCol(headers, ['min', 'mínim', 'minim', 'min stock', 'estoc mínim']);
+    const iUnit  = findCol(headers, ['unitat', 'unit', 'tipus']);
+    const iUpB   = findCol(headers, ['unitspercaixa', 'u/caixa', 'unitxbox', 'per_caixa']);
 
     state.catalog = rows.slice(1)
       .filter(r => String(r[iName] ?? '').trim())
       .map(r => ({
-        id:       parseInt(String(r[iId] ?? '0')) || 0,
-        code:     String(r[iCode]  ?? '').trim(),
-        name:     String(r[iName]  ?? '').trim(),
-        category: String(r[iCat]   ?? '').trim(),
-        supplier: String(r[iSupp]  ?? '').trim(),
-        minStock: parseFloat(String(r[iMin] ?? '0').replace(',', '.')) || 0,
+        id:          parseInt(String(r[iId] ?? '0')) || 0,
+        code:        String(r[iCode]  ?? '').trim(),
+        name:        String(r[iName]  ?? '').trim(),
+        category:    String(r[iCat]   ?? '').trim(),
+        supplier:    String(r[iSupp]  ?? '').trim(),
+        minStock:    parseFloat(String(r[iMin]  ?? '0').replace(',', '.')) || 0,
+        unit:        iUnit >= 0 ? String(r[iUnit] ?? '').trim() : '',
+        unitsPerBox: iUpB  >= 0 ? parseFloat(String(r[iUpB]  ?? '0').replace(',', '.')) || 0 : 0,
       }));
 
     state.maxCatalogId = state.catalog.reduce((max, p) => Math.max(max, p.id || 0), 0);
@@ -369,7 +373,7 @@ export function renderCatalogView() {
         `);
       } else {
         const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
-        const qty = existing != null ? fmtNum(existing.quantity) : '';
+        const qty = existing != null ? fmtQtyDisplay(existing) : '';
         html.push(`
           <button class="catalog-btn" data-catalog="${i}" data-search="${esc(searchVal)}">
             <span class="catalog-btn-name">${esc(p.name)}</span>
@@ -423,15 +427,25 @@ export function openQtyModal(idx) {
   if (!product) return;
   state.editingCatalogIdx = idx;
 
-  const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
-  const currentQty = existing != null ? existing.quantity : '';
+  const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+  const upb       = product.unitsPerBox || 0;
+  const unit      = product.unit || 'u';
 
   document.getElementById('modal-qty-title').textContent = product.name;
-  const input = document.getElementById('f-qty-value');
-  input.value = currentQty !== '' ? currentQty : '';
+
+  const boxesField = document.getElementById('qty-boxes-field');
+  const unitsLabel = document.getElementById('qty-units-label');
+  boxesField.hidden = upb === 0;
+  unitsLabel.textContent = unit.charAt(0).toUpperCase() + unit.slice(1) + (unit.endsWith('a') || unit.endsWith('e') ? 's' : 's');
+
+  const boxesInput = document.getElementById('f-qty-boxes');
+  const unitsInput = document.getElementById('f-qty-value');
+  boxesInput.value = existing?.boxes != null ? existing.boxes : '';
+  unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
 
   document.getElementById('modal-qty').classList.add('open');
-  setTimeout(() => { input.focus(); input.select(); }, 350);
+  const focusEl = upb > 0 ? boxesInput : unitsInput;
+  setTimeout(() => { focusEl.focus(); focusEl.select(); }, 350);
 }
 
 export function closeQtyModal() {
@@ -443,30 +457,44 @@ export function saveQty() {
   const product = state.catalog[state.editingCatalogIdx];
   if (!product) return;
 
-  const val = document.getElementById('f-qty-value').value;
-  const qty = parseFloat(val);
-  if (val === '' || isNaN(qty) || qty < 0) {
+  const upb       = product.unitsPerBox || 0;
+  const boxesVal  = document.getElementById('f-qty-boxes').value;
+  const unitsVal  = document.getElementById('f-qty-value').value;
+
+  if (unitsVal === '' && (upb === 0 || boxesVal === '')) {
     document.getElementById('f-qty-value').focus();
     return;
   }
 
-  const catId = ensureCategory(product.category);
-  const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+  const boxes     = upb > 0 ? (parseFloat(boxesVal) || 0) : 0;
+  const loose     = parseFloat(unitsVal) || 0;
+  const total     = upb > 0 ? boxes * upb + loose : loose;
+
+  const catId     = ensureCategory(product.category);
+  const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+  const update    = {
+    quantity:    total,
+    boxes:       boxes,
+    looseUnits:  loose,
+    unit:        product.unit || '',
+    unitsPerBox: upb,
+    updatedAt:   new Date().toISOString(),
+  };
 
   if (existing) {
-    existing.quantity  = qty;
-    existing.updatedAt = new Date().toISOString();
+    Object.assign(existing, update);
   } else {
     state.items.unshift({
-      id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      id: uid(), createdAt: new Date().toISOString(),
       name: product.name, category: catId,
-      quantity: qty, unit: '', minStock: 0, notes: '',
+      minStock: product.minStock || 0, notes: '',
+      ...update,
     });
   }
 
   saveItems();
   closeQtyModal();
-  toast(`${product.name}: ${fmtNum(qty)} u`);
+  toast(`${product.name}: ${fmtQtyDisplay({ boxes, looseUnits: loose, unit: product.unit || 'u' })}`);
   renderCatalogView();
 }
 
@@ -523,10 +551,13 @@ export function openNewProductModal(prefill = {}) {
   if (delBtn) delBtn.hidden = true;
 
   _fillProductDataLists();
-  document.getElementById('f-np-name').value     = prefill.name     || '';
-  document.getElementById('f-np-category').value = prefill.category || '';
-  document.getElementById('f-np-supplier').value = prefill.supplier || '';
-  document.getElementById('f-np-code').value     = prefill.code     || '';
+  document.getElementById('f-np-name').value        = prefill.name        || '';
+  document.getElementById('f-np-category').value    = prefill.category    || '';
+  document.getElementById('f-np-supplier').value    = prefill.supplier    || '';
+  document.getElementById('f-np-unit').value        = prefill.unit        || '';
+  document.getElementById('f-np-unitsperbox').value = prefill.unitsPerBox || '';
+  document.getElementById('f-np-minstock').value    = prefill.minStock    || '';
+  document.getElementById('f-np-code').value        = prefill.code        || '';
   document.getElementById('modal-new-product').classList.add('open');
   const focusField = prefill.name ? 'f-np-category' : 'f-np-name';
   setTimeout(() => document.getElementById(focusField).focus(), 380);
@@ -541,10 +572,13 @@ export function openEditProductModal(idx) {
   document.getElementById('btn-save-new-product').textContent = 'Desar canvis';
 
   _fillProductDataLists();
-  document.getElementById('f-np-name').value     = product.name     || '';
-  document.getElementById('f-np-category').value = product.category || '';
-  document.getElementById('f-np-supplier').value = product.supplier || '';
-  document.getElementById('f-np-code').value     = product.code     || '';
+  document.getElementById('f-np-name').value        = product.name        || '';
+  document.getElementById('f-np-category').value    = product.category    || '';
+  document.getElementById('f-np-supplier').value    = product.supplier    || '';
+  document.getElementById('f-np-unit').value        = product.unit        || '';
+  document.getElementById('f-np-unitsperbox').value = product.unitsPerBox || '';
+  document.getElementById('f-np-minstock').value    = product.minStock    || '';
+  document.getElementById('f-np-code').value        = product.code        || '';
 
   const isExtra = state.catalogExtra.some(e => e.id === product.id);
   const delBtn = document.getElementById('btn-delete-product');
@@ -559,10 +593,13 @@ export function saveEditProduct() {
   if (idx === null) return;
   const original = state.catalog[idx];
 
-  const name     = document.getElementById('f-np-name').value.trim();
-  const category = document.getElementById('f-np-category').value.trim();
-  const supplier = document.getElementById('f-np-supplier').value.trim();
-  const code     = document.getElementById('f-np-code').value.trim();
+  const name        = document.getElementById('f-np-name').value.trim();
+  const category    = document.getElementById('f-np-category').value.trim();
+  const supplier    = document.getElementById('f-np-supplier').value.trim();
+  const unit        = document.getElementById('f-np-unit').value.trim();
+  const unitsPerBox = parseFloat(document.getElementById('f-np-unitsperbox').value) || 0;
+  const minStock    = parseFloat(document.getElementById('f-np-minstock').value) || 0;
+  const code        = document.getElementById('f-np-code').value.trim();
 
   if (!name) {
     const el = document.getElementById('f-np-name');
@@ -572,7 +609,7 @@ export function saveEditProduct() {
     return;
   }
 
-  const updated = { ...original, name, category, supplier, code };
+  const updated = { ...original, name, category, supplier, unit, unitsPerBox, minStock, code };
   state.catalog[idx] = updated;
 
   const extraIdx = state.catalogExtra.findIndex(p => p.id === original.id);
@@ -615,11 +652,13 @@ export function closeNewProductModal() {
 
 export function saveNewProduct() {
   try {
-    const name     = document.getElementById('f-np-name').value.trim();
-    const category = document.getElementById('f-np-category').value.trim();
-    const supplier = document.getElementById('f-np-supplier').value.trim();
-    const code     = document.getElementById('f-np-code').value.trim();
-    const minStock = parseFloat(document.getElementById('f-np-minstock').value) || 0;
+    const name        = document.getElementById('f-np-name').value.trim();
+    const category    = document.getElementById('f-np-category').value.trim();
+    const supplier    = document.getElementById('f-np-supplier').value.trim();
+    const unit        = document.getElementById('f-np-unit').value.trim();
+    const unitsPerBox = parseFloat(document.getElementById('f-np-unitsperbox').value) || 0;
+    const minStock    = parseFloat(document.getElementById('f-np-minstock').value) || 0;
+    const code        = document.getElementById('f-np-code').value.trim();
 
     if (!name) {
       const el = document.getElementById('f-np-name');
@@ -631,7 +670,7 @@ export function saveNewProduct() {
 
     state.maxCatalogId++;
     const newId   = state.maxCatalogId;
-    const product = { id: newId, code, name, category, supplier, minStock };
+    const product = { id: newId, code, name, category, supplier, unit, unitsPerBox, minStock };
 
     state.catalog.push(product);
     state.catalogExtra.push(product);
@@ -644,6 +683,7 @@ export function saveNewProduct() {
         action: 'add-producte',
         id: newId, producte: name, proveidor: supplier,
         categoria: category, codi: code, min: minStock,
+        unitat: unit, unitspercaixa: unitsPerBox,
       });
       sendToSheet(gasUrl, params);
 

@@ -653,6 +653,16 @@
             <datalist id="dl-np-suppliers"></datalist>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="f-np-unit">Unitat</label>
+            <input class="form-input" id="f-np-unit" type="text" placeholder="p.ex. botella">
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="f-np-unitsperbox">Unitats/caixa</label>
+            <input class="form-input" id="f-np-unitsperbox" type="number" min="0" step="1" placeholder="0">
+          </div>
+        </div>
         <div class="form-field">
           <label class="form-label" for="f-np-minstock">Estoc mínim</label>
           <input class="form-input" id="f-np-minstock" type="number" min="0" step="1" placeholder="0">
@@ -692,9 +702,15 @@
         </button>
       </div>
       <form class="modal-form" id="qty-form" autocomplete="off" novalidate>
-        <div class="form-field">
-          <label class="form-label" for="f-qty-value">Nombre d'unitats</label>
-          <input class="form-input qty-big-input" id="f-qty-value" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+        <div class="qty-dual-row">
+          <div class="form-field" id="qty-boxes-field" hidden>
+            <label class="form-label" for="f-qty-boxes">Caixes</label>
+            <input class="form-input qty-big-input" id="f-qty-boxes" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="form-field">
+            <label class="form-label" id="qty-units-label" for="f-qty-value">Unitats</label>
+            <input class="form-input qty-big-input" id="f-qty-value" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+          </div>
         </div>
       </form>
       <div class="form-actions">
