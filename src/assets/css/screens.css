@@ -108,12 +108,12 @@
     border-color .32s ease,
     background   .32s ease,
     transform    .32s var(--ease-expo);
-  animation: user-card-in .55s var(--ease-expo) both;
+  animation: user-card-in .35s var(--ease-expo) both;
 }
-.user-card:nth-child(1) { animation-delay: .04s; }
-.user-card:nth-child(2) { animation-delay: .12s; }
-.user-card:nth-child(3) { animation-delay: .20s; }
-.user-card:nth-child(4) { animation-delay: .28s; }
+.user-card:nth-child(1) { animation-delay: .02s; }
+.user-card:nth-child(2) { animation-delay: .07s; }
+.user-card:nth-child(3) { animation-delay: .12s; }
+.user-card:nth-child(4) { animation-delay: .17s; }
 
 .masia-card-logo {
   width: 80%;

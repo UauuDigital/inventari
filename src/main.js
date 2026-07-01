@@ -117,6 +117,7 @@ export function render() {
 
 export function setView(view) {
   state.view = view;
+  document.body.dataset.view = view;
   renderNav();
   if (view === 'stats')   renderStats();
   if (view === 'cats')    renderCats();
@@ -254,7 +255,7 @@ function init() {
   _itemTagSearch = createTagSearch(
     document.getElementById('search-tag-input'),
     tags => { state.search = tags; renderItems(); },
-    'Filtra per nom o categoria…',
+    'Nom o categoria… (Enter per text)',
     () => state.categories.map(c => ({ value: c.name.toLowerCase(), label: c.name, type: 'Categoria' }))
   );
 

@@ -389,7 +389,7 @@ export function renderCatalogView() {
   createTagSearch(
     document.getElementById('catalog-tag-search'),
     tags => { _catalogTags = tags; _filterCatalogView(panel); },
-    'Filtra per nom, categoria o proveïdor…',
+    'Nom, categoria, proveïdor… (Enter per text)',
     () => {
       const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort()
         .map(c => ({ value: c.toLowerCase(), label: c, type: 'Categoria' }));

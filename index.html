@@ -613,7 +613,8 @@
     .getActiveSpreadsheet().getSheets()[0];
   const p = e.parameter;
   s.appendRow([p.id, p.producte, p.proveidor,
-               p.preu, p.categoria, p.codi]);
+               p.categoria, p.codi, p.min,
+               p.unitat, p.unitspercaixa]);
   return ContentService.createTextOutput('ok');
 }</pre>
       </form>
