@@ -301,3 +301,130 @@
   color: rgba(34,31,30,.45);
 }
 
+/* ── Product picker (nova comanda) ───────────────────────────── */
+.order-search-wrap {
+  position: relative;
+}
+
+.order-product-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--surface, #fff);
+  border: 1px solid rgba(34,31,30,.14);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.order-product-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--dark);
+  cursor: pointer;
+  gap: 8px;
+}
+.order-product-option:hover { background: rgba(34,31,30,.05); }
+
+.order-product-option-meta {
+  font-size: 11px;
+  color: rgba(34,31,30,.4);
+  flex-shrink: 0;
+}
+
+.order-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.order-product-empty {
+  font-size: 13px;
+  color: rgba(34,31,30,.4);
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.order-product-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(34,31,30,.04);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.order-product-qty-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.order-product-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dark);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-product-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34,31,30,.07);
+  border: 1px solid rgba(34,31,30,.12);
+  border-radius: 7px;
+  padding: 3px 8px 3px 6px;
+  flex-shrink: 0;
+}
+
+.order-product-qty {
+  width: 44px;
+  background: transparent;
+  border: none;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+}
+
+.order-product-unit {
+  font-size: 11px;
+  color: rgba(34,31,30,.45);
+}
+
+.order-product-remove {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: rgba(34,31,30,.35);
+  flex-shrink: 0;
+  line-height: 0;
+}
+.order-product-remove:hover { color: var(--danger, #c00); }
+
+.order-product-row.is-low {
+  border: 1px solid rgba(200,48,48,.45);
+  background: rgba(200,48,48,.08);
+}
+.order-product-row.is-low .order-product-name { color: #c83030; }
+.order-product-row.is-low .order-product-qty-wrap {
+  border-color: rgba(200,48,48,.55);
+  background: rgba(200,48,48,.12);
+}
+.order-product-row.is-low .order-product-qty { color: #c83030; }
+.order-product-row.is-low .order-product-unit { color: rgba(200,48,48,.7); }
+

@@ -484,7 +484,18 @@
             </select>
           </div>
         </div>
-        <div class="form-field">
+        <!-- Selector de productes (nova comanda) -->
+        <div class="form-field" id="order-product-picker" hidden>
+          <label class="form-label">Articles *</label>
+          <div class="order-search-wrap">
+            <input class="form-input" id="f-order-product-search" type="text"
+                   placeholder="Cerca producte…" autocomplete="off">
+            <div class="order-product-dropdown" id="order-product-dropdown" hidden></div>
+          </div>
+          <div class="order-product-list" id="order-product-list"></div>
+        </div>
+        <!-- Descripció lliure / taula (editar comanda existent) -->
+        <div class="form-field" id="order-desc-field">
           <label class="form-label" id="label-order-desc" for="f-order-desc">Articles / Descripció *</label>
           <textarea class="form-textarea" id="f-order-desc" placeholder="Detall dels articles demanats…" style="min-height:90px"></textarea>
           <div id="order-desc-table" hidden></div>
@@ -725,6 +736,7 @@
       </form>
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-qty">Desar</button>
+        <button class="btn-danger" id="btn-remove-qty" hidden>Desmarcar</button>
       </div>
     </div>
   </div>

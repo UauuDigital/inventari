@@ -13,6 +13,7 @@ import {
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
   openEditProductModal, saveEditProduct, deleteEditProduct,
+  removeQtyItem,
 } from './catalog.js';
 import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
@@ -327,6 +328,7 @@ function init() {
   // Modal quantitat
   document.getElementById('btn-qty-close').addEventListener('click', closeQtyModal);
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);
+  document.getElementById('btn-remove-qty').addEventListener('click', removeQtyItem);
   document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); saveQty(); });
 
   // Modal editar historial

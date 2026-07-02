@@ -2,32 +2,55 @@ import { state, STATUS_LABELS, STATUS_CSS, saveOrders } from './config.js';
 import { uid, esc, fmtDate, toast } from './helpers.js';
 
 function _parseStructuredDesc(desc) {
-  if (!desc || !desc.includes(': ') || !desc.includes(' u')) return null;
+  if (!desc || !desc.includes(': ')) return null;
   const parts = desc.split(' | ');
   const items = parts.map(p => {
-    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*u$/);
-    return m ? { name: m[1].trim(), qty: parseFloat(m[2]) } : null;
+    // format "nom: 3 c + 2 u"
+    const mCU = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*c\s*\+\s*(\d+(?:\.\d+)?)\s*u$/);
+    if (mCU) return { name: mCU[1].trim(), qty: parseFloat(mCU[2]), unit: 'c', loose: parseFloat(mCU[3]) };
+    // format "nom: 3 c" o "nom: 5 u"
+    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*(u|c)$/);
+    if (m) return { name: m[1].trim(), qty: parseFloat(m[2]), unit: m[3], loose: 0 };
+    return null;
   });
   return items.every(Boolean) && items.length > 0 ? items : null;
 }
 
 function _buildDescTable(items) {
-  return items.map(item => `
+  return items.map(item => {
+    const looseInput = (item.unit === 'c' || item.loose > 0) ? `
+      <label class="order-desc-qty-wrap">
+        <input class="order-desc-qty order-desc-loose" type="number" min="0" step="1"
+               value="${item.loose || 0}" data-name="${esc(item.name)}" data-unit="u">
+        <span class="order-desc-qty-unit">u</span>
+      </label>` : '';
+    return `
     <div class="order-desc-row">
       <span class="order-desc-name">${esc(item.name)}</span>
-      <label class="order-desc-qty-wrap">
-        <input class="order-desc-qty" type="number" min="0" step="1"
-               value="${item.qty}" data-name="${esc(item.name)}">
-        <span class="order-desc-qty-unit">u</span>
-      </label>
-    </div>`).join('');
+      <div style="display:flex;gap:6px;align-items:center">
+        <label class="order-desc-qty-wrap">
+          <input class="order-desc-qty order-desc-main" type="number" min="0" step="1"
+                 value="${item.qty}" data-name="${esc(item.name)}" data-unit="${item.unit || 'u'}">
+          <span class="order-desc-qty-unit">${item.unit || 'u'}</span>
+        </label>
+        ${looseInput}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function _readDescFromTable() {
-  const inputs = document.querySelectorAll('#order-desc-table .order-desc-qty');
-  return Array.from(inputs)
-    .map(inp => `${inp.dataset.name}: ${Math.max(0, parseFloat(inp.value) || 0)} u`)
-    .join(' | ');
+  const rows = document.querySelectorAll('#order-desc-table .order-desc-row');
+  return Array.from(rows).map(row => {
+    const main  = row.querySelector('.order-desc-main');
+    const loose = row.querySelector('.order-desc-loose');
+    const name  = main.dataset.name;
+    const unit  = main.dataset.unit;
+    const qty   = Math.max(0, parseFloat(main.value) || 0);
+    const looseQty = loose ? Math.max(0, parseFloat(loose.value) || 0) : 0;
+    if (unit === 'c' && looseQty > 0) return `${name}: ${qty} c + ${looseQty} u`;
+    return `${name}: ${qty} ${unit}`;
+  }).join(' | ');
 }
 
 export function filteredOrders() {
@@ -95,6 +118,126 @@ export function renderOrders() {
   `).join('');
 }
 
+// ── PRODUCT PICKER (nova comanda) ────────────────────────────────────
+
+let _orderItems = [];
+
+function _totalOrderUnits(item) {
+  return item.upb > 0 ? item.boxes * item.upb + item.loose : item.loose;
+}
+
+function _updateOrderRowLow(row, item) {
+  const total = _totalOrderUnits(item);
+  row.classList.toggle('is-low', item.minStock > 0 && total < item.minStock);
+}
+
+function _renderOrderProductList() {
+  const el = document.getElementById('order-product-list');
+  if (!el) return;
+  if (!_orderItems.length) {
+    el.innerHTML = `<p class="order-product-empty">Cap producte afegit</p>`;
+    return;
+  }
+  el.innerHTML = _orderItems.map((item, i) => {
+    const hasBoxes = item.upb > 0;
+    const isLow    = item.minStock > 0 && _totalOrderUnits(item) < item.minStock;
+    const lowCls   = isLow ? ' is-low' : '';
+    const qtyInputs = hasBoxes ? `
+      <label class="order-product-qty-wrap">
+        <input class="order-product-qty" type="number" min="0" step="1"
+               value="${item.boxes}" data-idx="${i}" data-field="boxes" placeholder="0">
+        <span class="order-product-unit">c</span>
+      </label>
+      <label class="order-product-qty-wrap">
+        <input class="order-product-qty" type="number" min="0" step="1"
+               value="${item.loose}" data-idx="${i}" data-field="loose" placeholder="0">
+        <span class="order-product-unit">u</span>
+      </label>` : `
+      <label class="order-product-qty-wrap">
+        <input class="order-product-qty" type="number" min="0" step="1"
+               value="${item.loose}" data-idx="${i}" data-field="loose" placeholder="0">
+        <span class="order-product-unit">${item.unit || 'u'}</span>
+      </label>`;
+    return `
+    <div class="order-product-row${lowCls}" data-idx="${i}">
+      <span class="order-product-name">${esc(item.name)}</span>
+      <div class="order-product-qty-group">${qtyInputs}</div>
+      <button class="order-product-remove" data-remove="${i}" aria-label="Treure">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.order-product-qty').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const item = _orderItems[parseInt(inp.dataset.idx)];
+      const val  = Math.max(0, parseFloat(inp.value) || 0);
+      if (inp.dataset.field === 'boxes') item.boxes = val;
+      else item.loose = val;
+      _updateOrderRowLow(inp.closest('.order-product-row'), item);
+    });
+  });
+  el.querySelectorAll('.order-product-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _orderItems.splice(parseInt(btn.dataset.remove), 1);
+      _renderOrderProductList();
+    });
+  });
+}
+
+function _initProductSearch() {
+  const old = document.getElementById('f-order-product-search');
+  if (!old) return;
+  const input = old.cloneNode(true);
+  old.replaceWith(input);
+  const dropdown = document.getElementById('order-product-dropdown');
+  if (!dropdown) return;
+
+  input.value = '';
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { dropdown.hidden = true; dropdown.innerHTML = ''; return; }
+    const matches = state.catalog
+      .filter(p => p.name.toLowerCase().includes(q))
+      .slice(0, 8);
+    if (!matches.length) { dropdown.hidden = true; return; }
+    dropdown.hidden = false;
+    dropdown.innerHTML = matches.map(p => {
+      const upb      = p.unitsPerBox || 0;
+      const unit     = p.unit || 'u';
+      const minStock = p.minStock || 0;
+      const meta     = upb > 0 ? `${upb} ${unit}/c` : unit;
+      return `<div class="order-product-option"
+          data-name="${esc(p.name)}"
+          data-upb="${upb}"
+          data-unit="${esc(unit)}"
+          data-minstock="${minStock}">
+          ${esc(p.name)}
+          <span class="order-product-option-meta">${esc(meta)}</span>
+        </div>`;
+    }).join('');
+    dropdown.querySelectorAll('.order-product-option').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const name     = opt.dataset.name;
+        const upb      = parseInt(opt.dataset.upb)      || 0;
+        const unit     = opt.dataset.unit               || 'u';
+        const minStock = parseFloat(opt.dataset.minstock) || 0;
+        if (!_orderItems.find(i => i.name === name)) {
+          _orderItems.push({ name, upb, unit, minStock, boxes: upb > 0 ? 1 : 0, loose: upb > 0 ? 0 : 1 });
+          _renderOrderProductList();
+        }
+        input.value     = '';
+        dropdown.hidden = true;
+      });
+    });
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => { dropdown.hidden = true; }, 150);
+  });
+}
+
 export function openOrderModal(order = null) {
   state.editingOrderId = order?.id || null;
   document.getElementById('modal-order-title').textContent = order ? 'Editar comanda' : 'Nova comanda';
@@ -106,23 +249,38 @@ export function openOrderModal(order = null) {
   document.getElementById('f-order-status').value   = order?.status   ?? 'pendent';
   document.getElementById('f-order-notes').value    = order?.notes    ?? '';
 
-  const structured = _parseStructuredDesc(order?.desc ?? '');
-  const textarea   = document.getElementById('f-order-desc');
-  const table      = document.getElementById('order-desc-table');
-  const label      = document.getElementById('label-order-desc');
-  if (structured) {
-    textarea.hidden    = true;
-    table.hidden       = false;
-    table.innerHTML    = _buildDescTable(structured);
-    label.textContent  = 'Articles';
-    label.removeAttribute('for');
+  const picker   = document.getElementById('order-product-picker');
+  const descField = document.getElementById('order-desc-field');
+
+  if (!order) {
+    // Nova comanda — mostra el selector de productes
+    _orderItems = [];
+    picker.hidden   = false;
+    descField.hidden = true;
+    _renderOrderProductList();
+    _initProductSearch();
   } else {
-    textarea.hidden    = false;
-    textarea.value     = order?.desc ?? '';
-    table.hidden       = true;
-    table.innerHTML    = '';
-    label.textContent  = 'Articles / Descripció *';
-    label.setAttribute('for', 'f-order-desc');
+    // Editar comanda existent — mostra el camp de descripció
+    picker.hidden   = true;
+    descField.hidden = false;
+    const structured = _parseStructuredDesc(order?.desc ?? '');
+    const textarea   = document.getElementById('f-order-desc');
+    const table      = document.getElementById('order-desc-table');
+    const label      = document.getElementById('label-order-desc');
+    if (structured) {
+      textarea.hidden   = true;
+      table.hidden      = false;
+      table.innerHTML   = _buildDescTable(structured);
+      label.textContent = 'Articles';
+      label.removeAttribute('for');
+    } else {
+      textarea.hidden   = false;
+      textarea.value    = order?.desc ?? '';
+      table.hidden      = true;
+      table.innerHTML   = '';
+      label.textContent = 'Articles / Descripció *';
+      label.setAttribute('for', 'f-order-desc');
+    }
   }
 
   document.getElementById('modal-order').classList.add('open');
@@ -135,17 +293,39 @@ export function closeOrderModal() {
 }
 
 export function saveOrder() {
-  const tableEl = document.getElementById('order-desc-table');
-  const useTable = !tableEl.hidden;
-  const desc = useTable
-    ? _readDescFromTable()
-    : document.getElementById('f-order-desc').value.trim();
-  if (!useTable && !desc) {
-    const el = document.getElementById('f-order-desc');
-    el.focus();
-    el.style.borderColor = 'rgba(176,32,32,0.5)';
-    setTimeout(() => { el.style.borderColor = ''; }, 1200);
-    return;
+  const pickerVisible = !document.getElementById('order-product-picker').hidden;
+  let desc;
+  if (pickerVisible) {
+    const items = _orderItems.filter(i => (i.boxes || 0) + (i.loose || 0) > 0);
+    if (!items.length) {
+      const inp = document.getElementById('f-order-product-search');
+      inp.focus();
+      inp.style.borderColor = 'rgba(176,32,32,0.5)';
+      setTimeout(() => { inp.style.borderColor = ''; }, 1200);
+      return;
+    }
+    desc = items.map(i => {
+      if (i.upb > 0) {
+        const parts = [];
+        if (i.boxes > 0) parts.push(`${i.boxes} c`);
+        if (i.loose > 0) parts.push(`${i.loose} u`);
+        return `${i.name}: ${parts.join(' + ')}`;
+      }
+      return `${i.name}: ${i.loose} u`;
+    }).join(' | ');
+  } else {
+    const tableEl  = document.getElementById('order-desc-table');
+    const useTable = !tableEl.hidden;
+    desc = useTable
+      ? _readDescFromTable()
+      : document.getElementById('f-order-desc').value.trim();
+    if (!useTable && !desc) {
+      const el = document.getElementById('f-order-desc');
+      el.focus();
+      el.style.borderColor = 'rgba(176,32,32,0.5)';
+      setTimeout(() => { el.style.borderColor = ''; }, 1200);
+      return;
+    }
   }
   const data = {
     ref:       document.getElementById('f-order-ref').value.trim(),

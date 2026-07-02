@@ -28,6 +28,15 @@ document.addEventListener('click', e => {
     const id  = editBtn.dataset.editHistorial;
     const row = _historialRows.find(r => r[0] === id);
     if (row) openEditHistorialModal(row);
+    return;
+  }
+
+  const removeBtn = e.target.closest('[data-remove-item]');
+  if (removeBtn) {
+    state.items = state.items.filter(i => i.id !== removeBtn.dataset.removeItem);
+    saveItems();
+    renderStats();
+    renderStatsStrip();
   }
 });
 
@@ -117,9 +126,17 @@ export function renderStats() {
     groups.forEach((items, catName) => {
       html += `<div class="stats-section-title">${esc(catName)}</div>`;
       items.forEach(item => {
-        const looseVal = item.looseUnits != null ? item.looseUnits : item.quantity;
-        const boxesVal = item.boxes || '';
-        const unitLbl  = item.unit || 'u';
+        const looseVal  = item.looseUnits != null ? item.looseUnits : item.quantity;
+        const boxesVal  = item.boxes || '';
+        const unitLbl   = item.unit || 'u';
+        const hasBoxes  = (item.unitsPerBox || 0) > 0;
+        const boxesHtml = hasBoxes ? `
+            <div class="stats-qty-field">
+              <input type="number" min="0" class="stats-qty-input"
+                     data-item-id="${esc(item.id)}" data-field="boxes"
+                     value="${boxesVal}" placeholder="0">
+              <span class="stats-qty-unit">c</span>
+            </div>` : '';
         html += `<div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <div class="stats-qty-inputs">
@@ -129,12 +146,10 @@ export function renderStats() {
                      value="${looseVal}" placeholder="0">
               <span class="stats-qty-unit">${esc(unitLbl)}</span>
             </div>
-            <div class="stats-qty-field">
-              <input type="number" min="0" class="stats-qty-input"
-                     data-item-id="${esc(item.id)}" data-field="boxes"
-                     value="${boxesVal}" placeholder="0">
-              <span class="stats-qty-unit">c</span>
-            </div>
+            ${boxesHtml}
+            <button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="Desmarcar ${esc(item.name)}">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
           </div>
         </div>`;
       });

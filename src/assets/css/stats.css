@@ -175,9 +175,21 @@
 
 .stats-qty-inputs {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
+
+.stats-remove-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: rgba(255,255,255,.3);
+  line-height: 0;
+  flex-shrink: 0;
+}
+.stats-remove-btn:hover { color: rgba(255,255,255,.8); }
 .stats-qty-field {
   display: flex;
   align-items: center;
@@ -441,6 +453,12 @@
 .coord-order-row.is-low { border-color: rgba(200,48,48,.45); background: rgba(200,48,48,.1); }
 .coord-order-row.is-low .coord-order-name  { color: var(--danger); }
 .coord-order-row.is-low .coord-order-stock { color: var(--danger); opacity: .8; }
+.coord-order-row.is-low .coord-order-qty-wrap {
+  border-color: rgba(200,48,48,.6);
+  background: rgba(200,48,48,.15);
+}
+.coord-order-row.is-low .coord-order-qty { color: var(--danger); }
+.coord-order-row.is-low .coord-order-qty-unit { color: rgba(200,48,48,.7); }
 .coord-order-name  { flex: 1; font-size: 14px; color: var(--text); }
 .coord-order-stock { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
 .coord-order-qty-wrap {

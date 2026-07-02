@@ -455,6 +455,7 @@ export function openQtyModal(idx) {
   boxesInput.value = existing?.boxes != null ? existing.boxes : '';
   unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
 
+  document.getElementById('btn-remove-qty').hidden = !existing;
   document.getElementById('modal-qty').classList.add('open');
   setTimeout(() => { unitsInput.focus(); unitsInput.select(); }, 350);
 }
@@ -462,6 +463,16 @@ export function openQtyModal(idx) {
 export function closeQtyModal() {
   document.getElementById('modal-qty').classList.remove('open');
   state.editingCatalogIdx = null;
+}
+
+export function removeQtyItem() {
+  const product = state.catalog[state.editingCatalogIdx];
+  if (!product) return;
+  state.items = state.items.filter(i => i.name.toLowerCase() !== product.name.toLowerCase());
+  saveItems();
+  closeQtyModal();
+  toast(`${product.name} desmarcat`);
+  renderCatalogView();
 }
 
 export function saveQty() {
