@@ -60,9 +60,9 @@ export function renderOrders() {
           ${o.ref  ? `<span class="order-ref">${esc(o.ref)}</span>`   : ''}
           ${o.date ? `<span class="order-date">${fmtDate(o.date)}</span>` : ''}
         </div>
-        <span class="order-status-badge ${STATUS_CSS[o.status] || ''}">
+        <button class="order-status-badge ${STATUS_CSS[o.status] || ''}" data-cycle-status="${o.id}" title="Clic per canviar estat">
           ${esc(STATUS_LABELS[o.status] || o.status)}
-        </span>
+        </button>
       </div>
       ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
       ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
@@ -178,6 +178,18 @@ export function deleteOrder() {
   closeOrderModal();
   renderOrders();
   toast('Comanda eliminada');
+}
+
+const _statusCycle = ['pendent', 'en_curs', 'rebuda'];
+export function cycleOrderStatus(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  const idx = _statusCycle.indexOf(o.status);
+  o.status    = _statusCycle[(idx + 1) % _statusCycle.length];
+  o.updatedAt = new Date().toISOString();
+  saveOrders();
+  renderOrders();
+  toast(`Estat: ${STATUS_LABELS[o.status]}`);
 }
 
 export function deleteOrderDirect(id) {

@@ -38,6 +38,8 @@ function _fmtTime(str) {
 let _casaments     = [];
 let _selectedMasia = null;
 let _lastUpdated   = null;
+let _detallFilter  = 'tots';
+let _detallSearch  = '';
 
 function _parseRows(rows) {
   if (rows.length < 2) return [];
@@ -167,16 +169,51 @@ function _renderMasies() {
   });
 }
 
+// ── BUILD LLISTA HTML ─────────────────────────────────────────────────────
+
+function _buildLlista(llista) {
+  if (!llista.length) return '<p class="cas-empty">Sense resultats</p>';
+  return llista.map(c => {
+    const intolHtml = c.intol ? esc(c.intol).replace(/\n/g, '<br>') : '';
+    return `
+    <div class="cas-item">
+      <div class="cas-item-row">
+        <span class="cas-item-nom">${esc(c.nom)}</span>
+        <span class="cas-item-meta">
+          ${c.adults ? `<span class="cas-item-adults">${c.adults} adults</span>` : ''}
+          ${c.data   ? `<span class="cas-item-hora">${esc(_fmtTime(c.data))}</span>` : ''}
+        </span>
+      </div>
+      ${intolHtml ? `
+      <details class="cas-intol-details">
+        <summary class="cas-intol-summary">Comentaris</summary>
+        <div class="cas-intol-body">${intolHtml}</div>
+      </details>` : '<p class="cas-intol-none">Sense comentaris registrats</p>'}
+    </div>`;
+  }).join('');
+}
+
 // ── LEVEL 2: wedding list for one masia ──────────────────────────────────
 
 function _renderDetall() {
   const el = document.getElementById('casaments-content');
   if (!el) return;
 
-  const label  = MASIA_LABELS[_selectedMasia] || _selectedMasia;
-  const color  = MASIA_COLORS[_selectedMasia] || '#ccc';
-  const llista = _casaments.filter(c => c.masiaId === _selectedMasia);
-  const total  = llista.reduce((s, c) => s + c.adults, 0);
+  const label   = MASIA_LABELS[_selectedMasia] || _selectedMasia;
+  const color   = MASIA_COLORS[_selectedMasia] || '#ccc';
+  const all     = _casaments.filter(c => c.masiaId === _selectedMasia);
+  const total   = all.reduce((s, c) => s + c.adults, 0);
+  const now     = Date.now();
+
+  let llista = all;
+  if (_detallFilter === 'proxims') llista = llista.filter(c => !c.sortTs || c.sortTs >= now);
+  if (_detallSearch) {
+    const q = _detallSearch.toLowerCase();
+    llista = llista.filter(c =>
+      c.nom.toLowerCase().includes(q) || c.intol.toLowerCase().includes(q)
+    );
+  }
+
   el.innerHTML = `
     <div class="cas-detall-header">
       <button class="cas-back-btn" id="cas-back">
@@ -189,30 +226,41 @@ function _renderDetall() {
       </span>
       <span class="cas-detall-total">${total} adults</span>
     </div>
-    <div class="cas-detall-list">
-      ${llista.length ? llista.map(c => {
-        const intolHtml = c.intol ? esc(c.intol).replace(/\n/g, '<br>') : '';
-        return `
-        <div class="cas-item">
-          <div class="cas-item-row">
-            <span class="cas-item-nom">${esc(c.nom)}</span>
-            <span class="cas-item-meta">
-              ${c.adults ? `<span class="cas-item-adults">${c.adults} adults</span>` : ''}
-              ${c.data   ? `<span class="cas-item-hora">${esc(_fmtTime(c.data))}</span>` : ''}
-            </span>
-          </div>
-          ${intolHtml ? `
-          <details class="cas-intol-details">
-            <summary class="cas-intol-summary">Comentaris</summary>
-            <div class="cas-intol-body">${intolHtml}</div>
-          </details>` : '<p class="cas-intol-none">Sense intoleràncies registrades</p>'}
-        </div>`;
-      }).join('') : '<p class="cas-empty">Sense casaments per a aquesta finca</p>'}
+    <div class="cas-detall-toolbar">
+      <div class="casaments-filters">
+        <button class="filter-pill${_detallFilter === 'tots'    ? ' active' : ''}" data-df="tots">Tots</button>
+        <button class="filter-pill${_detallFilter === 'proxims' ? ' active' : ''}" data-df="proxims">Pròxims</button>
+      </div>
+      <input class="casaments-search-input" id="cas-search" placeholder="Cercar nom, al·lèrgia…"
+             value="${esc(_detallSearch)}" autocomplete="off">
+    </div>
+    <div class="cas-detall-list" id="cas-detall-list">
+      ${_buildLlista(llista)}
     </div>`;
 
   document.getElementById('cas-back').addEventListener('click', () => {
     _selectedMasia = null;
+    _detallFilter  = 'tots';
+    _detallSearch  = '';
     _renderMasies();
+  });
+  el.querySelectorAll('[data-df]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _detallFilter = btn.dataset.df;
+      _renderDetall();
+    });
+  });
+  document.getElementById('cas-search').addEventListener('input', e => {
+    _detallSearch = e.target.value;
+    let filtered = all;
+    if (_detallFilter === 'proxims') filtered = filtered.filter(c => !c.sortTs || c.sortTs >= now);
+    if (_detallSearch) {
+      const q = _detallSearch.toLowerCase();
+      filtered = filtered.filter(c =>
+        c.nom.toLowerCase().includes(q) || c.intol.toLowerCase().includes(q)
+      );
+    }
+    document.getElementById('cas-detall-list').innerHTML = _buildLlista(filtered);
   });
 }
 

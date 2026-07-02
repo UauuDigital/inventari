@@ -211,12 +211,21 @@ function _fireIframe(url) {
   setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 8000);
 }
 
+export function updateOfflineQueueBadge() {
+  const badge = document.getElementById('offline-sync-badge');
+  if (!badge) return;
+  const count = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]').length;
+  badge.hidden = count === 0;
+  badge.textContent = count === 1 ? '1 enviament pendent' : `${count} enviaments pendents`;
+}
+
 export function sendToSheet(gasUrl, params) {
   const url = `${gasUrl}?${params}`;
   if (!navigator.onLine) {
     const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
     queue.push(url);
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+    updateOfflineQueueBadge();
     toast('Sense connexió — s\'enviarà quan hi hagi WiFi');
     return;
   }
@@ -228,5 +237,6 @@ export function drainOfflineQueue() {
   if (!queue.length) return;
   queue.forEach(url => _fireIframe(url));
   localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  updateOfflineQueueBadge();
   toast(`${queue.length} ${queue.length === 1 ? 'enviament pendent enviat' : 'enviaments pendents enviats'}`);
 }

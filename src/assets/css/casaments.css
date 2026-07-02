@@ -162,6 +162,13 @@
   flex-shrink: 0;
 }
 
+.cas-detall-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 0;
+}
+
 .cas-detall-list {
   display: flex;
   flex-direction: column;
@@ -262,6 +269,22 @@
   color: var(--text-dim, rgba(255,255,255,.35));
   margin: 8px 0 0;
 }
+
+.casaments-search-input {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  padding: 9px 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.casaments-search-input::placeholder { color: rgba(255,255,255,.35); }
+.casaments-search-input:focus { border-color: rgba(255,255,255,.32); }
+
+.casaments-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .cas-empty {
   padding: 40px 0;

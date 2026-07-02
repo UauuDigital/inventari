@@ -5,6 +5,8 @@ import { loadCatalog } from './catalog.js';
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
 let _editingHistorialId    = null;
 let _editingHistorialItems = [];
+let _historialPage         = 0;
+const HIST_PAGE_SIZE       = 20;
 import { setView } from './main.js';
 
 // ── HISTORIAL DELETE / EDIT (document-level, attached once) ──────────
@@ -30,6 +32,13 @@ document.addEventListener('click', e => {
 });
 
 // ── STATS QTY INPUTS (document-level, attached once) ─────────────────
+let _pendingQtyChange = false;
+
+function _updatePendingBanner() {
+  const banner = document.getElementById('pending-changes-banner');
+  if (banner) banner.hidden = !_pendingQtyChange;
+}
+
 document.addEventListener('change', e => {
   const input = e.target.closest('.stats-qty-input');
   if (!input) return;
@@ -45,6 +54,8 @@ document.addEventListener('change', e => {
   item.updatedAt = new Date().toISOString();
   saveItems();
   renderStatsStrip();
+  _pendingQtyChange = true;
+  _updatePendingBanner();
 });
 
 // ── COMANDA COORDINADOR (document-level, attached once) ───────────────
@@ -128,6 +139,9 @@ export function renderStats() {
         </div>`;
       });
     });
+    html += `<div id="pending-changes-banner" class="pending-changes-banner"${_pendingQtyChange ? '' : ' hidden'}>
+      <span>Canvis pendents d'enviar</span>
+    </div>`;
     html += `<textarea class="inv-comment-input" id="inv-comment" placeholder="Comentari opcional…" rows="3"></textarea>`;
     html += `<button class="btn-send-report" data-action="send-report">Enviar inventari al coordinador</button>`;
     el.innerHTML = html;
@@ -136,8 +150,14 @@ export function renderStats() {
 
   const lowItems  = state.items.filter(i => i.minStock > 0 && i.quantity <= i.minStock);
   const zeroItems = state.items.filter(i => i.quantity === 0);
+  const alertN    = lowItems.length + zeroItems.length;
 
   el.innerHTML = `
+    ${alertN > 0 ? `
+    <div class="low-stock-alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>${alertN} producte${alertN !== 1 ? 's' : ''} per sota del mínim</span>
+    </div>` : ''}
     <div class="stats-section-title">Per categoria</div>
 
     ${state.categories.map(cat => {
@@ -208,6 +228,7 @@ export function sendInventoryReport() {
     comentari: comment,
   });
   sendToSheet(SHEET_APPEND_URL, params.toString());
+  _pendingQtyChange = false;
 
   state.items = [];
   saveItems();
@@ -333,7 +354,13 @@ function _renderHistorialCards() {
     cardsEl.innerHTML = `<div class="reports-loading" style="padding:40px 16px 20px">Sense resultats.</div>`;
     return;
   }
-  cardsEl.innerHTML = data.map(r => _cardHtml(r, role)).join('');
+
+  const visible  = data.slice(0, (_historialPage + 1) * HIST_PAGE_SIZE);
+  const hasMore  = data.length > visible.length;
+  cardsEl.innerHTML = visible.map(r => _cardHtml(r, role)).join('') +
+    (hasMore
+      ? `<button class="load-more-btn" data-load-more>Carregar més (${data.length - visible.length} restants)</button>`
+      : '');
 }
 
 export async function renderReports() {
@@ -344,6 +371,7 @@ export async function renderReports() {
   const role = document.body.dataset.role || 'comensal';
   _historialFilter = new Set(['tot']);
   _historialSearch = '';
+  _historialPage   = 0;
 
   try {
     const res     = await fetch(INVENTARI_URL);
@@ -411,7 +439,12 @@ export async function renderReports() {
 
     document.getElementById('historial-search').addEventListener('input', e => {
       _historialSearch = e.target.value.trim();
+      _historialPage   = 0;
       _renderHistorialCards();
+    });
+
+    document.getElementById('reports-cards').addEventListener('click', e => {
+      if (e.target.closest('[data-load-more]')) { _historialPage++; _renderHistorialCards(); }
     });
 
     document.getElementById('historial-filters').addEventListener('click', e => {
@@ -434,6 +467,7 @@ export async function renderReports() {
       document.querySelectorAll('#historial-filters .filter-pill').forEach(p =>
         p.classList.toggle('active', _historialFilter.has(p.dataset.hfilter))
       );
+      _historialPage = 0;
       _renderHistorialCards();
     });
 

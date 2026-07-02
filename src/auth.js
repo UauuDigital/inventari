@@ -174,6 +174,7 @@ function goBackToMasia() {
   sc.classList.remove('leaving');
   sc.hidden = false;
   void sc.offsetWidth;
+  _loadMasiaTags();
 }
 
 export function showLoginScreen() {

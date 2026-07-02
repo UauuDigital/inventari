@@ -60,6 +60,7 @@
 }
 
 .order-status-badge {
+  font-family: var(--font-sans);
   font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -69,7 +70,11 @@
   padding: 4px 10px;
   white-space: nowrap;
   flex-shrink: 0;
+  background: none;
+  cursor: pointer;
+  transition: opacity .15s;
 }
+.order-status-badge:hover { opacity: .7; }
 .order-status-badge.status-pendent      { color: #D4956A; border-color: rgba(212,149,106,0.45); }
 .order-status-badge.status-en_curs      { color: #7BA4C8; border-color: rgba(123,164,200,0.45); }
 .order-status-badge.status-rebuda       { color: #8AB89A; border-color: rgba(138,184,154,0.45); }

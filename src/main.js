@@ -1,5 +1,5 @@
 import { state, loadData } from './config.js';
-import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, createTagSearch } from './helpers.js';
+import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit } from './auth.js';
 import {
   openItemModal, closeItemModal, saveItem, deleteItem,
@@ -14,7 +14,7 @@ import {
   openNewProductModal, closeNewProductModal, saveNewProduct,
   openEditProductModal, saveEditProduct, deleteEditProduct,
 } from './catalog.js';
-import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder } from './orders.js';
+import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
 import {
   openUserModal, closeUserModal, saveUser, deleteUser,
@@ -163,6 +163,9 @@ document.addEventListener('click', e => {
   const printOrderBtn = e.target.closest('[data-print-order]');
   if (printOrderBtn) { printOrder(printOrderBtn.dataset.printOrder); return; }
 
+  const cycleBtn = e.target.closest('[data-cycle-status]');
+  if (cycleBtn) { cycleOrderStatus(cycleBtn.dataset.cycleStatus); return; }
+
   const delOrderBtn = e.target.closest('[data-delete-order-direct]');
   if (delOrderBtn) { deleteOrderDirect(delOrderBtn.dataset.deleteOrderDirect); return; }
 
@@ -247,8 +250,9 @@ function init() {
   loadData();
   render();
   initUserScreen();
+  updateOfflineQueueBadge();
   drainOfflineQueue();
-  window.addEventListener('online', drainOfflineQueue);
+  window.addEventListener('online', () => { drainOfflineQueue(); updateOfflineQueueBadge(); });
   document.getElementById('btn-logout').addEventListener('click', showUserScreen);
 
   document.getElementById('btn-search').addEventListener('click', toggleSearch);
