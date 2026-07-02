@@ -31,6 +31,7 @@
   overflow: hidden;
 }
 .modal-overlay.open .modal { transform: translateY(0); }
+.modal--tall { height: 92dvh; }
 
 .modal-handle {
   width: 34px;

@@ -17,7 +17,10 @@ export async function loadCatalog() {
     const res  = await fetch(CATALOG_URL + '&t=' + Date.now(), { cache: 'no-store' });
     const text = await res.text();
     const rows = parseCSV(text);
-    if (rows.length < 2) return;
+    if (rows.length < 2) {
+      state.catalogReady = true;
+      return;
+    }
 
     const headers = rows[0].map(h => String(h).toLowerCase().trim());
     const iId    = headers.indexOf('id');

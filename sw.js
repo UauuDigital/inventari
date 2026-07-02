@@ -1,4 +1,4 @@
-const CACHE = 'uauu-inv-v56';
+const CACHE = 'uauu-inv-v66';
 
 const ASSETS = [
   './',
@@ -26,6 +26,7 @@ const ASSETS = [
   './src/stats.js',
   './src/casaments.js',
   './src/estadistiques.js',
+  './src/help.js',
   './src/assets/css/estadistiques.css',
   './manifest.json',
   './src/assets/icons/icon.svg',

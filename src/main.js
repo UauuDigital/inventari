@@ -28,6 +28,7 @@ import {
 } from './stats.js';
 import { renderCasamentsView } from './casaments.js';
 import { renderEstadistiques } from './estadistiques.js';
+import { openHelpModal, closeHelpModal } from './help.js';
 
 // ── RENDER ───────────────────────────────────────────────────────────
 
@@ -256,6 +257,11 @@ function init() {
   updateOfflineQueueBadge();
   drainOfflineQueue();
   window.addEventListener('online', () => { drainOfflineQueue(); updateOfflineQueueBadge(); });
+  document.getElementById('btn-help').addEventListener('click', openHelpModal);
+  document.getElementById('btn-help-close').addEventListener('click', closeHelpModal);
+  document.getElementById('modal-help').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeHelpModal();
+  });
   document.getElementById('btn-logout').addEventListener('click', showUserScreen);
 
   document.getElementById('btn-search').addEventListener('click', toggleSearch);

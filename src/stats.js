@@ -11,15 +11,33 @@ import { setView } from './main.js';
 
 // ── HISTORIAL DELETE / EDIT (document-level, attached once) ──────────
 document.addEventListener('click', e => {
+  // Primer clic: mostra confirmació inline a la targeta
   const delBtn = e.target.closest('[data-delete-historial]');
-  if (delBtn) {
-    const id = delBtn.dataset.deleteHistorial;
-    if (!confirm('Eliminar aquesta entrada permanentment?\nAquesta acció no es pot desfer.')) return;
-    const params = new URLSearchParams({ action: 'delete-historial', id });
-    sendToSheet(SHEET_APPEND_URL, params.toString());
+  if (delBtn && !delBtn.dataset.confirming) {
+    delBtn.dataset.confirming = '1';
+    delBtn.textContent = 'Confirmar?';
+    delBtn.style.cssText = 'color:#c83030;font-size:11px;font-weight:600;padding:0 6px;background:rgba(200,48,48,.12);border-radius:6px;border:1px solid rgba(200,48,48,.35)';
+    setTimeout(() => {
+      if (delBtn.dataset.confirming) {
+        delete delBtn.dataset.confirming;
+        delBtn.textContent = '';
+        delBtn.style.cssText = '';
+        delBtn.innerHTML = _deleteIcon;
+      }
+    }, 3000);
+    return;
+  }
+
+  // Segon clic: confirmat, elimina
+  if (delBtn && delBtn.dataset.confirming) {
+    const id  = delBtn.dataset.deleteHistorial;
+    const url = `${SHEET_APPEND_URL}?action=delete-historial&id=${encodeURIComponent(id)}`;
+    toast(`Eliminant… (id: ${id.slice(-6)})`);
+    fetch(url, { mode: 'no-cors' })
+      .then(() => toast('Petició enviada al full'))
+      .catch(() => toast('Error de xarxa al eliminar'));
     _historialRows = _historialRows.filter(r => r[0] !== id);
     _renderHistorialCards();
-    toast('Entrada eliminada');
     return;
   }
 
@@ -392,6 +410,15 @@ export async function renderReports() {
     const res     = await fetch(INVENTARI_URL);
     const text    = await res.text();
     const rows    = parseCSV(text);
+
+    // Full buit (sense capçaleres ni dades) → estat buit normal
+    if (rows.length === 0 || (rows.length === 1 && rows[0].every(c => !c.trim()))) {
+      _historialRows = [];
+      await loadCatalog();
+      el.innerHTML = `<p class="stats-empty">Cap inventari registrat encara.</p>`;
+      return;
+    }
+
     const headers = (rows[0] || []).map(h => h.toLowerCase().trim());
 
     const isCorrectSheet = headers.some(h => h === 'inventari' || h === 'data' || h === 'hora');
@@ -410,7 +437,12 @@ export async function renderReports() {
       data = data.filter(r => r[masiaIdx] === state.masia);
     }
 
-    _historialRows = [...data].reverse();
+    // Normalitza l'ID (columna 0) de notació científica a enter string
+    const normId = v => {
+      const n = Number(v);
+      return (!isNaN(n) && isFinite(n) && String(n) !== v) ? String(Math.round(n)) : String(v);
+    };
+    _historialRows = [...data].reverse().map(r => { const c = [...r]; c[0] = normId(c[0]); return c; });
     await loadCatalog();
 
     if (!_historialRows.length) {
