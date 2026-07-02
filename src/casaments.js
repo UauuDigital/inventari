@@ -264,6 +264,19 @@ function _renderDetall() {
   });
 }
 
+// ── DATA ACCESS (per estadistiques.js) ───────────────────────────────────
+
+export function getCasamentsData() { return _casaments; }
+
+export async function ensureCasamentsLoaded() {
+  if (_casaments.length) return;
+  try {
+    const res  = await fetch(`${CASAMENTS_URL}&t=${Date.now()}`, { cache: 'no-store' });
+    const text = await res.text();
+    _casaments = _parseRows(parseCSV(text));
+  } catch { }
+}
+
 // ── ENTRY POINT ──────────────────────────────────────────────────────────
 
 export async function renderCasamentsView() {
