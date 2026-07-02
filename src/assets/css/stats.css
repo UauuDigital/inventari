@@ -420,7 +420,8 @@
 .coord-order-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(255,255,255,.05);
@@ -452,6 +453,19 @@
   outline: none;
 }
 .coord-order-qty-unit { font-size: 11px; color: var(--text-dim); }
+
+.coord-order-hint {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill, 99px);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.coord-order-hint--mitja {
+  background: rgba(123,164,200,.12);
+  border: 1px solid rgba(123,164,200,.3);
+  color: #7BA4C8;
+}
 
 /* ── EDIT HISTORIAL MODAL ────────────────────────────────────────── */
 
