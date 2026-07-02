@@ -61,8 +61,8 @@ export async function tryRestoreSession() {
     const profile = JSON.parse(profileStr);
     state.authProfile = profile;
     state.accessToken = token;
-    const rolToUser = { comensal: 'Comensal', coordinador: 'Coordinador', admin: 'Admin' };
-    state.user = rolToUser[(profile.rol || '').toLowerCase()] || localStorage.getItem('uauu_inv_user') || 'Comensal';
+    const rolToUser = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
+    state.user = rolToUser[(profile.rol || '').toLowerCase()] || localStorage.getItem('uauu_inv_user') || 'Encarregat';
     const savedMasia = localStorage.getItem(STORAGE_MASIA);
     if ((profile.rol || '').toLowerCase() === 'comensal' && savedMasia) state.masia = savedMasia;
     return true;
@@ -75,7 +75,8 @@ export function updateHeaderUser() {
   const nameEl = document.getElementById('user-pill-name');
   if (nameEl) nameEl.textContent = profile.nom || state.user;
   const roleEl = document.getElementById('user-pill-role');
-  if (roleEl) { roleEl.textContent = profile.rol || ''; roleEl.hidden = !profile.rol; }
+  const ROL_DISPLAY = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
+  if (roleEl) { roleEl.textContent = ROL_DISPLAY[profile.rol] || profile.rol || ''; roleEl.hidden = !profile.rol; }
 }
 
 // ── MASIA INVENTORY TAGS ─────────────────────────────────────────────
@@ -257,6 +258,7 @@ export async function handleLoginSubmit(e) {
 // ── ROLE / USER SELECTION ────────────────────────────────────────────
 
 export const ROLE_MAP = {
+  'Encarregat':  'comensal',
   'Comensal':    'comensal',
   'Começal':     'comensal',
   'Coordinador': 'coordinador',

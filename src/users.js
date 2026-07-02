@@ -1,7 +1,7 @@
 import { state, SUPABASE_KEY, MANAGE_USERS_URL, STORAGE_ACCESS_TOKEN, MASIA_LABELS } from './config.js';
 import { esc, toast } from './helpers.js';
 
-export const ROL_LABELS = { comensal: 'Comensal', coordinador: 'Coordinador', admin: 'Admin' };
+export const ROL_LABELS = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
 
 async function callManageUsers(action, payload = {}) {
   const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);

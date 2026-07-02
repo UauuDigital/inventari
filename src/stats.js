@@ -233,8 +233,8 @@ export function sendInventoryReport() {
   state.items = [];
   saveItems();
   renderStats();
-  toast('Inventari enviat al coordinador');
-  setView('catalog');
+  toast('Inventari enviat. Comprova\'l a l\'historial.');
+  setView('reports');
   renderStatsStrip();
 }
 
@@ -313,7 +313,7 @@ function _cardHtml(r, role) {
           ${authorHtml}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="report-count-badge">${items.length} productes</span>
+          ${role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`}
           ${editBtn}
           ${genComandaBtn}
           ${delBtn}
@@ -408,7 +408,7 @@ export async function renderReports() {
           <p class="empty-title">Sense historial</p>
           <p class="empty-text">${role === 'comensal'
             ? 'Els teus inventaris enviats i productes creats apareixeran aquí.'
-            : 'Els comensals enviaran informes quan acabin l\'inventari.'}</p>
+            : 'Els encarregats enviaran informes quan acabin l\'inventari.'}</p>
         </div>`;
       return;
     }

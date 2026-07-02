@@ -206,7 +206,6 @@ function _renderDetall() {
   const now     = Date.now();
 
   let llista = all;
-  if (_detallFilter === 'proxims') llista = llista.filter(c => !c.sortTs || c.sortTs >= now);
   if (_detallSearch) {
     const q = _detallSearch.toLowerCase();
     llista = llista.filter(c =>
@@ -227,10 +226,6 @@ function _renderDetall() {
       <span class="cas-detall-total">${total} adults</span>
     </div>
     <div class="cas-detall-toolbar">
-      <div class="casaments-filters">
-        <button class="filter-pill${_detallFilter === 'tots'    ? ' active' : ''}" data-df="tots">Tots</button>
-        <button class="filter-pill${_detallFilter === 'proxims' ? ' active' : ''}" data-df="proxims">Pròxims</button>
-      </div>
       <input class="casaments-search-input" id="cas-search" placeholder="Cercar nom, al·lèrgia…"
              value="${esc(_detallSearch)}" autocomplete="off">
     </div>
@@ -244,16 +239,9 @@ function _renderDetall() {
     _detallSearch  = '';
     _renderMasies();
   });
-  el.querySelectorAll('[data-df]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      _detallFilter = btn.dataset.df;
-      _renderDetall();
-    });
-  });
   document.getElementById('cas-search').addEventListener('input', e => {
     _detallSearch = e.target.value;
     let filtered = all;
-    if (_detallFilter === 'proxims') filtered = filtered.filter(c => !c.sortTs || c.sortTs >= now);
     if (_detallSearch) {
       const q = _detallSearch.toLowerCase();
       filtered = filtered.filter(c =>
