@@ -26,6 +26,7 @@ import {
   closeEditHistorialModal, saveEditHistorial,
 } from './stats.js';
 import { renderCasamentsView } from './casaments.js';
+import { renderEstadistiques } from './estadistiques.js';
 
 // ── RENDER ───────────────────────────────────────────────────────────
 
@@ -124,7 +125,8 @@ export function setView(view) {
   if (view === 'orders')  renderOrders();
   if (view === 'catalog') renderCatalogView();
   if (view === 'reports')   renderReports();
-  if (view === 'casaments') renderCasamentsView();
+  if (view === 'casaments')    renderCasamentsView();
+  if (view === 'estadistiques') renderEstadistiques();
   if (view === 'users')     renderUsers();
 }
 

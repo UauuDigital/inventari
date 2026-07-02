@@ -1,0 +1,128 @@
+.est-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.est-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 20px 16px 16px;
+}
+
+.est-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 14px;
+}
+
+.est-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.est-donut-wrap {
+  flex-shrink: 0;
+}
+
+.donut-svg {
+  width: 160px;
+  height: 160px;
+}
+
+.donut-center-val {
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--white);
+  font-family: var(--font-serif, serif);
+}
+
+.donut-center-lbl {
+  font-size: 10px;
+  fill: var(--text-dim);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.est-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.est-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.est-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.est-legend-label {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.est-legend-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.est-legend-meta strong {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.est-legend-more { list-style: none; padding: 0; margin: 0; }
+
+.est-legend-expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.est-legend-expand-btn:hover { color: var(--white); }
+
+.est-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.est-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: rgba(22, 20, 18, 0.95);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,.12);
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}

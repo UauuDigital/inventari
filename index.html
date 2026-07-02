@@ -263,6 +263,11 @@
       <div id="casaments-content"></div>
     </div>
 
+    <!-- VIEW: ESTADÍSTIQUES (Coordinador + Admin) -->
+    <div id="view-estadistiques" class="view-panel" hidden>
+      <div id="estadistiques-content"></div>
+    </div>
+
     <!-- VIEW: COMANDES (Coordinador + Admin) -->
     <div id="view-orders" class="view-panel" hidden>
       <div class="orders-filter-strip" id="orders-filter-strip">
@@ -349,6 +354,13 @@
         <path d="M9 16l2 2 4-4"/>
       </svg>
       Casaments
+    </button>
+    <button class="nav-tab role-coord-only role-admin-only" data-view="estadistiques" aria-label="Estadístiques" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 3v9l5 3"/>
+      </svg>
+      Estadístiques
     </button>
     <button class="nav-tab role-admin-only" data-view="users" aria-label="Usuaris" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
