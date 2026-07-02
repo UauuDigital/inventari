@@ -447,7 +447,7 @@
 .form-hint-inline {
   font-weight: 400;
   font-size: 11px;
-  color: var(--text-dim);
+  color: rgba(34,31,30,0.45);
   text-transform: none;
   letter-spacing: 0;
 }

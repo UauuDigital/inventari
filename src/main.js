@@ -1,6 +1,6 @@
 import { state, loadData } from './config.js';
 import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch } from './helpers.js';
-import { initUserScreen, showUserScreen, handleLoginSubmit } from './auth.js';
+import { initUserScreen, showUserScreen, handleLoginSubmit, openChangePasswordModal, closeChangePasswordModal, saveChangePassword } from './auth.js';
 import {
   openItemModal, closeItemModal, saveItem, deleteItem,
   openCatModal,  closeCatModal,  saveCat,  deleteCategory,
@@ -243,8 +243,10 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('modal-qty').classList.contains('open'))         { closeQtyModal();        return; }
   if (document.getElementById('modal-new-product').classList.contains('open'))    { closeNewProductModal();    return; }
   if (document.getElementById('modal-gas').classList.contains('open'))           { closeGasModal();           return; }
-  if (document.getElementById('modal-edit-historial').classList.contains('open')){ closeEditHistorialModal();  return; }
-  if (document.getElementById('modal-scan').classList.contains('open'))          { closeScanModal();           return; }
+  if (document.getElementById('modal-edit-historial').classList.contains('open')){ closeEditHistorialModal();     return; }
+  if (document.getElementById('modal-scan').classList.contains('open'))          { closeScanModal();              return; }
+  if (document.getElementById('modal-change-password').classList.contains('open')){ closeChangePasswordModal();  return; }
+  if (document.getElementById('modal-help').classList.contains('open'))           { closeHelpModal();             return; }
   if (state.searchOpen) toggleSearch();
 });
 
@@ -257,6 +259,12 @@ function init() {
   updateOfflineQueueBadge();
   drainOfflineQueue();
   window.addEventListener('online', () => { drainOfflineQueue(); updateOfflineQueueBadge(); });
+  document.getElementById('btn-change-password').addEventListener('click', openChangePasswordModal);
+  document.getElementById('btn-chpw-close').addEventListener('click', closeChangePasswordModal);
+  document.getElementById('btn-chpw-save').addEventListener('click', saveChangePassword);
+  document.getElementById('modal-change-password').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeChangePasswordModal();
+  });
   document.getElementById('btn-help').addEventListener('click', openHelpModal);
   document.getElementById('btn-help-close').addEventListener('click', closeHelpModal);
   document.getElementById('modal-help').addEventListener('click', e => {

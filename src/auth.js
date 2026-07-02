@@ -224,7 +224,7 @@ export async function handleLoginSubmit(e) {
   try {
     const authData = await supabaseSignIn(email, password);
     const meta = authData.user?.user_metadata || {};
-    const profile = { id: authData.user?.id, nom: meta.nom, rol: meta.rol, masia: meta.masia || null };
+    const profile = { id: authData.user?.id, email: authData.user?.email || email, nom: meta.nom, rol: meta.rol, masia: meta.masia || null };
     if (!profile.rol) throw new Error('Perfil sense rol — afegeix user_metadata a Supabase');
 
     const expectedRole = ROLE_MAP[state.user] || 'comensal';
@@ -375,5 +375,92 @@ export async function initUserScreen() {
     } else {
       selectUser(savedUser);
     }
+  }
+}
+
+// ── CANVIAR CONTRASENYA (usuari propi) ───────────────────────────────
+
+export function openChangePasswordModal() {
+  document.getElementById('f-chpw-current').value  = '';
+  document.getElementById('f-chpw-new').value      = '';
+  document.getElementById('f-chpw-confirm').value  = '';
+  const errEl = document.getElementById('chpw-error');
+  errEl.hidden = true; errEl.textContent = '';
+  document.getElementById('modal-change-password').classList.add('open');
+  setTimeout(() => document.getElementById('f-chpw-current').focus(), 380);
+}
+
+export function closeChangePasswordModal() {
+  document.getElementById('modal-change-password').classList.remove('open');
+}
+
+export async function saveChangePassword() {
+  const current  = document.getElementById('f-chpw-current').value;
+  const newPw    = document.getElementById('f-chpw-new').value;
+  const confirm  = document.getElementById('f-chpw-confirm').value;
+  const errEl    = document.getElementById('chpw-error');
+  const btn      = document.getElementById('btn-chpw-save');
+
+  errEl.hidden = true;
+
+  if (!current || !newPw || !confirm) {
+    errEl.textContent = 'Omple tots els camps'; errEl.hidden = false; return;
+  }
+  if (newPw.length < 6) {
+    errEl.textContent = 'La nova contrasenya ha de tenir mínim 6 caràcters'; errEl.hidden = false; return;
+  }
+  if (newPw !== confirm) {
+    errEl.textContent = 'Les contrasenyes no coincideixen'; errEl.hidden = false; return;
+  }
+
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Verificant…';
+
+  try {
+    // 1. Obté l'email (del perfil o directament de Supabase)
+    const profile = state.authProfile;
+    let email = profile?.email;
+    if (!email) {
+      const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);
+      const meRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` },
+      });
+      const meData = await meRes.json().catch(() => ({}));
+      email = meData.email;
+      if (email && state.authProfile) state.authProfile.email = email;
+    }
+    if (!email) throw new Error('No s\'ha pogut obtenir el correu de la sessió actual');
+
+    // 2. Verifica la contrasenya actual
+    await supabaseSignIn(email, current);
+
+    // 2. Actualitza la contrasenya amb el token propi
+    btn.textContent = 'Canviant…';
+    const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_KEY,
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ password: newPw }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error_description || data.message || `Error ${res.status}`);
+
+    closeChangePasswordModal();
+    // Importem toast des de helpers si cal
+    const { toast } = await import('./helpers.js');
+    toast('Contrasenya canviada correctament');
+  } catch (err) {
+    errEl.textContent = err.message === 'Credencials incorrectes'
+      ? 'La contrasenya actual no és correcta'
+      : err.message;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = orig;
   }
 }
