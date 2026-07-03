@@ -91,30 +91,10 @@ function _startOfWeek(date) {
 }
 
 async function _loadMasiaTags() {
-  try {
-    const res  = await fetch(INVENTARI_URL + '&t=' + Date.now(), { cache: 'no-store' });
-    const text = await res.text();
-    const rows = parseCSV(text);
-    if (rows.length < 2) return;
-
-    const headers  = rows[0].map(h => String(h).toLowerCase().trim());
-    const iMasia   = headers.indexOf('masia');
-    const iData    = headers.indexOf('data');
-    if (iMasia < 0 || iData < 0) return;
-
-    const lastDate = {};
-    rows.slice(1).forEach(r => {
-      const masia = String(r[iMasia] || '').trim();
-      const data  = String(r[iData]  || '').trim();
-      if (!masia || !data) return;
-      const d = new Date(data);
-      if (isNaN(d)) return;
-      if (!lastDate[masia] || d > lastDate[masia]) lastDate[masia] = d;
-    });
-
-    const now         = new Date();
-    const thisWeek    = _startOfWeek(now);
-    const lastWeek    = new Date(thisWeek); lastWeek.setDate(lastWeek.getDate() - 7);
+  // Sempre afegim primer el tag per defecte ("Sense inventari") per a totes les masies
+  const _applyTags = (lastDate) => {
+    const now      = new Date();
+    const thisWeek = _startOfWeek(now);
 
     document.querySelectorAll('.user-card[data-masia]').forEach(card => {
       card.querySelector('.masia-inv-tag')?.remove();
@@ -126,10 +106,15 @@ async function _loadMasiaTags() {
         cls = 'never'; label = 'Sense inventari';
       } else if (d >= thisWeek) {
         cls = 'current'; label = 'Aquesta setmana';
-      } else if (d >= lastWeek) {
-        cls = 'last'; label = 'Setmana passada';
       } else {
-        cls = 'old'; label = 'Fa 2+ setmanes';
+        const weeksAgo = Math.floor((thisWeek - d) / (7 * 24 * 60 * 60 * 1000)) + 1;
+        if (weeksAgo === 1) {
+          cls = 'last'; label = 'Setmana passada';
+        } else if (weeksAgo <= 3) {
+          cls = 'old'; label = `Fa ${weeksAgo} setmanes`;
+        } else {
+          cls = 'old-long'; label = `Fa ${weeksAgo} setmanes`;
+        }
       }
 
       const tag = document.createElement('span');
@@ -137,7 +122,42 @@ async function _loadMasiaTags() {
       tag.textContent = label;
       card.appendChild(tag);
     });
-  } catch { /* offline o error — no mostrem tags */ }
+  };
+
+  // Apliquem "Sense inventari" per defecte mentre carrega
+  _applyTags({});
+
+  try {
+    const res  = await fetch(INVENTARI_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length < 2) return; // sheet buida → queda "Sense inventari"
+
+    const headers = rows[0].map(h => String(h).toLowerCase().trim());
+    const iMasia  = headers.indexOf('masia');
+    const iData   = headers.indexOf('data');
+    if (iMasia < 0 || iData < 0) return;
+
+    // Accepta tant l'ID ("ca-nalzina") com el label ("Ca n'Alzina")
+    const labelToId = {};
+    Object.entries(MASIA_LABELS).forEach(([id, lbl]) => {
+      labelToId[lbl.toLowerCase()] = id;
+      labelToId[id.toLowerCase()]  = id;
+    });
+
+    const lastDate = {};
+    rows.slice(1).forEach(r => {
+      const raw  = String(r[iMasia] || '').trim();
+      const data = String(r[iData]  || '').trim();
+      if (!raw || !data) return;
+      const d = new Date(data);
+      if (isNaN(d)) return;
+      const id = labelToId[raw.toLowerCase()] || raw;
+      if (!lastDate[id] || d > lastDate[id]) lastDate[id] = d;
+    });
+
+    _applyTags(lastDate);
+  } catch { /* offline — queda el tag per defecte */ }
 }
 
 // ── LOGIN / ROLE SCREENS ─────────────────────────────────────────────

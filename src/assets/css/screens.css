@@ -422,6 +422,7 @@
   border-radius: var(--r-pill);
   border: 1px solid transparent;
   white-space: nowrap;
+  margin-top: auto;
 }
 .masia-inv-tag--current {
   background: rgba(60,160,80,.15);
@@ -437,6 +438,11 @@
   background: rgba(200,48,48,.15);
   border-color: rgba(200,48,48,.35);
   color: #e06060;
+}
+.masia-inv-tag--old-long {
+  background: rgba(180,30,30,.22);
+  border-color: rgba(180,30,30,.5);
+  color: #f04040;
 }
 .masia-inv-tag--never {
   background: rgba(255,255,255,.05);
