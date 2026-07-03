@@ -355,9 +355,13 @@ function _cardHtml(r, role) {
     ? `<span class="report-count-badge" style="font-size:10px;color:var(--text-dim)">${esc(authorLine)}</span>`
     : '';
   const isProducte    = (inventari || '').startsWith('[PRODUCTE]: ');
-  const delBtn        = role === 'admin' && !isPending ? _deleteBtn(id) : '';
-  const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte && !isPending
-    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">Genera comanda</button>`
+  const delBtn        = role === 'admin' ? _deleteBtn(id) : '';
+  const hasOrder      = state.orders.some(o => o.sourceHistorialId === id);
+  const orderBadge    = hasOrder
+    ? `<span class="report-order-badge" title="Ja s'ha generat una comanda a partir d'aquest inventari">Comanda generada</span>`
+    : '';
+  const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
+    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">${hasOrder ? 'Torna a generar' : 'Genera comanda'}</button>`
     : '';
   const canEdit = (role === 'admin' || role === 'coordinador') && !isPending;
   const resendBtn = isPending
@@ -413,6 +417,8 @@ function _cardHtml(r, role) {
         <div style="display:flex;align-items:center;gap:6px">
           ${statusBadge}
           ${resendBtn}
+          ${role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`}
+          ${orderBadge}
           ${editBtn}
           ${genComandaBtn}
           ${delBtn}
@@ -735,12 +741,14 @@ export function coordOrderAccept() {
       }).join(' | ');
   state.orders.unshift({
     id:        uid(),
-    ref:       masiaLabel,
     date:      today,
     supplier:  masiaLabel,
+    masia:     _coordOrderData.masia,
     status:    'pendent',
     desc,
     notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
+    createdBy: state.authProfile?.nom || state.user || comensal || '',
+    sourceHistorialId: _coordOrderData.id,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });

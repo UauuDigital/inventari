@@ -1,4 +1,4 @@
-import { state, STATUS_LABELS, STATUS_CSS, saveOrders } from './config.js';
+import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
 import { uid, esc, fmtDate, toast } from './helpers.js';
 
 function _parseStructuredDesc(desc) {
@@ -76,12 +76,16 @@ export function renderOrders() {
   }
   empty.hidden = true;
 
-  list.innerHTML = orders.map(o => `
-    <div class="order-card" data-id="${o.id}">
+  list.innerHTML = orders.map(o => {
+    const masiaColor = MASIA_COLORS[o.masia] || '';
+    const cardStyle   = masiaColor ? ` style="border-left:3px solid ${masiaColor}"` : '';
+    return `
+    <div class="order-card" data-id="${o.id}"${cardStyle}>
       <div class="order-card-top">
         <div class="order-card-meta">
           ${o.ref  ? `<span class="order-ref">${esc(o.ref)}</span>`   : ''}
           ${o.date ? `<span class="order-date">${fmtDate(o.date)}</span>` : ''}
+          ${o.createdBy ? `<span class="order-created-by">${esc(o.createdBy)}</span>` : ''}
         </div>
         <button class="order-status-badge ${STATUS_CSS[o.status] || ''}" data-cycle-status="${o.id}" title="Clic per canviar estat">
           ${esc(STATUS_LABELS[o.status] || o.status)}
@@ -115,7 +119,8 @@ export function renderOrders() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // ── PRODUCT PICKER (nova comanda) ────────────────────────────────────
@@ -341,7 +346,8 @@ export function saveOrder() {
     if (idx >= 0) state.orders[idx] = { ...state.orders[idx], ...data };
     toast('Comanda actualitzada');
   } else {
-    state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), ...data });
+    const createdBy = state.authProfile?.nom || state.user || '';
+    state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), createdBy, ...data });
     toast('Comanda afegida');
   }
   saveOrders();
@@ -421,7 +427,7 @@ export function printOrder(id) {
           ${o.ref  ? `<p><strong>Referència:</strong> ${esc(o.ref)}</p>`        : ''}
           ${o.date ? `<p><strong>Data comanda:</strong> ${fmtDate(o.date)}</p>` : ''}
           <p><strong>Data impressió:</strong> ${today}</p>
-          ${state.authProfile?.nom ? `<p><strong>Coordinador:</strong> ${esc(state.authProfile.nom)}</p>` : ''}
+          ${o.createdBy ? `<p><strong>Coordinador:</strong> ${esc(o.createdBy)}</p>` : ''}
         </div>
       </div>
       ${bodyHtml}

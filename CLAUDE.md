@@ -1,3 +1,5 @@
+rec
+
 # CLAUDE.md
 
 ## Versionat
