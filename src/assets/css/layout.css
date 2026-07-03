@@ -12,6 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 0 18px;
 }
 
@@ -19,6 +20,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .app-logo {
@@ -45,7 +48,18 @@
   color: var(--white);
 }
 
-.app-header-actions { display: flex; align-items: center; gap: 2px; }
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.app-header-actions::-webkit-scrollbar { display: none; }
+.app-header-actions .icon-btn,
+.app-header-actions .user-pill { flex-shrink: 0; }
 
 .app-version {
   position: fixed;
