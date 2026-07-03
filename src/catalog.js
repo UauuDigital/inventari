@@ -1,11 +1,13 @@
 import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, SHEET_APPEND_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS,
-  state, saveItems,
+  state, saveItems, CAT_COLORS,
 } from './config.js';
 import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, createTagSearch, matchesTags } from './helpers.js';
 import { ensureCategory } from './items.js';
 
 let _catalogTags    = [];
+let _catalogText    = '';
+let _activeCat      = null;
 let _scanFillTarget  = null;
 let _pendingCreate   = null;
 
@@ -323,6 +325,26 @@ async function handleBarcode(code) {
 
 // ── CATALOG VIEW (Comensal) ──────────────────────────────────────────
 
+function _catColor(catName) {
+  const cat = state.categories.find(c => c.name.toLowerCase() === (catName || '').toLowerCase());
+  if (cat) return cat.color;
+  let h = 0;
+  for (let i = 0; i < (catName || '').length; i++) h = (h * 31 + catName.charCodeAt(i)) & 0xFFFF;
+  return CAT_COLORS[h % CAT_COLORS.length];
+}
+
+function _iconType(unit) {
+  const u = (unit || '').toLowerCase();
+  if (/botel|ampol|vi\b|cava|cerves|llaun|garraf/.test(u)) return 'bottle';
+  return 'box';
+}
+
+const _ICON_SVG = {
+  bottle: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10.5 3v3L7.5 9.5V19a1.5 1.5 0 001.5 1.5h6A1.5 1.5 0 0016.5 19V9.5L13.5 6V3"/><line x1="7.5" y1="14" x2="16.5" y2="14"/></svg>`,
+  box:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  pkg:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+};
+
 export function renderCatalogView() {
   const panel = document.getElementById('view-catalog');
   if (!panel) return;
@@ -347,36 +369,22 @@ export function renderCatalogView() {
 
   _catalogTags = [];
 
-  const groups = new Map();
-  state.catalog.forEach((p, i) => {
-    const cat = p.category || 'Sense categoria';
-    if (!groups.has(cat)) groups.set(cat, []);
-    groups.get(cat).push({ p, i });
-  });
-
   const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
-  const html = [`<div class="catalog-list">`];
+  if (isEditor) {
+    // ── Editor view: flat list grouped by category ──────────────────
+    const groups = new Map();
+    state.catalog.forEach((p, i) => {
+      const cat = p.category || 'Sense categoria';
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat).push({ p, i });
+    });
 
-  html.push(`<div id="catalog-tag-search"></div>`);
-  if (!isEditor) {
-    html.push(`
-      <button class="catalog-scan-btn" id="btn-scan-barcode">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
-          <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="17" y1="12" x2="17" y2="12.01"/>
-        </svg>
-        Escaneja codi de barres
-      </button>
-    `);
-  }
-
-  groups.forEach((entries, catName) => {
-    html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
-    entries.forEach(({ p, i }) => {
-      const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
-      if (isEditor) {
+    const html = [`<div class="catalog-list"><div id="catalog-tag-search"></div>`];
+    groups.forEach((entries, catName) => {
+      html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
+      entries.forEach(({ p, i }) => {
+        const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
         html.push(`
           <div class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}">
             <span class="catalog-btn-name">${esc(p.name)}</span>
@@ -386,40 +394,120 @@ export function renderCatalogView() {
             </div>
           </div>
         `);
-      } else {
-        const existing = state.items.find(item => item.name.toLowerCase() === p.name.toLowerCase());
-        const qty = existing != null ? fmtQtyDisplay(existing) : '';
-        html.push(`
-          <button class="catalog-btn" data-catalog="${i}" data-search="${esc(searchVal)}">
-            <span class="catalog-btn-name">${esc(p.name)}</span>
-            <span class="catalog-btn-qty${qty ? ' has-qty' : ''}">${qty || '—'}</span>
-          </button>
-        `);
-      }
+      });
     });
-  });
-  html.push('</div>');
-  panel.innerHTML = html.join('');
+    html.push('</div>');
+    panel.innerHTML = html.join('');
+  } else {
+    // ── Comensal view: card grid ─────────────────────────────────────
+    _activeCat = null;
+
+    const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
+
+    const catPills = cats.map(c => {
+      const color = _catColor(c);
+      return `<button class="catalog-cat-pill" data-cat="${esc(c)}" style="background:${color};color:rgba(34,31,30,0.8)">${esc(c)}</button>`;
+    }).join('');
+
+    const scanBtn = `
+      <button class="catalog-scan-btn" id="btn-scan-barcode">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
+          <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="17" y1="12" x2="17" y2="12.01"/>
+        </svg>
+        Escaneja codi de barres
+      </button>`;
+
+    const cards = state.catalog.map((p, i) => {
+      const existing  = state.items.find(it => it.name.toLowerCase() === p.name.toLowerCase());
+      const qty       = existing != null ? fmtQtyDisplay(existing) : '';
+      const hasQty    = !!qty;
+      const color     = _catColor(p.category);
+      const iconKey   = _iconType(p.unit);
+      const icon      = _ICON_SVG[iconKey] || _ICON_SVG.pkg;
+      const catLabel  = p.category || '';
+      const searchVal = [p.name, p.supplier].filter(Boolean).join(' ').toLowerCase();
+      const cls       = ['catalog-card', hasQty && 'has-qty'].filter(Boolean).join(' ');
+      return `
+        <button class="${cls}" data-catalog="${i}" data-search="${esc(searchVal)}" data-cat="${esc(p.category || '')}">
+          <div class="catalog-card-top">
+            <div class="catalog-card-icon">${icon}</div>
+            ${catLabel ? `<span class="catalog-card-cat" style="background:${color};color:rgba(34,31,30,0.8)">${esc(catLabel)}</span>` : ''}
+          </div>
+          <span class="catalog-card-name">${esc(p.name)}</span>
+          <span class="catalog-card-qty">${qty || '—'}</span>
+        </button>`;
+    });
+
+    panel.innerHTML = `
+      <div class="catalog-list">
+        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cerca producte…">
+        ${scanBtn}
+      </div>
+      ${cats.length ? `<div class="catalog-cat-pills" id="catalog-cat-pills">${catPills}</div>` : ''}
+      <div class="catalog-grid">${cards.join('')}</div>`;
+
+    _catalogText = '';
+    document.getElementById('catalog-simple-search').addEventListener('input', e => {
+      _catalogText = e.target.value.trim().toLowerCase();
+      _filterCatalogView(panel);
+    });
+
+    // Category pill click handler
+    const pillsEl = panel.querySelector('#catalog-cat-pills');
+    if (pillsEl) {
+      pillsEl.addEventListener('click', e => {
+        const pill = e.target.closest('.catalog-cat-pill');
+        if (!pill) return;
+        const cat = pill.dataset.cat;
+        if (_activeCat === cat) {
+          _activeCat = null;
+          pill.classList.remove('active');
+        } else {
+          pillsEl.querySelectorAll('.catalog-cat-pill').forEach(p => p.classList.remove('active'));
+          _activeCat = cat;
+          pill.classList.add('active');
+        }
+        _filterCatalogView(panel);
+      });
+    }
+    return;
+  }
 
   createTagSearch(
     document.getElementById('catalog-tag-search'),
     tags => { _catalogTags = tags; _filterCatalogView(panel); },
     'Nom, categoria, proveïdor… (Enter per text)',
     () => {
-      const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort()
+      const cats2 = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort()
         .map(c => ({ value: c.toLowerCase(), label: c, type: 'Categoria' }));
       const supps = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort()
         .map(s => ({ value: s.toLowerCase(), label: s, type: 'Proveïdor' }));
-      return [...cats, ...supps];
+      return [...cats2, ...supps];
     }
   );
 }
 
+function _totalQtyUnits(item) {
+  const upb = item.unitsPerBox || 0;
+  return upb > 0 ? (item.boxes || 0) * upb + (item.loose || 0) : (item.qty || item.loose || 0);
+}
+
 function _filterCatalogView(panel) {
   const tags = _catalogTags;
+  const grid = panel.querySelector('.catalog-grid');
+  if (grid) {
+    grid.querySelectorAll('.catalog-card').forEach(el => {
+      const textOk = !_catalogText || (el.dataset.search || '').includes(_catalogText);
+      const catOk  = !_activeCat || el.dataset.cat === _activeCat;
+      el.hidden = !(textOk && catOk);
+    });
+    return;
+  }
+
   let lastSection = null;
   let sectionVisible = false;
-
   panel.querySelectorAll('.catalog-list > *').forEach(el => {
     if (el.classList.contains('catalog-section-title')) {
       if (lastSection) lastSection.hidden = !sectionVisible;

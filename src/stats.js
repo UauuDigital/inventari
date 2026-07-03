@@ -147,14 +147,13 @@ export function renderStats() {
         const looseVal  = item.looseUnits != null ? item.looseUnits : item.quantity;
         const boxesVal  = item.boxes || '';
         const unitLbl   = item.unit || 'u';
-        const hasBoxes  = (item.unitsPerBox || 0) > 0;
-        const boxesHtml = hasBoxes ? `
+        const boxesHtml = `
             <div class="stats-qty-field">
               <input type="number" min="0" class="stats-qty-input"
                      data-item-id="${esc(item.id)}" data-field="boxes"
                      value="${boxesVal}" placeholder="0">
               <span class="stats-qty-unit">c</span>
-            </div>` : '';
+            </div>`;
         html += `<div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <div class="stats-qty-inputs">

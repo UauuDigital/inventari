@@ -219,7 +219,7 @@ document.addEventListener('click', e => {
   const catalogEditBtn = e.target.closest('[data-catalog-edit]');
   if (catalogEditBtn) { openEditProductModal(parseInt(catalogEditBtn.dataset.catalogEdit)); return; }
 
-  const catalogBtn = e.target.closest('.catalog-btn[data-catalog]');
+  const catalogBtn = e.target.closest('.catalog-btn[data-catalog], .catalog-card[data-catalog]');
   if (catalogBtn) { openQtyModal(parseInt(catalogBtn.dataset.catalog)); return; }
 
   if (e.target.id === 'modal-item')        { closeItemModal();       return; }
