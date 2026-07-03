@@ -28,13 +28,13 @@ export function filteredItems() {
   return list;
 }
 
-export function createTagSearch(container, onChange, placeholder = 'Filtra…', getSuggestions = null) {
+export function createTagSearch(container, onChange, placeholder = 'Filtra…', getSuggestions = null, initialTags = []) {
   container.classList.add('tag-search-widget');
   container.innerHTML = `<div class="tsw-inner"><input class="tsw-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${esc(placeholder)}"></div>${getSuggestions ? '<div class="tsw-suggestions"></div>' : ''}`;
   const inner   = container.querySelector('.tsw-inner');
   const input   = container.querySelector('.tsw-input');
   const sugsEl  = container.querySelector('.tsw-suggestions');
-  let tags = []; // [{value, type, label}]
+  let tags = [...initialTags]; // [{value, type, label}]
 
   function _renderSuggestions() {
     if (!sugsEl) return;
@@ -96,7 +96,8 @@ export function createTagSearch(container, onChange, placeholder = 'Filtra…', 
 
   input.addEventListener('blur', () => { if (input.value.trim()) _add(input.value, 'text'); });
 
-  _renderSuggestions();
+  if (tags.length) _render();
+  else _renderSuggestions();
 
   return {
     focus() { input.focus(); },
