@@ -45,7 +45,19 @@
   color: var(--white);
 }
 
-.app-header-actions { display: flex; gap: 2px; }
+.app-header-actions { display: flex; align-items: center; gap: 2px; }
+
+.app-version {
+  position: fixed;
+  top: calc(var(--safe-top) + 8px);
+  right: 14px;
+  z-index: 400;
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.55;
+  user-select: none;
+  pointer-events: none;
+}
 
 .icon-btn {
   width: 38px;

@@ -398,6 +398,19 @@ function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
+
+  showAppVersion();
+}
+
+async function showAppVersion() {
+  const el = document.getElementById('app-version');
+  if (!el) return;
+  try {
+    const res   = await fetch(`sw.js?t=${Date.now()}`, { cache: 'no-store' });
+    const text  = await res.text();
+    const match = text.match(/CACHE\s*=\s*'uauu-inv-(v[\d.]+)'/);
+    if (match) el.textContent = match[1];
+  } catch {}
 }
 
 init();
