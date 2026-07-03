@@ -32,7 +32,6 @@ export async function loadCatalog() {
     const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
     const iMin   = findCol(headers, ['min', 'mínim', 'minim', 'min stock', 'estoc mínim']);
     const iUnit  = findCol(headers, ['unitat', 'unit', 'tipus']);
-    const iUpB   = findCol(headers, ['unitspercaixa', 'u/caixa', 'unitxbox', 'per_caixa']);
     const iMitja = findCol(headers, ['mitja', 'mitjana', 'media', 'average']);
 
     state.catalog = rows.slice(1)
@@ -53,7 +52,6 @@ export async function loadCatalog() {
           supplier:    String(r[iSupp]  ?? '').trim(),
           minStock:    parseFloat(String(r[iMin]  ?? '0').replace(',', '.')) || 0,
           unit:        iUnit >= 0 ? String(r[iUnit] ?? '').trim() : '',
-          unitsPerBox: iUpB  >= 0 ? parseFloat(String(r[iUpB]  ?? '0').replace(',', '.')) || 0 : 0,
           avgQty,
           numCom,
         };
@@ -488,11 +486,6 @@ export function renderCatalogView() {
   );
 }
 
-function _totalQtyUnits(item) {
-  const upb = item.unitsPerBox || 0;
-  return upb > 0 ? (item.boxes || 0) * upb + (item.loose || 0) : (item.qty || item.loose || 0);
-}
-
 function _filterCatalogView(panel) {
   const tags = _catalogTags;
   const grid = panel.querySelector('.catalog-grid');
@@ -532,25 +525,15 @@ function _pluralCa(word, n) {
 
 function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
-let _qtyUnitWord = 'unitat';
-
 function _updateQtyLabels() {
-  const unitsInput = document.getElementById('f-qty-value');
   const boxesInput = document.getElementById('f-qty-boxes');
-  const unitsLabel = document.getElementById('qty-units-label');
   const boxesLabel = document.getElementById('qty-boxes-label');
-
-  const unitsVal = unitsInput.value === '' ? 1 : unitsInput.value;
-  const boxesVal = boxesInput.value === '' ? 1 : boxesInput.value;
-
-  const unitPlural = _pluralCa(_qtyUnitWord, unitsVal);
-  const indivPlural = _pluralCa('individual', unitsVal);
-  unitsLabel.textContent = `${_cap(unitPlural)} ${indivPlural}`;
+  const boxesVal   = boxesInput.value === '' ? 1 : boxesInput.value;
   boxesLabel.textContent = _cap(_pluralCa('caixa', boxesVal));
 }
 
 document.addEventListener('input', e => {
-  if (e.target.id === 'f-qty-value' || e.target.id === 'f-qty-boxes') _updateQtyLabels();
+  if (e.target.id === 'f-qty-boxes') _updateQtyLabels();
 });
 
 export function openQtyModal(idx) {
@@ -558,25 +541,17 @@ export function openQtyModal(idx) {
   if (!product) return;
   state.editingCatalogIdx = idx;
 
-  const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
-  const upb       = product.unitsPerBox || 0;
-  const unit      = product.unit || 'u';
+  const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
 
   document.getElementById('modal-qty-title').textContent = product.name;
 
-  const boxesField = document.getElementById('qty-boxes-field');
-  boxesField.hidden = false;
-  _qtyUnitWord = (unit && unit.toLowerCase() !== 'u') ? unit.toLowerCase() : 'unitat';
-
   const boxesInput = document.getElementById('f-qty-boxes');
-  const unitsInput = document.getElementById('f-qty-value');
   boxesInput.value = existing?.boxes != null ? existing.boxes : '';
-  unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
   _updateQtyLabels();
 
   document.getElementById('btn-remove-qty').hidden = !existing;
   document.getElementById('modal-qty').classList.add('open');
-  setTimeout(() => { unitsInput.focus(); unitsInput.select(); }, 350);
+  setTimeout(() => { boxesInput.focus(); boxesInput.select(); }, 350);
 }
 
 export function closeQtyModal() {
@@ -598,28 +573,22 @@ export function saveQty() {
   const product = state.catalog[state.editingCatalogIdx];
   if (!product) return;
 
-  const upb       = product.unitsPerBox || 0;
-  const boxesVal  = document.getElementById('f-qty-boxes').value;
-  const unitsVal  = document.getElementById('f-qty-value').value;
+  const boxesVal = document.getElementById('f-qty-boxes').value;
 
-  if (boxesVal === '' && unitsVal === '') {
+  if (boxesVal === '') {
     document.getElementById('f-qty-boxes').focus();
     return;
   }
 
   const boxes = parseFloat(boxesVal) || 0;
-  const loose = parseFloat(unitsVal) || 0;
-  const total = upb > 0 ? boxes * upb + loose : loose || boxes;
 
   const catId     = ensureCategory(product.category);
   const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
   const update    = {
-    quantity:    total,
-    boxes:       boxes,
-    looseUnits:  loose,
-    unit:        product.unit || '',
-    unitsPerBox: upb,
-    updatedAt:   new Date().toISOString(),
+    quantity:  boxes,
+    boxes:     boxes,
+    unit:      product.unit || '',
+    updatedAt: new Date().toISOString(),
   };
 
   if (existing) {
@@ -635,7 +604,7 @@ export function saveQty() {
 
   saveItems();
   closeQtyModal();
-  toast(`${product.name}: ${fmtQtyDisplay({ boxes, looseUnits: loose, unit: product.unit || 'u' })}`);
+  toast(`${product.name}: ${fmtQtyDisplay({ boxes, unit: product.unit || 'u' })}`);
   renderCatalogView();
 }
 
@@ -696,7 +665,6 @@ export function openNewProductModal(prefill = {}) {
   document.getElementById('f-np-category').value    = prefill.category    || '';
   document.getElementById('f-np-supplier').value    = prefill.supplier    || '';
   document.getElementById('f-np-unit').value        = prefill.unit        || '';
-  document.getElementById('f-np-unitsperbox').value = prefill.unitsPerBox || '';
   document.getElementById('f-np-minstock').value    = prefill.minStock    || '';
   document.getElementById('f-np-code').value        = prefill.code        || '';
   document.getElementById('modal-new-product').classList.add('open');
@@ -717,7 +685,6 @@ export function openEditProductModal(idx) {
   document.getElementById('f-np-category').value    = product.category    || '';
   document.getElementById('f-np-supplier').value    = product.supplier    || '';
   document.getElementById('f-np-unit').value        = product.unit        || '';
-  document.getElementById('f-np-unitsperbox').value = product.unitsPerBox || '';
   document.getElementById('f-np-minstock').value    = product.minStock    || '';
   document.getElementById('f-np-code').value        = product.code        || '';
 
@@ -738,7 +705,6 @@ export function saveEditProduct() {
   const category    = document.getElementById('f-np-category').value.trim();
   const supplier    = document.getElementById('f-np-supplier').value.trim();
   const unit        = document.getElementById('f-np-unit').value.trim();
-  const unitsPerBox = parseFloat(document.getElementById('f-np-unitsperbox').value) || 0;
   const minStock    = parseFloat(document.getElementById('f-np-minstock').value) || 0;
   const code        = document.getElementById('f-np-code').value.trim();
 
@@ -750,7 +716,7 @@ export function saveEditProduct() {
     return;
   }
 
-  const updated = { ...original, name, category, supplier, unit, unitsPerBox, minStock, code };
+  const updated = { ...original, name, category, supplier, unit, minStock, code };
   state.catalog[idx] = updated;
 
   const extraIdx = state.catalogExtra.findIndex(p => p.id === original.id);
@@ -797,7 +763,6 @@ export function saveNewProduct() {
     const category    = document.getElementById('f-np-category').value.trim();
     const supplier    = document.getElementById('f-np-supplier').value.trim();
     const unit        = document.getElementById('f-np-unit').value.trim();
-    const unitsPerBox = parseFloat(document.getElementById('f-np-unitsperbox').value) || 0;
     const minStock    = parseFloat(document.getElementById('f-np-minstock').value) || 0;
     const code        = document.getElementById('f-np-code').value.trim();
 
@@ -811,7 +776,7 @@ export function saveNewProduct() {
 
     state.maxCatalogId++;
     const newId   = state.maxCatalogId;
-    const product = { id: newId, code, name, category, supplier, unit, unitsPerBox, minStock };
+    const product = { id: newId, code, name, category, supplier, unit, minStock };
 
     state.catalog.push(product);
     state.catalogExtra.push(product);
@@ -824,7 +789,7 @@ export function saveNewProduct() {
         action: 'add-producte',
         id: newId, producte: name, proveidor: supplier,
         categoria: category, codi: code, min: minStock,
-        unitat: unit, unitspercaixa: unitsPerBox,
+        unitat: unit,
       });
       sendToSheet(gasUrl, params);
 

@@ -5,51 +5,35 @@ function _parseStructuredDesc(desc) {
   if (!desc || !desc.includes(': ')) return null;
   const parts = desc.split(' | ');
   const items = parts.map(p => {
-    // format "nom: 3 c + 2 u"
-    const mCU = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*c\s*\+\s*(\d+(?:\.\d+)?)\s*u$/);
-    if (mCU) return { name: mCU[1].trim(), qty: parseFloat(mCU[2]), unit: 'c', loose: parseFloat(mCU[3]) };
-    // format "nom: 3 c" o "nom: 5 u"
-    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*(u|c)$/);
-    if (m) return { name: m[1].trim(), qty: parseFloat(m[2]), unit: m[3], loose: 0 };
+    // format "nom: 3 c"
+    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*c$/);
+    if (m) return { name: m[1].trim(), qty: parseFloat(m[2]) };
     return null;
   });
   return items.every(Boolean) && items.length > 0 ? items : null;
 }
 
 function _buildDescTable(items) {
-  return items.map(item => {
-    const looseInput = (item.unit === 'c' || item.loose > 0) ? `
-      <label class="order-desc-qty-wrap">
-        <input class="order-desc-qty order-desc-loose" type="number" min="0" step="1"
-               value="${item.loose || 0}" data-name="${esc(item.name)}" data-unit="u">
-        <span class="order-desc-qty-unit">u</span>
-      </label>` : '';
-    return `
+  return items.map(item => `
     <div class="order-desc-row">
       <span class="order-desc-name">${esc(item.name)}</span>
       <div style="display:flex;gap:6px;align-items:center">
         <label class="order-desc-qty-wrap">
           <input class="order-desc-qty order-desc-main" type="number" min="0" step="1"
-                 value="${item.qty}" data-name="${esc(item.name)}" data-unit="${item.unit || 'u'}">
-          <span class="order-desc-qty-unit">${item.unit || 'u'}</span>
+                 value="${item.qty}" data-name="${esc(item.name)}">
+          <span class="order-desc-qty-unit">c</span>
         </label>
-        ${looseInput}
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
 function _readDescFromTable() {
   const rows = document.querySelectorAll('#order-desc-table .order-desc-row');
   return Array.from(rows).map(row => {
-    const main  = row.querySelector('.order-desc-main');
-    const loose = row.querySelector('.order-desc-loose');
-    const name  = main.dataset.name;
-    const unit  = main.dataset.unit;
-    const qty   = Math.max(0, parseFloat(main.value) || 0);
-    const looseQty = loose ? Math.max(0, parseFloat(loose.value) || 0) : 0;
-    if (unit === 'c' && looseQty > 0) return `${name}: ${qty} c + ${looseQty} u`;
-    return `${name}: ${qty} ${unit}`;
+    const main = row.querySelector('.order-desc-main');
+    const name = main.dataset.name;
+    const qty  = Math.max(0, parseFloat(main.value) || 0);
+    return `${name}: ${qty} c`;
   }).join(' | ');
 }
 
@@ -127,13 +111,8 @@ export function renderOrders() {
 
 let _orderItems = [];
 
-function _totalOrderUnits(item) {
-  return item.upb > 0 ? item.boxes * item.upb + item.loose : item.loose;
-}
-
 function _updateOrderRowLow(row, item) {
-  const total = _totalOrderUnits(item);
-  row.classList.toggle('is-low', item.minStock > 0 && total < item.minStock);
+  row.classList.toggle('is-low', item.minStock > 0 && item.boxes < item.minStock);
 }
 
 function _renderOrderProductList() {
@@ -144,29 +123,18 @@ function _renderOrderProductList() {
     return;
   }
   el.innerHTML = _orderItems.map((item, i) => {
-    const hasBoxes = item.upb > 0;
-    const isLow    = item.minStock > 0 && _totalOrderUnits(item) < item.minStock;
-    const lowCls   = isLow ? ' is-low' : '';
-    const qtyInputs = hasBoxes ? `
-      <label class="order-product-qty-wrap">
-        <input class="order-product-qty" type="number" min="0" step="1"
-               value="${item.boxes}" data-idx="${i}" data-field="boxes" placeholder="0">
-        <span class="order-product-unit">c</span>
-      </label>
-      <label class="order-product-qty-wrap">
-        <input class="order-product-qty" type="number" min="0" step="1"
-               value="${item.loose}" data-idx="${i}" data-field="loose" placeholder="0">
-        <span class="order-product-unit">u</span>
-      </label>` : `
-      <label class="order-product-qty-wrap">
-        <input class="order-product-qty" type="number" min="0" step="1"
-               value="${item.loose}" data-idx="${i}" data-field="loose" placeholder="0">
-        <span class="order-product-unit">${item.unit || 'u'}</span>
-      </label>`;
+    const isLow  = item.minStock > 0 && item.boxes < item.minStock;
+    const lowCls = isLow ? ' is-low' : '';
     return `
     <div class="order-product-row${lowCls}" data-idx="${i}">
       <span class="order-product-name">${esc(item.name)}</span>
-      <div class="order-product-qty-group">${qtyInputs}</div>
+      <div class="order-product-qty-group">
+        <label class="order-product-qty-wrap">
+          <input class="order-product-qty" type="number" min="0" step="1"
+                 value="${item.boxes}" data-idx="${i}" data-field="boxes" placeholder="0">
+          <span class="order-product-unit">c</span>
+        </label>
+      </div>
       <button class="order-product-remove" data-remove="${i}" aria-label="Treure">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -176,9 +144,7 @@ function _renderOrderProductList() {
   el.querySelectorAll('.order-product-qty').forEach(inp => {
     inp.addEventListener('input', () => {
       const item = _orderItems[parseInt(inp.dataset.idx)];
-      const val  = Math.max(0, parseFloat(inp.value) || 0);
-      if (inp.dataset.field === 'boxes') item.boxes = val;
-      else item.loose = val;
+      item.boxes = Math.max(0, parseFloat(inp.value) || 0);
       _updateOrderRowLow(inp.closest('.order-product-row'), item);
     });
   });
@@ -208,28 +174,20 @@ function _initProductSearch() {
     if (!matches.length) { dropdown.hidden = true; return; }
     dropdown.hidden = false;
     dropdown.innerHTML = matches.map(p => {
-      const upb      = p.unitsPerBox || 0;
-      const unit     = p.unit || 'u';
       const minStock = p.minStock || 0;
-      const meta     = upb > 0 ? `${upb} ${unit}/c` : unit;
       return `<div class="order-product-option"
           data-name="${esc(p.name)}"
-          data-upb="${upb}"
-          data-unit="${esc(unit)}"
           data-minstock="${minStock}">
           ${esc(p.name)}
-          <span class="order-product-option-meta">${esc(meta)}</span>
         </div>`;
     }).join('');
     dropdown.querySelectorAll('.order-product-option').forEach(opt => {
       opt.addEventListener('mousedown', e => {
         e.preventDefault();
         const name     = opt.dataset.name;
-        const upb      = parseInt(opt.dataset.upb)      || 0;
-        const unit     = opt.dataset.unit               || 'u';
         const minStock = parseFloat(opt.dataset.minstock) || 0;
         if (!_orderItems.find(i => i.name === name)) {
-          _orderItems.push({ name, upb, unit, minStock, boxes: upb > 0 ? 1 : 0, loose: upb > 0 ? 0 : 1 });
+          _orderItems.push({ name, minStock, boxes: 1 });
           _renderOrderProductList();
         }
         input.value     = '';
@@ -301,7 +259,7 @@ export function saveOrder() {
   const pickerVisible = !document.getElementById('order-product-picker').hidden;
   let desc;
   if (pickerVisible) {
-    const items = _orderItems.filter(i => (i.boxes || 0) + (i.loose || 0) > 0);
+    const items = _orderItems.filter(i => (i.boxes || 0) > 0);
     if (!items.length) {
       const inp = document.getElementById('f-order-product-search');
       inp.focus();
@@ -309,15 +267,7 @@ export function saveOrder() {
       setTimeout(() => { inp.style.borderColor = ''; }, 1200);
       return;
     }
-    desc = items.map(i => {
-      if (i.upb > 0) {
-        const parts = [];
-        if (i.boxes > 0) parts.push(`${i.boxes} c`);
-        if (i.loose > 0) parts.push(`${i.loose} u`);
-        return `${i.name}: ${parts.join(' + ')}`;
-      }
-      return `${i.name}: ${i.loose} u`;
-    }).join(' | ');
+    desc = items.map(i => `${i.name}: ${i.boxes} c`).join(' | ');
   } else {
     const tableEl  = document.getElementById('order-desc-table');
     const useTable = !tableEl.hidden;
@@ -402,14 +352,14 @@ export function printOrder(id) {
           ${structured.map(item => `
             <tr>
               <td>${esc(item.name)}</td>
-              <td class="tc">${item.qty} u</td>
+              <td class="tc">${item.qty} c</td>
               <td></td>
             </tr>`).join('')}
         </tbody>
         <tfoot>
           <tr>
-            <td class="tr" colspan="1"><strong>Total unitats:</strong></td>
-            <td class="tc"><strong>${structured.reduce((s, i) => s + i.qty, 0)} u</strong></td>
+            <td class="tr" colspan="1"><strong>Total caixes:</strong></td>
+            <td class="tc"><strong>${structured.reduce((s, i) => s + i.qty, 0)} c</strong></td>
             <td></td>
           </tr>
         </tfoot>

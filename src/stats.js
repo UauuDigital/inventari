@@ -116,13 +116,9 @@ document.addEventListener('change', e => {
   const item = state.items.find(i => i.id === input.dataset.itemId);
   if (!item) return;
   const val = parseFloat(input.value) || 0;
-  if (input.dataset.field === 'loose') item.looseUnits = val;
-  else item.boxes = val;
-  const upb   = item.unitsPerBox || 0;
-  const loose = item.looseUnits != null ? item.looseUnits : 0;
-  const boxes = item.boxes || 0;
-  item.quantity  = upb > 0 ? boxes * upb + loose : loose || boxes;
-  item.updatedAt = new Date().toISOString();
+  item.boxes      = val;
+  item.quantity   = val;
+  item.updatedAt  = new Date().toISOString();
   saveItems();
   renderStatsStrip();
   _pendingQtyChange = true;
@@ -188,26 +184,16 @@ export function renderStats() {
     groups.forEach((items, catName) => {
       html += `<div class="stats-section-title">${esc(catName)}</div>`;
       items.forEach(item => {
-        const looseVal  = item.looseUnits != null ? item.looseUnits : item.quantity;
-        const boxesVal  = item.boxes || '';
-        const unitLbl   = item.unit || 'u';
-        const boxesHtml = `
-            <div class="stats-qty-field">
-              <input type="number" min="0" class="stats-qty-input"
-                     data-item-id="${esc(item.id)}" data-field="boxes"
-                     value="${boxesVal}" placeholder="0">
-              <span class="stats-qty-unit">c</span>
-            </div>`;
+        const boxesVal = item.boxes != null ? item.boxes : (item.quantity || '');
         html += `<div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <div class="stats-qty-inputs">
             <div class="stats-qty-field">
               <input type="number" min="0" class="stats-qty-input"
-                     data-item-id="${esc(item.id)}" data-field="loose"
-                     value="${looseVal}" placeholder="0">
-              <span class="stats-qty-unit">${esc(unitLbl)}</span>
+                     data-item-id="${esc(item.id)}" data-field="boxes"
+                     value="${boxesVal}" placeholder="0">
+              <span class="stats-qty-unit">c</span>
             </div>
-            ${boxesHtml}
             <button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="Desmarcar ${esc(item.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
@@ -396,7 +382,7 @@ function _cardHtml(r, role) {
     const qty      = sep > -1 ? item.slice(sep + 2) : '';
     const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
     const minStock = catEntry?.minStock || 0;
-    const isLow    = minStock > 0 && parseTotalQty(qty, catEntry?.unitsPerBox || 0) < minStock;
+    const isLow    = minStock > 0 && parseTotalQty(qty) < minStock;
     const lowStyle = isLow ? ` style="color:var(--danger)"` : '';
     return `<div class="stats-cat-row">
       <span class="stats-cat-name"${lowStyle}>${esc(name)}</span>
@@ -613,25 +599,23 @@ function _parseInventariItems(inventari) {
       const name     = seg.slice(0, sep).trim();
       const qtyStr   = seg.slice(sep + 2).trim();
       const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
-      const minStock = catEntry?.minStock    || 0;
-      const upb      = catEntry?.unitsPerBox || 0;
-      const avgQty   = catEntry?.avgQty      || 0;
-      const numCom   = catEntry?.numCom      || 0;
-      const qty      = parseTotalQty(qtyStr, upb);
+      const minStock = catEntry?.minStock || 0;
+      const avgQty   = catEntry?.avgQty   || 0;
+      const numCom   = catEntry?.numCom   || 0;
+      const qty      = parseTotalQty(qtyStr);
 
       let orderQty, orderSrc;
       if (avgQty > 0) {
         // Recomanació basada en la mitjana histórica
-        orderQty  = upb > 0 ? Math.ceil(avgQty / upb) : Math.round(avgQty);
+        orderQty  = Math.round(avgQty);
         orderSrc  = 'mitja';
       } else {
         // Fallback: caixes per cobrir dèficit fins al mínim
-        const deficit = Math.max(0, minStock - qty);
-        orderQty  = upb > 0 ? Math.ceil(deficit / upb) : deficit;
+        orderQty  = Math.max(0, minStock - qty);
         orderSrc  = 'deficit';
       }
 
-      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, orderQty, orderSrc };
+      return { name, qty, qtyStr, minStock, avgQty, numCom, orderQty, orderSrc };
     })
     .filter(Boolean);
 }
@@ -647,13 +631,11 @@ function _openCoordOrderEdit(row) {
 
 function _updateCoordOrderRowClass(row) {
   const qty      = parseFloat(row.dataset.qty)      || 0;
-  const minStock = parseFloat(row.dataset.minstock)  || 0;
-  const upb      = parseFloat(row.dataset.upb)       || 0;
+  const minStock = parseFloat(row.dataset.minstock) || 0;
   const input    = row.querySelector('.coord-order-qty');
-  const orderQty = parseFloat(input?.value)          || 0;
-  const orderUnits = upb > 0 ? orderQty * upb : orderQty;
+  const orderQty = parseFloat(input?.value)         || 0;
   row.classList.remove('is-ok', 'is-low');
-  if (minStock > 0 && qty + orderUnits < minStock) {
+  if (minStock > 0 && qty + orderQty < minStock) {
     row.classList.add('is-low');
   } else if (orderQty === 0) {
     row.classList.add('is-ok');
@@ -670,25 +652,23 @@ function _renderCoordOrderEdit() {
     </p>
     <div class="coord-order-list" id="coord-order-list">
       ${items.map((item, i) => {
-        const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-        const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
+        const isLow = item.minStock > 0 && item.qty + item.orderQty < item.minStock;
         const isOk  = !isLow && item.orderQty === 0;
         const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
         const stock = item.minStock > 0
           ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
           : `${item.qtyStr || item.qty}`;
-        const orderUnit = item.upb > 0 ? 'c' : 'u';
         const hint = item.orderSrc === 'mitja'
-          ? `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana histórica">~${Math.round(item.avgQty)} u · ${item.numCom} com.</span>`
+          ? `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana histórica">~${Math.round(item.avgQty)} c · ${item.numCom} com.</span>`
           : '';
         return `
-        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
+        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}">
           <span class="coord-order-name">${esc(item.name)}</span>
           <span class="coord-order-stock">${stock}</span>
           <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
             <input class="coord-order-qty" type="number" min="0" step="1"
                    value="${item.orderQty}" data-idx="${i}">
-            <span class="coord-order-qty-unit">${orderUnit}</span>
+            <span class="coord-order-qty-unit">c</span>
           </label>
           ${hint}
         </div>`;
@@ -713,13 +693,12 @@ export function coordOrderAccept() {
 
   // Actualitza la mitja histórica de cada producte comandat
   orderItems.forEach(item => {
-    const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-    const oldNum     = item.numCom || 0;
-    const oldAvg     = item.avgQty || 0;
-    const newNum     = oldNum + 1;
-    const newAvg     = oldNum === 0
-      ? orderUnits
-      : Math.round(((oldAvg * oldNum) + orderUnits) / newNum * 10) / 10;
+    const oldNum = item.numCom || 0;
+    const oldAvg = item.avgQty || 0;
+    const newNum = oldNum + 1;
+    const newAvg = oldNum === 0
+      ? item.orderQty
+      : Math.round(((oldAvg * oldNum) + item.orderQty) / newNum * 10) / 10;
     const params = new URLSearchParams({
       action:      'update-mitja',
       productName: item.name,
@@ -735,10 +714,7 @@ export function coordOrderAccept() {
   const today = new Date().toISOString().slice(0, 10);
   const desc  = orderItems.length === 0
     ? 'Cap producte per demanar'
-    : orderItems.map(i => {
-        const unit = i.upb > 0 ? 'c' : (i.upb === 0 ? 'u' : 'u');
-        return `${i.name}: ${i.orderQty} ${i.upb > 0 ? 'c' : 'u'}`;
-      }).join(' | ');
+    : orderItems.map(i => `${i.name}: ${i.orderQty} c`).join(' | ');
   state.orders.unshift({
     id:        uid(),
     date:      today,
@@ -775,33 +751,18 @@ function openEditHistorialModal(row) {
     const sep    = item.indexOf(': ');
     const name   = sep > -1 ? item.slice(0, sep) : item;
     const qtyStr = sep > -1 ? item.slice(sep + 2).trim() : '';
-    const boxM   = qtyStr.replace(/\s/g, '').match(/^(\d+(?:\.\d+)?)c/);
-    const boxes  = boxM ? parseFloat(boxM[1]) : 0;
-    const looseM = qtyStr.replace(/\s/g, '').match(/\+(\d+(?:\.\d+)?)[^0-9+]/) ||
-                   (!boxM ? qtyStr.match(/^(\d+(?:\.\d+)?)/) : null);
-    const loose  = looseM ? parseFloat(looseM[1]) : 0;
-    const unitM  = qtyStr.match(/(\d+(?:\.\d+)?)([a-zA-ZàèéíïòóúüçÀ-ž]+)\s*$/);
-    const unit   = unitM ? unitM[2] : '';
-    return { name, boxes, loose, unit, qtyStr };
+    const boxes  = parseTotalQty(qtyStr);
+    return { name, boxes, qtyStr };
   });
 
   document.getElementById('edit-historial-items').innerHTML = items.map((item, i) => {
-    const catEntry  = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
-    const minStock  = catEntry?.minStock || 0;
-    const upb       = catEntry?.unitsPerBox || 0;
-    const total     = upb > 0 ? item.boxes * upb + item.loose : item.loose || item.boxes;
-    const isLow     = minStock > 0 && total < minStock;
-    const unitLabel = item.unit || catEntry?.unit || 'u';
+    const catEntry = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+    const minStock = catEntry?.minStock || 0;
+    const isLow    = minStock > 0 && item.boxes < minStock;
     return `
     <div class="edit-hist-row${isLow ? ' is-low' : ''}">
       <span class="edit-hist-name">${esc(item.name)}</span>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-        <div class="edit-hist-qty-wrap">
-          <input type="number" min="0" step="any" class="edit-hist-input"
-                 data-hist-idx="${i}" data-hist-type="loose"
-                 placeholder="0" value="${item.loose || ''}">
-          <span class="edit-hist-unit">${esc(unitLabel)}</span>
-        </div>
         <div class="edit-hist-qty-wrap">
           <input type="number" min="0" step="any" class="edit-hist-input"
                  data-hist-idx="${i}" data-hist-type="boxes"
@@ -829,17 +790,9 @@ export function saveEditHistorial() {
   if (!_editingHistorialId) return;
 
   const newInventari = _editingHistorialItems.map((item, i) => {
-    const looseInput = document.querySelector(`[data-hist-idx="${i}"][data-hist-type="loose"]`);
     const boxesInput = document.querySelector(`[data-hist-idx="${i}"][data-hist-type="boxes"]`);
-    const loose = parseFloat(looseInput?.value) || 0;
     const boxes = parseFloat(boxesInput?.value) || 0;
-    const catEntry  = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
-    const unitLabel = item.unit || catEntry?.unit || 'u';
-    const parts = [];
-    if (loose > 0) parts.push(`${loose}${unitLabel}`);
-    if (boxes > 0) parts.push(`${boxes}c`);
-    const qtyStr = parts.join(' + ') || '0';
-    return `${item.name}: ${qtyStr}`;
+    return `${item.name}: ${boxes}c`;
   }).join(' | ');
 
   const comentari = document.getElementById('edit-historial-comment').value.trim();
