@@ -25,6 +25,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -35,6 +36,16 @@
 .donut-svg {
   width: 160px;
   height: 160px;
+}
+
+.est-legend {
+  min-width: 0;
+  flex: 1;
+}
+
+@media (max-width: 380px) {
+  .est-card-body { justify-content: flex-start; }
+  .est-legend { width: 100%; }
 }
 
 .donut-center-val {
@@ -65,6 +76,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
+  min-width: 0;
 }
 
 .est-legend-dot {
@@ -77,6 +89,11 @@
 .est-legend-label {
   color: var(--text-dim);
   font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .est-legend-meta {
