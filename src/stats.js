@@ -666,9 +666,9 @@ export function coordOrderAccept() {
       }).join(' | ');
   state.orders.unshift({
     id:        uid(),
-    ref:       masiaLabel,
     date:      today,
     supplier:  masiaLabel,
+    masia:     _coordOrderData.masia,
     status:    'pendent',
     desc,
     notes:     `Inventari del ${date} (${hora}) · ${comensal}`,

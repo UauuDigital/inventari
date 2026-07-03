@@ -1,4 +1,4 @@
-import { state, STATUS_LABELS, STATUS_CSS, saveOrders } from './config.js';
+import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
 import { uid, esc, fmtDate, toast } from './helpers.js';
 
 function _parseStructuredDesc(desc) {
@@ -76,8 +76,11 @@ export function renderOrders() {
   }
   empty.hidden = true;
 
-  list.innerHTML = orders.map(o => `
-    <div class="order-card" data-id="${o.id}">
+  list.innerHTML = orders.map(o => {
+    const masiaColor = MASIA_COLORS[o.masia] || '';
+    const cardStyle   = masiaColor ? ` style="border-left:3px solid ${masiaColor}"` : '';
+    return `
+    <div class="order-card" data-id="${o.id}"${cardStyle}>
       <div class="order-card-top">
         <div class="order-card-meta">
           ${o.ref  ? `<span class="order-ref">${esc(o.ref)}</span>`   : ''}
@@ -116,7 +119,8 @@ export function renderOrders() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // ── PRODUCT PICKER (nova comanda) ────────────────────────────────────
