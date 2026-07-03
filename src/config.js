@@ -14,6 +14,7 @@ export const STORAGE_ACCESS_TOKEN   = 'uauu_inv_access_token';
 export const STORAGE_REFRESH_TOKEN  = 'uauu_inv_refresh_token';
 export const STORAGE_TOKEN_EXPIRES  = 'uauu_inv_token_expires';
 export const STORAGE_USER_PROFILE   = 'uauu_inv_user_profile';
+export const STORAGE_PENDING_INV    = 'uauu_inv_pending_inventari';
 
 export const SUPABASE_URL     = 'https://oeriszeicvdnagohnqvq.supabase.co';
 export const SUPABASE_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lcmlzemVpY3ZkbmFnb2hucXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjM2MTAsImV4cCI6MjA5NzMzOTYxMH0.GyZe8TDZus51kyYeOViZMPKxXYHlynfvJiJ83S_2cu0';

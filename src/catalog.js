@@ -367,8 +367,6 @@ export function renderCatalogView() {
   const role     = document.body.dataset.role || 'comensal';
   const isEditor = role === 'admin' || role === 'coordinador';
 
-  _catalogTags = [];
-
   const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
   if (isEditor) {
@@ -400,13 +398,13 @@ export function renderCatalogView() {
     panel.innerHTML = html.join('');
   } else {
     // ── Comensal view: card grid ─────────────────────────────────────
-    _activeCat = null;
-
     const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
+    if (_activeCat && !cats.includes(_activeCat)) _activeCat = null;
 
     const catPills = cats.map(c => {
       const color = _catColor(c);
-      return `<button class="catalog-cat-pill" data-cat="${esc(c)}" style="background:${color};color:rgba(34,31,30,0.8)">${esc(c)}</button>`;
+      const active = c === _activeCat ? ' active' : '';
+      return `<button class="catalog-cat-pill${active}" data-cat="${esc(c)}" style="background:${color};color:rgba(34,31,30,0.8)">${esc(c)}</button>`;
     }).join('');
 
     const scanBtn = `
@@ -442,13 +440,12 @@ export function renderCatalogView() {
 
     panel.innerHTML = `
       <div class="catalog-list">
-        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cerca producte…">
+        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cerca producte…" value="${esc(_catalogText)}">
         ${scanBtn}
       </div>
       ${cats.length ? `<div class="catalog-cat-pills" id="catalog-cat-pills">${catPills}</div>` : ''}
       <div class="catalog-grid">${cards.join('')}</div>`;
 
-    _catalogText = '';
     document.getElementById('catalog-simple-search').addEventListener('input', e => {
       _catalogText = e.target.value.trim().toLowerCase();
       _filterCatalogView(panel);
@@ -472,6 +469,7 @@ export function renderCatalogView() {
         _filterCatalogView(panel);
       });
     }
+    _filterCatalogView(panel);
     return;
   }
 
@@ -485,7 +483,8 @@ export function renderCatalogView() {
       const supps = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort()
         .map(s => ({ value: s.toLowerCase(), label: s, type: 'Proveïdor' }));
       return [...cats2, ...supps];
-    }
+    },
+    _catalogTags
   );
 }
 
@@ -525,6 +524,35 @@ function _filterCatalogView(panel) {
 
 // ── QTY MODAL ────────────────────────────────────────────────────────
 
+function _pluralCa(word, n) {
+  if (!word) return word;
+  if (Math.abs(parseFloat(n)) === 1) return word;
+  return word.endsWith('a') ? word.slice(0, -1) + 'es' : word + 's';
+}
+
+function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+let _qtyUnitWord = 'unitat';
+
+function _updateQtyLabels() {
+  const unitsInput = document.getElementById('f-qty-value');
+  const boxesInput = document.getElementById('f-qty-boxes');
+  const unitsLabel = document.getElementById('qty-units-label');
+  const boxesLabel = document.getElementById('qty-boxes-label');
+
+  const unitsVal = unitsInput.value === '' ? 1 : unitsInput.value;
+  const boxesVal = boxesInput.value === '' ? 1 : boxesInput.value;
+
+  const unitPlural = _pluralCa(_qtyUnitWord, unitsVal);
+  const indivPlural = _pluralCa('individual', unitsVal);
+  unitsLabel.textContent = `${_cap(unitPlural)} ${indivPlural}`;
+  boxesLabel.textContent = _cap(_pluralCa('caixa', boxesVal));
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'f-qty-value' || e.target.id === 'f-qty-boxes') _updateQtyLabels();
+});
+
 export function openQtyModal(idx) {
   const product = state.catalog[idx];
   if (!product) return;
@@ -537,14 +565,14 @@ export function openQtyModal(idx) {
   document.getElementById('modal-qty-title').textContent = product.name;
 
   const boxesField = document.getElementById('qty-boxes-field');
-  const unitsLabel = document.getElementById('qty-units-label');
   boxesField.hidden = false;
-  unitsLabel.textContent = unit ? (unit.charAt(0).toUpperCase() + unit.slice(1)) : 'Unitats';
+  _qtyUnitWord = (unit && unit.toLowerCase() !== 'u') ? unit.toLowerCase() : 'unitat';
 
   const boxesInput = document.getElementById('f-qty-boxes');
   const unitsInput = document.getElementById('f-qty-value');
   boxesInput.value = existing?.boxes != null ? existing.boxes : '';
   unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
+  _updateQtyLabels();
 
   document.getElementById('btn-remove-qty').hidden = !existing;
   document.getElementById('modal-qty').classList.add('open');

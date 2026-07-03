@@ -1,6 +1,44 @@
-import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, saveItems, saveOrders } from './config.js';
+import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, saveItems, saveOrders } from './config.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { loadCatalog } from './catalog.js';
+
+// ── PENDING (OFFLINE) INVENTORY REPORTS ───────────────────────────────
+const _pendingKey = () => state.masia ? `${STORAGE_PENDING_INV}_${state.masia}` : STORAGE_PENDING_INV;
+
+function _loadPendingInv() {
+  try { return JSON.parse(localStorage.getItem(_pendingKey())) || []; }
+  catch { return []; }
+}
+
+function _savePendingInv(list) {
+  localStorage.setItem(_pendingKey(), JSON.stringify(list));
+}
+
+export function drainPendingInventari() {
+  if (!navigator.onLine) return;
+  const pending = _loadPendingInv();
+  if (!pending.length) return;
+  pending.forEach(entry => sendToSheet(SHEET_APPEND_URL, entry.params));
+  _savePendingInv([]);
+  _historialRows = _historialRows.filter(r => !r[7]);
+  _renderHistorialCards();
+}
+
+function _resendPendingHistorial(id) {
+  const pending = _loadPendingInv();
+  const idx = pending.findIndex(p => p.id === id);
+  if (idx < 0) return;
+  if (!navigator.onLine) {
+    toast('Encara sense connexió. S\'enviarà automàticament quan tornis a tenir WiFi.');
+    return;
+  }
+  sendToSheet(SHEET_APPEND_URL, pending[idx].params);
+  pending.splice(idx, 1);
+  _savePendingInv(pending);
+  _historialRows = _historialRows.filter(r => r[0] !== id);
+  _renderHistorialCards();
+  toast('Inventari enviat.');
+}
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
 let _editingHistorialId    = null;
@@ -46,6 +84,12 @@ document.addEventListener('click', e => {
     const id  = editBtn.dataset.editHistorial;
     const row = _historialRows.find(r => r[0] === id);
     if (row) openEditHistorialModal(row);
+    return;
+  }
+
+  const resendBtn = e.target.closest('[data-resend-historial]');
+  if (resendBtn) {
+    _resendPendingHistorial(resendBtn.dataset.resendHistorial);
     return;
   }
 
@@ -248,24 +292,40 @@ export function sendInventoryReport() {
   const commentEl  = document.getElementById('inv-comment');
   const comment    = commentEl ? commentEl.value.trim() : '';
   const inventariStr = state.items.map(i => `${i.name}: ${fmtQtyDisplay(i)}`).join(' | ');
+  const comensal     = state.authProfile?.nom || state.user || '';
+  const id           = String(now.getTime());
 
   const params = new URLSearchParams({
     action:    'inventari',
-    id:        String(now.getTime()),
+    id,
     data:      dateStr,
     hora:      timeStr,
-    comensal:  state.authProfile?.nom || state.user || '',
+    comensal,
     masia:     state.masia || '',
     inventari: inventariStr,
     comentari: comment,
   });
-  sendToSheet(SHEET_APPEND_URL, params.toString());
+
+  const wasOffline = !navigator.onLine;
+  if (wasOffline) {
+    const pending = _loadPendingInv();
+    pending.push({
+      id, date: dateStr, hora: timeStr, comensal,
+      masia: state.masia || '', inventari: inventariStr, comentari: comment,
+      params: params.toString(),
+    });
+    _savePendingInv(pending);
+  } else {
+    sendToSheet(SHEET_APPEND_URL, params.toString());
+  }
   _pendingQtyChange = false;
 
   state.items = [];
   saveItems();
   renderStats();
-  toast('Inventari enviat. Comprova\'l a l\'historial.');
+  toast(wasOffline
+    ? 'Sense connexió: l\'inventari s\'ha desat i s\'enviarà quan tinguis WiFi.'
+    : 'Inventari enviat. Comprova\'l a l\'historial.');
   setView('reports');
   renderStatsStrip();
 }
@@ -287,7 +347,7 @@ function _editBtn(id) {
 }
 
 function _cardHtml(r, role) {
-  const [id, date, hora, comensal, masiaVal, inventari, comentari] = r;
+  const [id, date, hora, comensal, masiaVal, inventari, comentari, isPending] = r;
   const masiaLabel = masiaVal ? (MASIA_LABELS[masiaVal] || masiaVal) : '';
   const authorLine = [comensal, role !== 'comensal' ? masiaLabel : ''].filter(Boolean).join(' · ');
   const masiaColor = role !== 'comensal' ? (MASIA_COLORS[masiaVal] || '') : '';
@@ -303,7 +363,10 @@ function _cardHtml(r, role) {
   const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
     ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">${hasOrder ? 'Torna a generar' : 'Genera comanda'}</button>`
     : '';
-  const canEdit = role === 'admin' || role === 'coordinador';
+  const canEdit = (role === 'admin' || role === 'coordinador') && !isPending;
+  const resendBtn = isPending
+    ? `<button class="btn-resend-historial" data-resend-historial="${esc(id)}" type="button">Enviar ara</button>`
+    : '';
 
   if (isProducte) {
     const nomProducte = inventari.slice('[PRODUCTE]: '.length);
@@ -341,14 +404,19 @@ function _cardHtml(r, role) {
     </div>`;
   }).join('');
   const comentariHtml = comentari ? `<div class="report-comment">${esc(comentari)}</div>` : '';
+  const statusBadge = isPending
+    ? `<span class="report-pending-badge">No enviat</span>`
+    : (role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`);
   return `
-    <div class="report-card" style="${cardStyle}">
+    <div class="report-card${isPending ? ' report-card--pending' : ''}" style="${cardStyle}">
       <div class="report-card-header">
         <div style="display:flex;flex-direction:column;gap:2px">
           <span class="report-date-time">${esc(date)} · ${esc(hora)}</span>
           ${authorHtml}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
+          ${statusBadge}
+          ${resendBtn}
           ${role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`}
           ${orderBadge}
           ${editBtn}
@@ -410,46 +478,55 @@ export async function renderReports() {
   _historialSearch = '';
   _historialPage   = 0;
 
+  let sheetRows   = [];
+  let fetchFailed = false;
+
   try {
     const res     = await fetch(INVENTARI_URL);
     const text    = await res.text();
     const rows    = parseCSV(text);
 
-    // Full buit (sense capçaleres ni dades) → estat buit normal
-    if (rows.length === 0 || (rows.length === 1 && rows[0].every(c => !c.trim()))) {
-      _historialRows = [];
-      await loadCatalog();
-      el.innerHTML = `<p class="stats-empty">Cap inventari registrat encara.</p>`;
-      return;
+    const sheetEmpty = rows.length === 0 || (rows.length === 1 && rows[0].every(c => !c.trim()));
+
+    if (!sheetEmpty) {
+      const headers = (rows[0] || []).map(h => h.toLowerCase().trim());
+
+      const isCorrectSheet = headers.some(h => h === 'inventari' || h === 'data' || h === 'hora');
+      if (!isCorrectSheet) {
+        el.innerHTML = `<div class="stats-cat-row" style="flex-direction:column;gap:6px;padding:20px 16px">
+          <span class="stats-cat-name" style="flex:none;font-size:13px;color:var(--low)">Error: s'està llegint el full incorrecte.</span>
+          <span class="stats-cat-count">Capçaleres trobades: ${esc((rows[0] || []).join(', '))}</span>
+        </div>`;
+        return;
+      }
+
+      const masiaIdx = findCol(headers, [['masia']]);
+      let data = rows.slice(1).filter(r => r.length > 1 && r[0]);
+
+      if (role === 'comensal' && state.masia && masiaIdx >= 0) {
+        data = data.filter(r => r[masiaIdx] === state.masia);
+      }
+
+      // Normalitza l'ID (columna 0) de notació científica a enter string
+      const normId = v => {
+        const n = Number(v);
+        return (!isNaN(n) && isFinite(n) && String(n) !== v) ? String(Math.round(n)) : String(v);
+      };
+      sheetRows = [...data].reverse().map(r => { const c = [...r]; c[0] = normId(c[0]); return c; });
     }
+  } catch {
+    fetchFailed = true;
+  }
 
-    const headers = (rows[0] || []).map(h => h.toLowerCase().trim());
+  const pendingRows = _loadPendingInv().map(p =>
+    [p.id, p.date, p.hora, p.comensal, p.masia, p.inventari, p.comentari, true]);
+  _historialRows = [...pendingRows, ...sheetRows];
+  await loadCatalog();
 
-    const isCorrectSheet = headers.some(h => h === 'inventari' || h === 'data' || h === 'hora');
-    if (!isCorrectSheet) {
-      el.innerHTML = `<div class="stats-cat-row" style="flex-direction:column;gap:6px;padding:20px 16px">
-        <span class="stats-cat-name" style="flex:none;font-size:13px;color:var(--low)">Error: s'està llegint el full incorrecte.</span>
-        <span class="stats-cat-count">Capçaleres trobades: ${esc((rows[0] || []).join(', '))}</span>
-      </div>`;
-      return;
-    }
-
-    const masiaIdx = findCol(headers, [['masia']]);
-    let data = rows.slice(1).filter(r => r.length > 1 && r[0]);
-
-    if (role === 'comensal' && state.masia && masiaIdx >= 0) {
-      data = data.filter(r => r[masiaIdx] === state.masia);
-    }
-
-    // Normalitza l'ID (columna 0) de notació científica a enter string
-    const normId = v => {
-      const n = Number(v);
-      return (!isNaN(n) && isFinite(n) && String(n) !== v) ? String(Math.round(n)) : String(v);
-    };
-    _historialRows = [...data].reverse().map(r => { const c = [...r]; c[0] = normId(c[0]); return c; });
-    await loadCatalog();
-
-    if (!_historialRows.length) {
+  if (!_historialRows.length) {
+    if (fetchFailed) {
+      el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant historial. Comprova la connexió.</div>`;
+    } else {
       el.innerHTML = `
         <div class="empty-state">
           <svg class="empty-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="1.5" aria-hidden="true">
@@ -461,70 +538,68 @@ export async function renderReports() {
             ? 'Els teus inventaris enviats i productes creats apareixeran aquí.'
             : 'Els encarregats enviaran informes quan acabin l\'inventari.'}</p>
         </div>`;
-      return;
+    }
+    return;
+  }
+
+  const masiaPills = role !== 'comensal'
+    ? Object.entries(MASIA_LABELS).map(([id, label]) => {
+        const color = MASIA_COLORS[id] || '';
+        const dot   = color
+          ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>`
+          : '';
+        return `<button class="filter-pill" data-hfilter="${esc(id)}">${dot}${esc(label)}</button>`;
+      }).join('')
+    : '';
+
+  el.innerHTML = `
+    ${fetchFailed ? `<div class="reports-offline-notice" style="margin:14px 16px 0">Sense connexió — mostrant només els inventaris pendents d'enviar.</div>` : ''}
+    <div style="padding:14px 16px 0">
+      <input class="search-input" id="historial-search" placeholder="Cerca producte, usuari…" autocomplete="off" style="height:40px">
+    </div>
+    <div class="filter-pills" id="historial-filters" style="padding-top:10px">
+      <button class="filter-pill active" data-hfilter="tot">Tot</button>
+      <button class="filter-pill" data-hfilter="inventari">Inventaris</button>
+      <button class="filter-pill" data-hfilter="producte">Productes nous</button>
+      ${masiaPills}
+    </div>
+    <div class="reports-list" id="reports-cards"></div>`;
+
+  _renderHistorialCards();
+
+  document.getElementById('historial-search').addEventListener('input', e => {
+    _historialSearch = e.target.value.trim();
+    _historialPage   = 0;
+    _renderHistorialCards();
+  });
+
+  document.getElementById('reports-cards').addEventListener('click', e => {
+    if (e.target.closest('[data-load-more]')) { _historialPage++; _renderHistorialCards(); }
+  });
+
+  document.getElementById('historial-filters').addEventListener('click', e => {
+    const pill = e.target.closest('[data-hfilter]');
+    if (!pill) return;
+    const val = pill.dataset.hfilter;
+
+    if (val === 'tot') {
+      _historialFilter = new Set(['tot']);
+    } else {
+      _historialFilter.delete('tot');
+      if (_historialFilter.has(val)) {
+        _historialFilter.delete(val);
+      } else {
+        _historialFilter.add(val);
+      }
+      if (_historialFilter.size === 0) _historialFilter.add('tot');
     }
 
-    const masiaPills = role !== 'comensal'
-      ? Object.entries(MASIA_LABELS).map(([id, label]) => {
-          const color = MASIA_COLORS[id] || '';
-          const dot   = color
-            ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>`
-            : '';
-          return `<button class="filter-pill" data-hfilter="${esc(id)}">${dot}${esc(label)}</button>`;
-        }).join('')
-      : '';
-
-    el.innerHTML = `
-      <div style="padding:14px 16px 0">
-        <input class="search-input" id="historial-search" placeholder="Cerca producte, usuari…" autocomplete="off" style="height:40px">
-      </div>
-      <div class="filter-pills" id="historial-filters" style="padding-top:10px">
-        <button class="filter-pill active" data-hfilter="tot">Tot</button>
-        <button class="filter-pill" data-hfilter="inventari">Inventaris</button>
-        <button class="filter-pill" data-hfilter="producte">Productes nous</button>
-        ${masiaPills}
-      </div>
-      <div class="reports-list" id="reports-cards"></div>`;
-
+    document.querySelectorAll('#historial-filters .filter-pill').forEach(p =>
+      p.classList.toggle('active', _historialFilter.has(p.dataset.hfilter))
+    );
+    _historialPage = 0;
     _renderHistorialCards();
-
-    document.getElementById('historial-search').addEventListener('input', e => {
-      _historialSearch = e.target.value.trim();
-      _historialPage   = 0;
-      _renderHistorialCards();
-    });
-
-    document.getElementById('reports-cards').addEventListener('click', e => {
-      if (e.target.closest('[data-load-more]')) { _historialPage++; _renderHistorialCards(); }
-    });
-
-    document.getElementById('historial-filters').addEventListener('click', e => {
-      const pill = e.target.closest('[data-hfilter]');
-      if (!pill) return;
-      const val = pill.dataset.hfilter;
-
-      if (val === 'tot') {
-        _historialFilter = new Set(['tot']);
-      } else {
-        _historialFilter.delete('tot');
-        if (_historialFilter.has(val)) {
-          _historialFilter.delete(val);
-        } else {
-          _historialFilter.add(val);
-        }
-        if (_historialFilter.size === 0) _historialFilter.add('tot');
-      }
-
-      document.querySelectorAll('#historial-filters .filter-pill').forEach(p =>
-        p.classList.toggle('active', _historialFilter.has(p.dataset.hfilter))
-      );
-      _historialPage = 0;
-      _renderHistorialCards();
-    });
-
-  } catch {
-    el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant historial. Comprova la connexió.</div>`;
-  }
+  });
 }
 
 // ── MODAL COMANDA COORDINADOR ─────────────────────────────────────────

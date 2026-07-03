@@ -6,6 +6,7 @@ import {
 } from './config.js';
 import { setView, render } from './main.js';
 import { parseCSV } from './helpers.js';
+import { drainPendingInventari } from './stats.js';
 
 // ── SUPABASE AUTH ────────────────────────────────────────────────────
 
@@ -290,6 +291,7 @@ export function applyRole(name) {
   document.body.dataset.role = role;
 
   loadData();
+  drainPendingInventari();
 
   const importBtn      = document.getElementById('btn-import-excel');
   const gasBtn         = document.getElementById('btn-gas-config');

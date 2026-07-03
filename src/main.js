@@ -25,6 +25,7 @@ import {
   renderStats, renderStatsStrip, renderReports, sendInventoryReport,
   closeCoordOrderModal, coordOrderAccept,
   closeEditHistorialModal, saveEditHistorial,
+  drainPendingInventari,
 } from './stats.js';
 import { renderCasamentsView } from './casaments.js';
 import { renderEstadistiques } from './estadistiques.js';
@@ -258,7 +259,8 @@ function init() {
   initUserScreen();
   updateOfflineQueueBadge();
   drainOfflineQueue();
-  window.addEventListener('online', () => { drainOfflineQueue(); updateOfflineQueueBadge(); });
+  drainPendingInventari();
+  window.addEventListener('online', () => { drainOfflineQueue(); drainPendingInventari(); updateOfflineQueueBadge(); });
   document.getElementById('btn-change-password').addEventListener('click', openChangePasswordModal);
   document.getElementById('btn-chpw-close').addEventListener('click', closeChangePasswordModal);
   document.getElementById('btn-chpw-save').addEventListener('click', saveChangePassword);
