@@ -524,6 +524,35 @@ function _filterCatalogView(panel) {
 
 // ── QTY MODAL ────────────────────────────────────────────────────────
 
+function _pluralCa(word, n) {
+  if (!word) return word;
+  if (Math.abs(parseFloat(n)) === 1) return word;
+  return word.endsWith('a') ? word.slice(0, -1) + 'es' : word + 's';
+}
+
+function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+let _qtyUnitWord = 'unitat';
+
+function _updateQtyLabels() {
+  const unitsInput = document.getElementById('f-qty-value');
+  const boxesInput = document.getElementById('f-qty-boxes');
+  const unitsLabel = document.getElementById('qty-units-label');
+  const boxesLabel = document.getElementById('qty-boxes-label');
+
+  const unitsVal = unitsInput.value === '' ? 1 : unitsInput.value;
+  const boxesVal = boxesInput.value === '' ? 1 : boxesInput.value;
+
+  const unitPlural = _pluralCa(_qtyUnitWord, unitsVal);
+  const indivPlural = _pluralCa('individual', unitsVal);
+  unitsLabel.textContent = `${_cap(unitPlural)} ${indivPlural}`;
+  boxesLabel.textContent = _cap(_pluralCa('caixa', boxesVal));
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'f-qty-value' || e.target.id === 'f-qty-boxes') _updateQtyLabels();
+});
+
 export function openQtyModal(idx) {
   const product = state.catalog[idx];
   if (!product) return;
@@ -536,14 +565,14 @@ export function openQtyModal(idx) {
   document.getElementById('modal-qty-title').textContent = product.name;
 
   const boxesField = document.getElementById('qty-boxes-field');
-  const unitsLabel = document.getElementById('qty-units-label');
   boxesField.hidden = false;
-  unitsLabel.textContent = unit ? (unit.charAt(0).toUpperCase() + unit.slice(1)) : 'Unitats';
+  _qtyUnitWord = (unit && unit.toLowerCase() !== 'u') ? unit.toLowerCase() : 'unitat';
 
   const boxesInput = document.getElementById('f-qty-boxes');
   const unitsInput = document.getElementById('f-qty-value');
   boxesInput.value = existing?.boxes != null ? existing.boxes : '';
   unitsInput.value = existing != null ? (existing.looseUnits ?? existing.quantity ?? '') : '';
+  _updateQtyLabels();
 
   document.getElementById('btn-remove-qty').hidden = !existing;
   document.getElementById('modal-qty').classList.add('open');
