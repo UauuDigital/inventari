@@ -194,6 +194,17 @@
     height: 36px;
   }
   .user-card-name { font-size: 18px; }
+
+  /* Targetes de masia: la píndola d'estat passa a línia pròpia, alineada amb el nom */
+  .user-card[data-masia] {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .user-card[data-masia] .masia-inv-tag {
+    flex-basis: 100%;
+    margin-top: 0;
+    margin-left: calc(52px + 16px);
+  }
 }
 
 /* ── USER PILL (header) ──────────────────────────────────────────── */
