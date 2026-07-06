@@ -15,7 +15,7 @@ import {
   openEditProductModal, saveEditProduct, deleteEditProduct,
   removeQtyItem,
 } from './catalog.js';
-import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus } from './orders.js';
+import { renderOrders, loadOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
 import {
   openUserModal, closeUserModal, saveUser, deleteUser,
@@ -125,7 +125,7 @@ export function setView(view) {
   renderNav();
   if (view === 'stats')   renderStats();
   if (view === 'cats')    renderCats();
-  if (view === 'orders')  renderOrders();
+  if (view === 'orders')  { renderOrders(); loadOrders(); }
   if (view === 'catalog') renderCatalogView();
   if (view === 'reports')   renderReports();
   if (view === 'casaments')    renderCasamentsView();

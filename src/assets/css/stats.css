@@ -491,17 +491,6 @@
   color: var(--text-dim);
   margin-bottom: 12px;
 }
-.coord-order-adults {
-  width: 64px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: right;
-}
 .coord-order-adults-src {
   font-size: 11px;
   color: var(--text-dimmer);
@@ -575,12 +564,11 @@
   flex-basis: 100%;
   font-size: 11px;
 }
-.coord-order-calc summary {
-  cursor: pointer;
+.coord-order-calc-title {
+  margin: 0;
   color: var(--text-dimmer);
   user-select: none;
 }
-.coord-order-calc summary:hover { color: var(--text-dim); }
 .coord-order-calc-body {
   margin: 6px 0 0;
   padding: 8px 10px 8px 26px;

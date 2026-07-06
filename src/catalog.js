@@ -32,30 +32,18 @@ export async function loadCatalog() {
     const iCode  = findCol(headers, ['codi', 'code', 'barcode', 'ean', 'upc']);
     const iMin   = findCol(headers, ['min', 'mínim', 'minim', 'min stock', 'estoc mínim']);
     const iUnit  = findCol(headers, ['unitat', 'unit', 'tipus']);
-    const iMitja = findCol(headers, ['mitja', 'mitjana', 'media', 'average']);
 
     state.catalog = rows.slice(1)
       .filter(r => String(r[iName] ?? '').trim())
-      .map(r => {
-        let avgQty = 0, numCom = 0;
-        if (iMitja >= 0) {
-          const mitjaStr = String(r[iMitja] ?? '').trim();
-          const parts    = mitjaStr.split(',');
-          avgQty = parseFloat(String(parts[0] ?? '0').replace(',', '.').trim()) || 0;
-          numCom = parseInt(String(parts[1]  ?? '0').trim()) || 0;
-        }
-        return {
-          id:          parseInt(String(r[iId] ?? '0')) || 0,
-          code:        String(r[iCode]  ?? '').trim(),
-          name:        String(r[iName]  ?? '').trim(),
-          category:    String(r[iCat]   ?? '').trim(),
-          supplier:    String(r[iSupp]  ?? '').trim(),
-          minStock:    parseFloat(String(r[iMin]  ?? '0').replace(',', '.')) || 0,
-          unit:        iUnit >= 0 ? String(r[iUnit] ?? '').trim() : '',
-          avgQty,
-          numCom,
-        };
-      });
+      .map(r => ({
+        id:          parseInt(String(r[iId] ?? '0')) || 0,
+        code:        String(r[iCode]  ?? '').trim(),
+        name:        String(r[iName]  ?? '').trim(),
+        category:    String(r[iCat]   ?? '').trim(),
+        supplier:    String(r[iSupp]  ?? '').trim(),
+        minStock:    parseFloat(String(r[iMin]  ?? '0').replace(',', '.')) || 0,
+        unit:        iUnit >= 0 ? String(r[iUnit] ?? '').trim() : '',
+      }));
 
     state.maxCatalogId = state.catalog.reduce((max, p) => Math.max(max, p.id || 0), 0);
 

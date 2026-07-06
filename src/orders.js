@@ -1,6 +1,90 @@
-import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
-import { uid, esc, fmtDate, toast } from './helpers.js';
-import { revertOrderMitja } from './stats.js';
+import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, ORDERS_URL, SHEET_APPEND_URL, saveOrders } from './config.js';
+import { uid, esc, fmtDate, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+
+// ── SHEET SYNC ─────────────────────────────────────────────────────────
+
+function _orderParams(action, o) {
+  return new URLSearchParams({
+    action,
+    id:                o.id,
+    ref:               o.ref               || '',
+    date:              o.date              || '',
+    supplier:          o.supplier          || '',
+    status:            o.status            || '',
+    desc:              o.desc              || '',
+    notes:             o.notes             || '',
+    createdBy:         o.createdBy         || '',
+    masia:             o.masia             || '',
+    sourceHistorialId: o.sourceHistorialId || '',
+    adults:            o.adults            || 0,
+    createdAt:         o.createdAt         || '',
+    updatedAt:         o.updatedAt         || '',
+  });
+}
+
+export function syncOrderToSheet(o, isNew) {
+  sendToSheet(SHEET_APPEND_URL, _orderParams(isNew ? 'add-comanda' : 'update-comanda', o));
+  o._synced = true;
+}
+
+export async function loadOrders() {
+  let text;
+  try {
+    const res = await fetch(ORDERS_URL + '&t=' + Date.now(), { cache: 'no-store' });
+    text = await res.text();
+  } catch {
+    return;
+  }
+
+  const rows = parseCSV(text);
+  if (rows.length < 2) return;
+
+  const headers    = rows[0].map(h => String(h).toLowerCase().trim());
+  const iId        = findCol(headers, ['id']);
+  const iRef       = findCol(headers, ['ref']);
+  const iDate      = findCol(headers, ['date', 'data']);
+  const iSupplier  = findCol(headers, ['supplier', 'proveidor', 'proveïdor']);
+  const iStatus    = findCol(headers, ['status', 'estat']);
+  const iDesc      = findCol(headers, ['desc', 'productes']);
+  const iNotes     = findCol(headers, ['notes', 'notas']);
+  const iCreatedBy = findCol(headers, ['createdby', 'creat per']);
+  const iMasia     = findCol(headers, ['masia']);
+  const iSrcHist   = findCol(headers, ['sourcehistorialid', 'historial']);
+  const iCreatedAt = findCol(headers, ['createdat', 'creat']);
+  const iUpdatedAt = findCol(headers, ['updatedat', 'actualitzat']);
+  const iAdults    = findCol(headers, ['adults']);
+
+  const sheetOrders = rows.slice(1)
+    .filter(r => String(r[iId] ?? '').trim())
+    .map(r => ({
+      id:                String(r[iId] ?? '').trim(),
+      ref:               iRef       >= 0 ? String(r[iRef]       ?? '').trim() : '',
+      date:              iDate      >= 0 ? String(r[iDate]      ?? '').trim() : '',
+      supplier:          iSupplier  >= 0 ? String(r[iSupplier]  ?? '').trim() : '',
+      status:            iStatus    >= 0 ? String(r[iStatus]    ?? '').trim() : 'pendent',
+      desc:              iDesc      >= 0 ? String(r[iDesc]      ?? '').trim() : '',
+      notes:             iNotes     >= 0 ? String(r[iNotes]     ?? '').trim() : '',
+      createdBy:         iCreatedBy >= 0 ? String(r[iCreatedBy] ?? '').trim() : '',
+      masia:             iMasia     >= 0 ? String(r[iMasia]     ?? '').trim() : '',
+      sourceHistorialId: iSrcHist   >= 0 ? String(r[iSrcHist]   ?? '').trim() : '',
+      adults:            iAdults    >= 0 ? parseFloat(r[iAdults]) || 0 : 0,
+      createdAt:         iCreatedAt >= 0 ? String(r[iCreatedAt] ?? '').trim() : '',
+      updatedAt:         iUpdatedAt >= 0 ? String(r[iUpdatedAt] ?? '').trim() : '',
+      _synced: true,
+    }));
+
+  const sheetIds  = new Set(sheetOrders.map(o => o.id));
+  const localOnly = state.orders.filter(o => !sheetIds.has(o.id));
+
+  // Migra les comandes locals (creades abans d'aquest canvi, o encara sense
+  // connexió) que encara no s'han enviat mai al Sheet.
+  localOnly.filter(o => !o._synced).forEach(o => syncOrderToSheet(o, true));
+
+  state.orders = [...sheetOrders, ...localOnly]
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  saveOrders();
+  renderOrders();
+}
 
 function _parseStructuredDesc(desc) {
   if (!desc || !desc.includes(': ')) return null;
@@ -292,42 +376,36 @@ export function saveOrder() {
     notes:     document.getElementById('f-order-notes').value.trim(),
     updatedAt: new Date().toISOString(),
   };
+  let savedOrder;
+  let isNew = false;
   if (state.editingOrderId) {
     const idx = state.orders.findIndex(o => o.id === state.editingOrderId);
     if (idx >= 0) state.orders[idx] = { ...state.orders[idx], ...data };
+    savedOrder = state.orders[idx];
     toast('Comanda actualitzada');
   } else {
     const createdBy = state.authProfile?.nom || state.user || '';
-    state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), createdBy, ...data });
+    savedOrder = { id: uid(), createdAt: new Date().toISOString(), createdBy, ...data };
+    state.orders.unshift(savedOrder);
+    isNew = true;
     toast('Comanda afegida');
   }
+  syncOrderToSheet(savedOrder, isNew);
   saveOrders();
   closeOrderModal();
   renderOrders();
-}
-
-function _toastDeleteResult(result) {
-  if (!result) return toast('Comanda eliminada');
-  const { reverted, skipped } = result;
-  if (skipped.length) {
-    toast(`Comanda eliminada. No s'ha pogut revertir la mitjana de: ${skipped.join(', ')} (ja s'han tornat a comandar)`);
-  } else if (reverted.length) {
-    toast(`Comanda eliminada i mitjana revertida (${reverted.length} producte${reverted.length !== 1 ? 's' : ''})`);
-  } else {
-    toast('Comanda eliminada');
-  }
 }
 
 export function deleteOrder() {
   if (!state.editingOrderId) return;
   const o = state.orders.find(x => x.id === state.editingOrderId);
   if (!confirm(`Eliminar la comanda${o?.ref ? ' ' + o.ref : ''}?`)) return;
-  const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== state.editingOrderId);
   saveOrders();
+  sendToSheet(SHEET_APPEND_URL, new URLSearchParams({ action: 'delete-comanda', id: o.id }));
   closeOrderModal();
   renderOrders();
-  _toastDeleteResult(result);
+  toast('Comanda eliminada');
 }
 
 const _statusCycle = ['pendent', 'en_curs', 'rebuda'];
@@ -337,6 +415,7 @@ export function cycleOrderStatus(id) {
   const idx = _statusCycle.indexOf(o.status);
   o.status    = _statusCycle[(idx + 1) % _statusCycle.length];
   o.updatedAt = new Date().toISOString();
+  syncOrderToSheet(o, false);
   saveOrders();
   renderOrders();
   toast(`Estat: ${STATUS_LABELS[o.status]}`);
@@ -346,11 +425,11 @@ export function deleteOrderDirect(id) {
   const o = state.orders.find(x => x.id === id);
   if (!o) return;
   if (!confirm(`Eliminar la comanda${o.ref ? ' ' + o.ref : ''}?`)) return;
-  const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== id);
   saveOrders();
+  sendToSheet(SHEET_APPEND_URL, new URLSearchParams({ action: 'delete-comanda', id }));
   renderOrders();
-  _toastDeleteResult(result);
+  toast('Comanda eliminada');
 }
 
 export function printOrder(id) {

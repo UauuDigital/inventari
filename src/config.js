@@ -3,9 +3,11 @@ export const OPEN_FOOD_FACTS_URL = 'https://world.openfoodfacts.org/api/v2/produ
 export const SHEET_APPEND_URL    = 'https://script.google.com/macros/s/AKfycbztMwSVooLa8kyrfc4w8nwozximqD_mwDztLQ4lvAY99MvUr6pgsS9Pt5i1F-D_nUoiQg/exec';
 export const INVENTARI_URL       = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=1640722155';
 export const CASAMENTS_URL       = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=279869052';
+export const ORDERS_URL          = 'https://docs.google.com/spreadsheets/d/1Vc3X0RI50pBOQpJUlLwSywAR9twlG4dSaoqONnRf2Ck/export?format=csv&gid=1032544119';
 
 export const STORAGE_ITEMS          = 'uauu_inv_items';
 export const STORAGE_CATS           = 'uauu_inv_cats';
+// Caché local de les comandes (font de veritat = pestanya "Comandes" del Sheet un cop hi ha connexió).
 export const STORAGE_ORDERS         = 'uauu_inv_orders';
 export const STORAGE_CAT_EXTRA      = 'uauu_inv_catalog_extra';
 export const STORAGE_CAT_EDITS      = 'uauu_inv_catalog_edits';
@@ -15,7 +17,6 @@ export const STORAGE_REFRESH_TOKEN  = 'uauu_inv_refresh_token';
 export const STORAGE_TOKEN_EXPIRES  = 'uauu_inv_token_expires';
 export const STORAGE_USER_PROFILE   = 'uauu_inv_user_profile';
 export const STORAGE_PENDING_INV    = 'uauu_inv_pending_inventari';
-export const STORAGE_MASIA_ADULTS   = 'uauu_inv_masia_adults';
 
 export const SUPABASE_URL     = 'https://oeriszeicvdnagohnqvq.supabase.co';
 export const SUPABASE_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lcmlzemVpY3ZkbmFnb2hucXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjM2MTAsImV4cCI6MjA5NzMzOTYxMH0.GyZe8TDZus51kyYeOViZMPKxXYHlynfvJiJ83S_2cu0';
