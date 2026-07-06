@@ -1,5 +1,6 @@
 import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
 import { uid, esc, fmtDate, toast } from './helpers.js';
+import { revertOrderMitja } from './stats.js';
 
 function _parseStructuredDesc(desc) {
   if (!desc || !desc.includes(': ')) return null;
@@ -305,15 +306,28 @@ export function saveOrder() {
   renderOrders();
 }
 
+function _toastDeleteResult(result) {
+  if (!result) return toast('Comanda eliminada');
+  const { reverted, skipped } = result;
+  if (skipped.length) {
+    toast(`Comanda eliminada. No s'ha pogut revertir la mitjana de: ${skipped.join(', ')} (ja s'han tornat a comandar)`);
+  } else if (reverted.length) {
+    toast(`Comanda eliminada i mitjana revertida (${reverted.length} producte${reverted.length !== 1 ? 's' : ''})`);
+  } else {
+    toast('Comanda eliminada');
+  }
+}
+
 export function deleteOrder() {
   if (!state.editingOrderId) return;
   const o = state.orders.find(x => x.id === state.editingOrderId);
   if (!confirm(`Eliminar la comanda${o?.ref ? ' ' + o.ref : ''}?`)) return;
+  const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== state.editingOrderId);
   saveOrders();
   closeOrderModal();
   renderOrders();
-  toast('Comanda eliminada');
+  _toastDeleteResult(result);
 }
 
 const _statusCycle = ['pendent', 'en_curs', 'rebuda'];
@@ -332,10 +346,11 @@ export function deleteOrderDirect(id) {
   const o = state.orders.find(x => x.id === id);
   if (!o) return;
   if (!confirm(`Eliminar la comanda${o.ref ? ' ' + o.ref : ''}?`)) return;
+  const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== id);
   saveOrders();
   renderOrders();
-  toast('Comanda eliminada');
+  _toastDeleteResult(result);
 }
 
 export function printOrder(id) {
