@@ -1,6 +1,7 @@
-import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, saveItems, saveOrders } from './config.js';
+import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, saveItems, saveOrders } from './config.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { loadCatalog } from './catalog.js';
+import { ensureCasamentsLoaded, getCasamentsData } from './casaments.js';
 
 // ── PENDING (OFFLINE) INVENTORY REPORTS ───────────────────────────────
 const _pendingKey = () => state.masia ? `${STORAGE_PENDING_INV}_${state.masia}` : STORAGE_PENDING_INV;
@@ -604,6 +605,25 @@ export async function renderReports() {
 
 // ── MODAL COMANDA COORDINADOR ─────────────────────────────────────────
 
+function _getMasiaAdults(masiaVal) {
+  try {
+    const map = JSON.parse(localStorage.getItem(STORAGE_MASIA_ADULTS) || '{}');
+    return parseInt(map[masiaVal]) || 0;
+  } catch { return 0; }
+}
+
+function _setMasiaAdults(masiaVal, adults) {
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(STORAGE_MASIA_ADULTS) || '{}'); } catch {}
+  map[masiaVal] = adults;
+  localStorage.setItem(STORAGE_MASIA_ADULTS, JSON.stringify(map));
+}
+
+// Casaments registrats d'aquesta masia (passats i futurs, sense filtrar per data).
+function _masiaCasaments(masiaVal) {
+  return getCasamentsData().filter(c => c.masiaId === masiaVal && c.adults > 0);
+}
+
 function _parseInventariItems(inventari) {
   return (inventari || '').split(' | ')
     .filter(Boolean)
@@ -615,32 +635,56 @@ function _parseInventariItems(inventari) {
       const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
       const minStock = catEntry?.minStock    || 0;
       const upb      = catEntry?.unitsPerBox || 0;
-      const avgQty   = catEntry?.avgQty      || 0;
+      const avgQty   = catEntry?.avgQty      || 0; // mitjana de caixes per adult (inventari + comanda)
       const numCom   = catEntry?.numCom      || 0;
       const qty      = parseTotalQty(qtyStr, upb);
+      const currentBoxes = upb > 0 ? qty / upb : qty;
 
-      let orderQty, orderSrc;
-      if (avgQty > 0) {
-        // Recomanació basada en la mitjana histórica
-        orderQty  = upb > 0 ? Math.ceil(avgQty / upb) : Math.round(avgQty);
-        orderSrc  = 'mitja';
-      } else {
-        // Fallback: caixes per cobrir dèficit fins al mínim
-        const deficit = Math.max(0, minStock - qty);
-        orderQty  = upb > 0 ? Math.ceil(deficit / upb) : deficit;
-        orderSrc  = 'deficit';
-      }
-
-      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, orderQty, orderSrc };
+      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, currentBoxes, orderQty: 0, orderSrc: '' };
     })
     .filter(Boolean);
 }
 
-function _openCoordOrderEdit(row) {
+// Calcula la quantitat recomanada per a cada producte a partir de la mitjana
+// de caixes/adult i el nombre d'adults de la masia (no altera avgQty/numCom).
+function _applyOrderRecommendations(items, adults) {
+  items.forEach(item => {
+    if (item.avgQty > 0 && adults > 0) {
+      // Objectiu: caixes totals (inventari + comanda) segons la mitjana per adult
+      const targetBoxes = item.avgQty * adults;
+      const rawDeficit   = targetBoxes - item.currentBoxes;
+      const deficit      = Math.max(0, rawDeficit);
+      item.targetBoxes = targetBoxes;
+      item.rawDeficit  = rawDeficit;
+      item.orderQty = Math.ceil(deficit - 1e-9);
+      item.orderSrc = 'mitja';
+    } else {
+      // Fallback: caixes per cobrir dèficit fins al mínim
+      const deficit = Math.max(0, item.minStock - item.qty);
+      item.targetBoxes = null;
+      item.rawDeficit  = null;
+      item.orderQty = item.upb > 0 ? Math.ceil(deficit / item.upb) : deficit;
+      item.orderSrc = 'deficit';
+    }
+  });
+}
+
+async function _openCoordOrderEdit(row) {
   const [id, date, hora, comensal, masiaVal, inventari] = row;
   const masiaLabel = MASIA_LABELS[masiaVal] || masiaVal || '';
   const items = _parseInventariItems(inventari);
-  _coordOrderData = { id, date, hora, masia: masiaVal, masiaLabel, comensal, items };
+
+  await ensureCasamentsLoaded();
+  const casaments = _masiaCasaments(masiaVal);
+  const sumAdults = casaments.reduce((sum, c) => sum + c.adults, 0);
+  const adults    = sumAdults > 0 ? sumAdults : _getMasiaAdults(masiaVal);
+
+  _applyOrderRecommendations(items, adults);
+  _coordOrderData = {
+    id, date, hora, masia: masiaVal, masiaLabel, comensal, items, adults,
+    adultsFromCasaments: sumAdults > 0,
+    adultsBreakdown: casaments,
+  };
   _renderCoordOrderEdit();
   setView('comanda-edit');
 }
@@ -660,45 +704,114 @@ function _updateCoordOrderRowClass(row) {
   }
 }
 
+function _fmt2(n) {
+  return (Math.round(n * 100) / 100).toString().replace('.', ',');
+}
+
+function _renderCoordOrderItemsList() {
+  const { items, adults } = _coordOrderData;
+  document.getElementById('coord-order-list').innerHTML = items.map((item, i) => {
+    const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
+    const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
+    const isOk  = !isLow && item.orderQty === 0;
+    const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
+    const stock = item.minStock > 0
+      ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
+      : `${item.qtyStr || item.qty}`;
+    const orderUnit = item.upb > 0 ? 'c' : 'u';
+    const boxUnit = item.upb > 0 ? 'c' : 'u';
+
+    let hint = '';
+    let calc = '';
+    if (item.orderSrc === 'mitja') {
+      hint = `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana de caixes per adult">~${_fmt2(item.avgQty)} c/adult · ${item.numCom} com.</span>`;
+      calc = `
+        <details class="coord-order-calc">
+          <summary>Com s'ha calculat?</summary>
+          <ol class="coord-order-calc-body">
+            <li>Estoc actual: <strong>${_fmt2(item.currentBoxes)} ${boxUnit}</strong></li>
+            <li>Mitjana de caixes/adult d'aquest producte (calculada amb ${item.numCom} comanda${item.numCom !== 1 ? 's' : ''} anteriors): <strong>${_fmt2(item.avgQty)} ${boxUnit}/adult</strong></li>
+            <li>Adults d'aquesta masia: <strong>${adults}</strong></li>
+            <li>Objectiu de caixes = mitjana × adults = ${_fmt2(item.avgQty)} × ${adults} = <strong>${_fmt2(item.targetBoxes)} ${boxUnit}</strong></li>
+            <li>Quantitat a demanar = objectiu − estoc actual = ${_fmt2(item.targetBoxes)} − ${_fmt2(item.currentBoxes)} = ${_fmt2(item.rawDeficit)} ${boxUnit}</li>
+            <li>Arrodonit amunt a caixes senceres → <strong>${item.orderQty} ${boxUnit}</strong></li>
+          </ol>
+        </details>`;
+    } else {
+      hint = `<span class="coord-order-hint" title="Encara sense mitjana; recomanació basada en el mínim del catàleg">sense mitjana</span>`;
+      calc = `
+        <details class="coord-order-calc">
+          <summary>Com s'ha calculat?</summary>
+          <ol class="coord-order-calc-body">
+            <li>Aquest producte no té cap comanda anterior registrada${adults <= 0 ? ' (o falten adults de la masia)' : ''}, per tant no hi ha mitjana → es fa servir el mínim del catàleg</li>
+            <li>Mínim del catàleg: <strong>${item.minStock}</strong></li>
+            <li>Estoc actual: <strong>${item.qty}</strong></li>
+            <li>Quantitat a demanar = mínim − estoc actual = ${item.minStock} − ${item.qty} = ${Math.max(0, item.minStock - item.qty)} → <strong>${item.orderQty} ${boxUnit}</strong></li>
+          </ol>
+        </details>`;
+    }
+
+    return `
+    <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
+      <span class="coord-order-name">${esc(item.name)}</span>
+      <span class="coord-order-stock">${stock}</span>
+      <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
+        <input class="coord-order-qty" type="number" min="0" step="1"
+               value="${item.orderQty}" data-idx="${i}">
+        <span class="coord-order-qty-unit">${orderUnit}</span>
+      </label>
+      ${hint}
+      ${calc}
+    </div>`;
+  }).join('');
+}
+
 function _renderCoordOrderEdit() {
-  const { date, hora, masiaLabel, comensal, items } = _coordOrderData;
+  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments, adultsBreakdown } = _coordOrderData;
   document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
+
+  let adultsSrcHint;
+  if (adultsFromCasaments) {
+    const sumExpr = adultsBreakdown.map(c => c.adults).join(' + ');
+    adultsSrcHint = `
+      <span class="coord-order-adults-src">suma de tots els casaments de la masia</span>
+      <details class="coord-order-calc">
+        <summary>Com s'ha calculat?</summary>
+        <div class="coord-order-calc-body">
+          ${adultsBreakdown.map(c => `${esc(c.nom)}: <strong>${c.adults}</strong> adults`).join('<br>')}<br>
+          Total = ${sumExpr} = <strong>${adults} adults</strong>
+        </div>
+      </details>`;
+  } else {
+    adultsSrcHint = `<span class="coord-order-adults-src coord-order-adults-src--warn">cap casament trobat — valor manual</span>`;
+  }
+
   document.getElementById('comanda-edit-body').innerHTML = `
     <p class="coord-order-meta">
       Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
       · <span style="color:var(--text-dim)">${esc(comensal)}</span>
     </p>
-    <div class="coord-order-list" id="coord-order-list">
-      ${items.map((item, i) => {
-        const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-        const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
-        const isOk  = !isLow && item.orderQty === 0;
-        const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
-        const stock = item.minStock > 0
-          ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
-          : `${item.qtyStr || item.qty}`;
-        const orderUnit = item.upb > 0 ? 'c' : 'u';
-        const hint = item.orderSrc === 'mitja'
-          ? `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana histórica">~${Math.round(item.avgQty)} u · ${item.numCom} com.</span>`
-          : '';
-        return `
-        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
-          <span class="coord-order-name">${esc(item.name)}</span>
-          <span class="coord-order-stock">${stock}</span>
-          <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
-            <input class="coord-order-qty" type="number" min="0" step="1"
-                   value="${item.orderQty}" data-idx="${i}">
-            <span class="coord-order-qty-unit">${orderUnit}</span>
-          </label>
-          ${hint}
-        </div>`;
-      }).join('')}
-    </div>`;
+    <label class="coord-order-adults-wrap">
+      Adults a la masia
+      <input class="coord-order-adults" type="number" min="0" step="1" id="coord-order-adults" value="${adults}">
+    </label>
+    ${adultsSrcHint}
+    <div class="coord-order-list" id="coord-order-list"></div>`;
+
+  _renderCoordOrderItemsList();
 
   document.getElementById('coord-order-list').addEventListener('input', e => {
     const input = e.target.closest('.coord-order-qty');
     if (!input) return;
     _updateCoordOrderRowClass(input.closest('.coord-order-row'));
+  });
+
+  document.getElementById('coord-order-adults').addEventListener('input', e => {
+    const newAdults = Math.max(0, parseInt(e.target.value) || 0);
+    _coordOrderData.adults = newAdults;
+    _setMasiaAdults(_coordOrderData.masia, newAdults);
+    _applyOrderRecommendations(_coordOrderData.items, newAdults);
+    _renderCoordOrderItemsList();
   });
 }
 
@@ -708,29 +821,35 @@ export function coordOrderAccept() {
     const i = parseInt(input.dataset.idx);
     _coordOrderData.items[i].orderQty = Math.max(0, parseFloat(input.value) || 0);
   });
-  const { date, hora, masiaLabel, comensal } = _coordOrderData;
+  const { date, hora, masiaLabel, comensal, adults } = _coordOrderData;
   const orderItems = _coordOrderData.items.filter(i => i.orderQty > 0);
 
-  // Actualitza la mitja histórica de cada producte comandat
-  orderItems.forEach(item => {
-    const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-    const oldNum     = item.numCom || 0;
-    const oldAvg     = item.avgQty || 0;
-    const newNum     = oldNum + 1;
-    const newAvg     = oldNum === 0
-      ? orderUnits
-      : Math.round(((oldAvg * oldNum) + orderUnits) / newNum * 10) / 10;
-    const params = new URLSearchParams({
-      action:      'update-mitja',
-      productName: item.name,
-      avgQty:      newAvg,
-      numCom:      newNum,
+  // Actualitza la mitjana de caixes/adult (inventari + comanda) de cada producte comandat
+  // Es guarda un "snapshot" (valors abans/després) a la comanda perquè, si s'elimina
+  // més endavant, es pugui revertir la seva contribució a la mitjana (vegeu revertOrderMitja).
+  const mitjaSnapshot = [];
+  if (adults > 0) {
+    orderItems.forEach(item => {
+      const perAdult = (item.currentBoxes + item.orderQty) / adults;
+      const oldNum   = item.numCom || 0;
+      const oldAvg   = item.avgQty || 0;
+      const newNum   = oldNum + 1;
+      const newAvg   = oldNum === 0
+        ? perAdult
+        : Math.round(((oldAvg * oldNum) + perAdult) / newNum * 1000) / 1000;
+      const params = new URLSearchParams({
+        action:      'update-mitja',
+        productName: item.name,
+        avgQty:      newAvg,
+        numCom:      newNum,
+      });
+      sendToSheet(SHEET_APPEND_URL, params.toString());
+      // Actualitza el catàleg local perquè la propera comanda ja tingui el valor nou
+      const cat = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+      if (cat) { cat.avgQty = newAvg; cat.numCom = newNum; }
+      mitjaSnapshot.push({ productName: item.name, prevAvg: oldAvg, prevNum: oldNum, newAvg, newNum });
     });
-    sendToSheet(SHEET_APPEND_URL, params.toString());
-    // Actualitza el catàleg local perquè la propera comanda ja tingui el valor nou
-    const cat = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
-    if (cat) { cat.avgQty = newAvg; cat.numCom = newNum; }
-  });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const desc  = orderItems.length === 0
@@ -749,6 +868,7 @@ export function coordOrderAccept() {
     notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
     createdBy: state.authProfile?.nom || state.user || comensal || '',
     sourceHistorialId: _coordOrderData.id,
+    mitjaSnapshot,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -760,6 +880,36 @@ export function coordOrderAccept() {
 export function closeCoordOrderModal() {
   _coordOrderData = null;
   setView('reports');
+}
+
+// Reverteix la contribució d'una comanda a la mitjana de cada producte, només si
+// ningú ha tornat a comandar aquest producte des de llavors (el catàleg encara té
+// exactament els valors que aquesta comanda hi va deixar). Si no, es deixa tal qual
+// i es reporta com a "no revertit" perquè desfer-ho trencaria la mitjana d'ordres posteriors.
+export function revertOrderMitja(order) {
+  const snapshot = order?.mitjaSnapshot;
+  if (!snapshot || !snapshot.length) return { reverted: [], skipped: [] };
+
+  const reverted = [];
+  const skipped  = [];
+  snapshot.forEach(entry => {
+    const cat = state.catalog.find(p => p.name.toLowerCase() === entry.productName.toLowerCase());
+    if (!cat || cat.avgQty !== entry.newAvg || cat.numCom !== entry.newNum) {
+      skipped.push(entry.productName);
+      return;
+    }
+    const params = new URLSearchParams({
+      action:      'update-mitja',
+      productName: entry.productName,
+      avgQty:      entry.prevAvg,
+      numCom:      entry.prevNum,
+    });
+    sendToSheet(SHEET_APPEND_URL, params.toString());
+    cat.avgQty = entry.prevAvg;
+    cat.numCom = entry.prevNum;
+    reverted.push(entry.productName);
+  });
+  return { reverted, skipped };
 }
 
 // ── HISTORIAL EDIT MODAL ─────────────────────────────────────────────
