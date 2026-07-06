@@ -111,26 +111,15 @@ export function fmtNum(n) {
 }
 
 export function fmtQtyDisplay(item) {
-  const boxes = item.boxes || 0;
-  const loose = item.looseUnits != null ? item.looseUnits : (item.quantity || 0);
-  const unit  = (item.unit || 'u').trim();
-  const abbr  = unit.length <= 3 ? unit : unit[0] || 'u';
-  const parts = [];
-  if (boxes > 0) parts.push(`${fmtNum(boxes)}c`);
-  if (loose > 0)  parts.push(`${fmtNum(loose)}${abbr}`);
-  return parts.join(' + ') || '0';
+  const boxes = item.boxes != null ? item.boxes : (item.quantity || 0);
+  return `${fmtNum(boxes)}c`;
 }
 
-export function parseTotalQty(qtyStr, unitsPerBox = 0) {
+export function parseTotalQty(qtyStr) {
   if (!qtyStr) return 0;
   const clean = String(qtyStr).replace(/\s/g, '');
   const boxM  = clean.match(/^(\d+(?:\.\d+)?)c/);
-  if (boxM) {
-    const boxes  = parseFloat(boxM[1]);
-    const looseM = clean.match(/\+(\d+(?:\.\d+)?)[^0-9+]/);
-    const loose  = looseM ? parseFloat(looseM[1]) : 0;
-    return unitsPerBox > 0 ? boxes * unitsPerBox + loose : loose;
-  }
+  if (boxM) return parseFloat(boxM[1]);
   return parseFloat(qtyStr) || 0;
 }
 
