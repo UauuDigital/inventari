@@ -2,7 +2,11 @@ import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STO
 import { t } from './i18n.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { loadCatalog } from './catalog.js';
+import { ensureCategory } from './items.js';
 import { ensureCasamentsLoaded, getCasamentsData } from './casaments.js';
+
+// Placeholder mostrat quan un producte no s'ha comptat en un inventari enviat.
+const NOT_COUNTED = '—';
 
 // ── PENDING (OFFLINE) INVENTORY REPORTS ───────────────────────────────
 const _pendingKey = () => state.masia ? `${STORAGE_PENDING_INV}_${state.masia}` : STORAGE_PENDING_INV;
@@ -115,13 +119,34 @@ function _updatePendingBanner() {
 document.addEventListener('change', e => {
   const input = e.target.closest('.stats-qty-input');
   if (!input) return;
-  const item = state.items.find(i => i.id === input.dataset.itemId);
-  if (!item) return;
-  const val = parseFloat(input.value) || 0;
-  item.boxes      = val;
-  item.quantity   = val;
-  item.updatedAt  = new Date().toISOString();
-  saveItems();
+  const name = input.dataset.product;
+  if (!name) return;
+  const item = state.items.find(i => i.name.toLowerCase() === name.toLowerCase());
+
+  if (input.value === '') {
+    if (item) { state.items = state.items.filter(i => i !== item); saveItems(); renderStats(); }
+  } else {
+    const val = parseFloat(input.value) || 0;
+    if (item) {
+      item.boxes     = val;
+      item.quantity  = val;
+      item.updatedAt = new Date().toISOString();
+    } else {
+      const product = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (!product) return;
+      const catId = ensureCategory(product.category);
+      state.items.unshift({
+        id: uid(), createdAt: new Date().toISOString(),
+        name: product.name, category: catId,
+        minStock: product.minStock || 0, notes: '',
+        quantity: val, boxes: val, unit: product.unit || '',
+        updatedAt: new Date().toISOString(),
+      });
+      renderStats();
+    }
+    saveItems();
+  }
+
   renderStatsStrip();
   _pendingQtyChange = true;
   _updatePendingBanner();
@@ -171,34 +196,34 @@ export function renderStats() {
   if (!el) return;
 
   if (document.body.dataset.role === 'comensal') {
-    if (state.items.length === 0) {
-      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">${t("Encara no s'ha comptat cap producte")}</span></div>`;
+    if (!state.catalog.length) {
+      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">${t('Carregant catàleg…')}</span></div>`;
       return;
     }
     const groups = new Map();
-    state.items.forEach(item => {
-      const cat     = state.categories.find(c => c.id === item.category);
-      const catName = cat ? cat.name : t('Sense categoria');
+    state.catalog.forEach(product => {
+      const catName = product.category || t('Sense categoria');
       if (!groups.has(catName)) groups.set(catName, []);
-      groups.get(catName).push(item);
+      groups.get(catName).push(product);
     });
     let html = `<div class="stats-total-row"><span class="stats-total-label">${t('Total comptat')}</span><span class="stats-total-val">${t('{n} productes', { n: state.items.length })}</span></div>`;
-    groups.forEach((items, catName) => {
+    groups.forEach((products, catName) => {
       html += `<div class="stats-section-title">${esc(catName)}</div>`;
-      items.forEach(item => {
-        const boxesVal = item.boxes != null ? item.boxes : (item.quantity || '');
+      products.forEach(product => {
+        const item      = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
+        const boxesVal  = item ? (item.boxes != null ? item.boxes : (item.quantity || '')) : '';
         html += `<div class="stats-cat-row">
-          <span class="stats-cat-name">${esc(item.name)}</span>
+          <span class="stats-cat-name">${esc(product.name)}</span>
           <div class="stats-qty-inputs">
             <div class="stats-qty-field">
               <input type="number" min="0" class="stats-qty-input"
-                     data-item-id="${esc(item.id)}" data-field="boxes"
-                     value="${boxesVal}" placeholder="0">
+                     data-product="${esc(product.name)}" data-field="boxes"
+                     value="${boxesVal}" placeholder="—">
               <span class="stats-qty-unit">c</span>
             </div>
-            <button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(item.name)}">
+            ${item ? `<button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(product.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
+            </button>` : ''}
           </div>
         </div>`;
       });
@@ -279,7 +304,12 @@ export function sendInventoryReport() {
 
   const commentEl  = document.getElementById('inv-comment');
   const comment    = commentEl ? commentEl.value.trim() : '';
-  const inventariStr = state.items.map(i => `${i.name}: ${fmtQtyDisplay(i)}`).join(' | ');
+  // Envia tot el catàleg al coordinador, no només els productes comptats:
+  // els no comptats es marquen amb el placeholder NOT_COUNTED.
+  const inventariStr = state.catalog.map(p => {
+    const item = state.items.find(i => i.name.toLowerCase() === p.name.toLowerCase());
+    return `${p.name}: ${item ? fmtQtyDisplay(item) : NOT_COUNTED}`;
+  }).join(' | ');
   const comensal     = state.authProfile?.nom || state.user || '';
   const id           = String(now.getTime());
 
@@ -384,7 +414,7 @@ function _cardHtml(r, role) {
     const qty      = sep > -1 ? item.slice(sep + 2) : '';
     const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
     const minStock = catEntry?.minStock || 0;
-    const isLow    = minStock > 0 && parseTotalQty(qty) < minStock;
+    const isLow    = qty !== NOT_COUNTED && minStock > 0 && parseTotalQty(qty) < minStock;
     const lowStyle = isLow ? ` style="color:var(--danger)"` : '';
     return `<div class="stats-cat-row">
       <span class="stats-cat-name"${lowStyle}>${esc(name)}</span>
@@ -412,7 +442,12 @@ function _cardHtml(r, role) {
         </div>
       </div>
       ${comentariHtml}
-      <div class="report-items-list">${itemsHtml}</div>
+      ${(role === 'comensal' || role === 'coordinador')
+        ? `<details class="report-items-details">
+             <summary class="report-items-summary">${t('{n} productes', { n: items.length })}</summary>
+             <div class="report-items-list">${itemsHtml}</div>
+           </details>`
+        : `<div class="report-items-list">${itemsHtml}</div>`}
     </div>`;
 }
 
@@ -686,7 +721,7 @@ function _fmt2(n) {
 }
 
 function _renderCoordOrderItemsList() {
-  const { items, adults } = _coordOrderData;
+  const { items } = _coordOrderData;
   document.getElementById('coord-order-list').innerHTML = items.map((item, i) => {
     const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
     const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
@@ -696,37 +731,10 @@ function _renderCoordOrderItemsList() {
       ? `${item.qtyStr || item.qty} / ${t('mín.')} ${item.minStock}`
       : `${item.qtyStr || item.qty}`;
     const orderUnit = item.upb > 0 ? 'c' : 'u';
-    const boxUnit = item.upb > 0 ? 'c' : 'u';
 
-    let hint = '';
-    let calc = '';
-    if (item.orderSrc === 'mitja') {
-      hint = `<span class="coord-order-hint coord-order-hint--mitja" title="${t('Recomanació basada en la mitjana de caixes per adult')}">~${_fmt2(item.avgQty)} ${t('c/adult')} · ${t('{n} com.', { n: item.numCom })}</span>`;
-      calc = `
-        <details class="coord-order-calc">
-          <summary>${t("Com s'ha calculat?")}</summary>
-          <ol class="coord-order-calc-body">
-            <li>${t('Estoc actual:')} <strong>${_fmt2(item.currentBoxes)} ${boxUnit}</strong></li>
-            <li>${t("Mitjana de caixes/adult d'aquest producte (calculada amb {n} comanda{s} anteriors):", { n: item.numCom, s: item.numCom !== 1 ? 's' : '' })} <strong>${_fmt2(item.avgQty)} ${boxUnit}/${t('adult')}</strong></li>
-            <li>${t("Adults d'aquesta masia:")} <strong>${adults}</strong></li>
-            <li>${t('Objectiu de caixes = mitjana × adults')} = ${_fmt2(item.avgQty)} × ${adults} = <strong>${_fmt2(item.targetBoxes)} ${boxUnit}</strong></li>
-            <li>${t('Quantitat a demanar = objectiu − estoc actual')} = ${_fmt2(item.targetBoxes)} − ${_fmt2(item.currentBoxes)} = ${_fmt2(item.rawDeficit)} ${boxUnit}</li>
-            <li>${t('Arrodonit amunt a caixes senceres')} → <strong>${item.orderQty} ${boxUnit}</strong></li>
-          </ol>
-        </details>`;
-    } else {
-      hint = `<span class="coord-order-hint" title="${t('Encara sense mitjana; recomanació basada en el mínim del catàleg')}">${t('sense mitjana')}</span>`;
-      calc = `
-        <details class="coord-order-calc">
-          <summary>${t("Com s'ha calculat?")}</summary>
-          <ol class="coord-order-calc-body">
-            <li>${t('Aquest producte no té cap comanda anterior registrada{note}, per tant no hi ha mitjana → es fa servir el mínim del catàleg', { note: adults <= 0 ? t(' (o falten adults de la masia)') : '' })}</li>
-            <li>${t('Mínim del catàleg:')} <strong>${item.minStock}</strong></li>
-            <li>${t('Estoc actual:')} <strong>${item.qty}</strong></li>
-            <li>${t('Quantitat a demanar = mínim − estoc actual')} = ${item.minStock} − ${item.qty} = ${Math.max(0, item.minStock - item.qty)} → <strong>${item.orderQty} ${boxUnit}</strong></li>
-          </ol>
-        </details>`;
-    }
+    const hint = item.orderSrc === 'mitja'
+      ? `<span class="coord-order-hint coord-order-hint--mitja" title="${t('Recomanació basada en la mitjana de caixes per adult')}">~${_fmt2(item.avgQty)} ${t('c/adult')} · ${t('{n} com.', { n: item.numCom })}</span>`
+      : `<span class="coord-order-hint" title="${t('Encara sense mitjana; recomanació basada en el mínim del catàleg')}">${t('sense mitjana')}</span>`;
 
     return `
     <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
@@ -738,30 +746,17 @@ function _renderCoordOrderItemsList() {
         <span class="coord-order-qty-unit">${orderUnit}</span>
       </label>
       ${hint}
-      ${calc}
     </div>`;
   }).join('');
 }
 
 function _renderCoordOrderEdit() {
-  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments, adultsBreakdown } = _coordOrderData;
+  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments } = _coordOrderData;
   document.getElementById('comanda-edit-title').textContent = t('Comanda — {masia}', { masia: masiaLabel });
 
-  let adultsSrcHint;
-  if (adultsFromCasaments) {
-    const sumExpr = adultsBreakdown.map(c => c.adults).join(' + ');
-    adultsSrcHint = `
-      <span class="coord-order-adults-src">${t('suma de tots els casaments de la masia')}</span>
-      <details class="coord-order-calc">
-        <summary>${t("Com s'ha calculat?")}</summary>
-        <div class="coord-order-calc-body">
-          ${adultsBreakdown.map(c => `${esc(c.nom)}: <strong>${c.adults}</strong> ${t('adults')}`).join('<br>')}<br>
-          ${t('Total')} = ${sumExpr} = <strong>${t('{n} adults', { n: adults })}</strong>
-        </div>
-      </details>`;
-  } else {
-    adultsSrcHint = `<span class="coord-order-adults-src coord-order-adults-src--warn">${t('cap casament trobat — valor manual')}</span>`;
-  }
+  const adultsSrcHint = adultsFromCasaments
+    ? ''
+    : `<span class="coord-order-adults-src coord-order-adults-src--warn">${t('cap casament trobat — valor manual')}</span>`;
 
   document.getElementById('comanda-edit-body').innerHTML = `
     <p class="coord-order-meta">
