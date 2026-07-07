@@ -6,8 +6,8 @@
 }
 
 .est-card {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(var(--fg-rgb),.05);
+  border: 1px solid rgba(var(--fg-rgb),.08);
   border-radius: 12px;
   padding: 20px 16px 16px;
 }

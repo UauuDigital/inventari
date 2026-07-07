@@ -32,6 +32,26 @@
   --ease-expo:   cubic-bezier(.22,1,.36,1);
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bot:    env(safe-area-inset-bottom, 0px);
+
+  /* Fixos: no canvien amb el tema (targetes/botons "paper" sobre fons fixos com modals) */
+  --ink:         #221F1E;
+  --paper:       #fff;
+  /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) i que segueixi el tema */
+  --fg-rgb:      255,255,255;
+  /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
+  --bg-rgb:      34,31,30;
+}
+
+:root[data-theme="light"] {
+  --dark:        #F2EFEE;
+  --white:       #221F1E;
+  --surface:     rgba(34,31,30,0.045);
+  --border:      rgba(34,31,30,0.1);
+  --text:        #221F1E;
+  --text-dim:    rgba(34,31,30,0.55);
+  --text-dimmer: rgba(34,31,30,0.32);
+  --fg-rgb:      34,31,30;
+  --bg-rgb:      242,239,238;
 }
 
 html { height: 100%; overflow-x: hidden; }
@@ -48,6 +68,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
   overflow-x: hidden;
+  transition: background .25s ease, color .25s ease;
 }
 
 [hidden] { display: none !important; }

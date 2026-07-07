@@ -1,4 +1,4 @@
-import { state, loadData } from './config.js';
+import { state, loadData, STORAGE_THEME } from './config.js';
 import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit, openChangePasswordModal, closeChangePasswordModal, saveChangePassword } from './auth.js';
 import {
@@ -115,6 +115,28 @@ export function render() {
   renderItems();
   if (state.view === 'stats') renderStats();
   if (state.view === 'cats')  renderCats();
+}
+
+// ── TEMA CLAR / FOSC ─────────────────────────────────────────────────
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.setAttribute('color-scheme', theme);
+  document.querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', theme === 'light' ? '#F2EFEE' : '#221F1E');
+  const setHidden = (el, hide) => hide ? el.setAttribute('hidden', '') : el.removeAttribute('hidden');
+  setHidden(document.querySelector('.theme-icon-dark'),  theme === 'light');
+  setHidden(document.querySelector('.theme-icon-light'), theme !== 'light');
+}
+
+function initTheme() {
+  applyTheme(localStorage.getItem(STORAGE_THEME) || 'dark');
+}
+
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  localStorage.setItem(STORAGE_THEME, next);
+  applyTheme(next);
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────────────
@@ -254,6 +276,7 @@ document.addEventListener('keydown', e => {
 // ── INIT ─────────────────────────────────────────────────────────────
 
 function init() {
+  initTheme();
   loadData();
   render();
   initUserScreen();
@@ -267,6 +290,7 @@ function init() {
   document.getElementById('modal-change-password').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeChangePasswordModal();
   });
+  document.getElementById('btn-theme-toggle').addEventListener('click', toggleTheme);
   document.getElementById('btn-help').addEventListener('click', openHelpModal);
   document.getElementById('btn-help-close').addEventListener('click', closeHelpModal);
   document.getElementById('modal-help').addEventListener('click', e => {

@@ -627,23 +627,6 @@ function _parseInventariItems(inventari) {
       const currentBoxes = upb > 0 ? qty / upb : qty;
 
       return { name, qty, qtyStr, minStock, upb, avgQty, numCom, currentBoxes, orderQty: 0, orderSrc: '' };
-      const minStock = catEntry?.minStock || 0;
-      const avgQty   = catEntry?.avgQty   || 0;
-      const numCom   = catEntry?.numCom   || 0;
-      const qty      = parseTotalQty(qtyStr);
-
-      let orderQty, orderSrc;
-      if (avgQty > 0) {
-        // Recomanació basada en la mitjana histórica
-        orderQty  = Math.round(avgQty);
-        orderSrc  = 'mitja';
-      } else {
-        // Fallback: caixes per cobrir dèficit fins al mínim
-        orderQty  = Math.max(0, minStock - qty);
-        orderSrc  = 'deficit';
-      }
-
-      return { name, qty, qtyStr, minStock, avgQty, numCom, orderQty, orderSrc };
     })
     .filter(Boolean);
 }
@@ -800,30 +783,6 @@ function _renderCoordOrderEdit() {
     <div class="coord-order-list" id="coord-order-list"></div>`;
 
   _renderCoordOrderItemsList();
-    <div class="coord-order-list" id="coord-order-list">
-      ${items.map((item, i) => {
-        const isLow = item.minStock > 0 && item.qty + item.orderQty < item.minStock;
-        const isOk  = !isLow && item.orderQty === 0;
-        const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
-        const stock = item.minStock > 0
-          ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
-          : `${item.qtyStr || item.qty}`;
-        const hint = item.orderSrc === 'mitja'
-          ? `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana histórica">~${Math.round(item.avgQty)} c · ${item.numCom} com.</span>`
-          : '';
-        return `
-        <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}">
-          <span class="coord-order-name">${esc(item.name)}</span>
-          <span class="coord-order-stock">${stock}</span>
-          <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
-            <input class="coord-order-qty" type="number" min="0" step="1"
-                   value="${item.orderQty}" data-idx="${i}">
-            <span class="coord-order-qty-unit">c</span>
-          </label>
-          ${hint}
-        </div>`;
-      }).join('')}
-    </div>`;
 
   document.getElementById('coord-order-list').addEventListener('input', e => {
     const input = e.target.closest('.coord-order-qty');
