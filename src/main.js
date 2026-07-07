@@ -136,6 +136,8 @@ export function setView(view) {
 
 export function updateLangSwitch() {
   const lang = getLang();
+  const wrap = document.getElementById('lang-switch');
+  if (wrap) wrap.dataset.active = lang;
   document.querySelectorAll('#lang-switch .lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });

@@ -238,28 +238,48 @@
 /* ── CONFIG MODAL ────────────────────────────────────────────────── */
 
 .lang-switch {
+  position: relative;
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(34,31,30,0.05);
+  border: 1px solid rgba(34,31,30,0.1);
+  border-radius: var(--r-pill);
 }
+.lang-switch-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background: var(--dark);
+  border-radius: var(--r-pill);
+  box-shadow: 0 2px 8px rgba(34,31,30,0.22);
+  transition: transform .32s var(--ease-expo);
+  will-change: transform;
+}
+.lang-switch[data-active="es"] .lang-switch-thumb { transform: translateX(100%); }
+
 .lang-btn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
-  color: rgba(34,31,30,0.55);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(34,31,30,0.5);
   background: transparent;
-  border: 1px solid rgba(34,31,30,0.18);
+  border: none;
   border-radius: var(--r-pill);
   padding: 12px 10px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color .2s, border-color .2s, background .2s;
+  transition: color .3s;
 }
-.lang-btn.active {
-  color: var(--white);
-  background: var(--dark);
-  border-color: var(--dark);
-}
+.lang-btn:hover:not(.active) { color: rgba(34,31,30,0.75); }
+.lang-btn.active { color: var(--white); }
 
 .config-row-btn { width: 100%; margin-top: 4px; }
 
