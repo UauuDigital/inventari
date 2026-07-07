@@ -405,7 +405,6 @@ function _cardHtml(r, role) {
         <div style="display:flex;align-items:center;gap:6px">
           ${statusBadge}
           ${resendBtn}
-          ${role === 'comensal' ? `<span class="report-received-badge">${t('Rebut')}</span>` : `<span class="report-count-badge">${t('{n} productes', { n: items.length })}</span>`}
           ${orderBadge}
           ${editBtn}
           ${genComandaBtn}
