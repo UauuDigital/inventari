@@ -404,7 +404,6 @@ function _cardHtml(r, role) {
         <div style="display:flex;align-items:center;gap:6px">
           ${statusBadge}
           ${resendBtn}
-          ${role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`}
           ${orderBadge}
           ${editBtn}
           ${genComandaBtn}
@@ -598,13 +597,6 @@ function _getMasiaAdults(masiaVal) {
   } catch { return 0; }
 }
 
-function _setMasiaAdults(masiaVal, adults) {
-  let map = {};
-  try { map = JSON.parse(localStorage.getItem(STORAGE_MASIA_ADULTS) || '{}'); } catch {}
-  map[masiaVal] = adults;
-  localStorage.setItem(STORAGE_MASIA_ADULTS, JSON.stringify(map));
-}
-
 // Casaments registrats d'aquesta masia (passats i futurs, sense filtrar per data).
 function _masiaCasaments(masiaVal) {
   return getCasamentsData().filter(c => c.masiaId === masiaVal && c.adults > 0);
@@ -751,34 +743,25 @@ function _renderCoordOrderItemsList() {
 }
 
 function _renderCoordOrderEdit() {
-  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments, adultsBreakdown } = _coordOrderData;
+  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments } = _coordOrderData;
   document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
 
-  let adultsSrcHint;
-  if (adultsFromCasaments) {
-    const sumExpr = adultsBreakdown.map(c => c.adults).join(' + ');
-    adultsSrcHint = `
-      <span class="coord-order-adults-src">suma de tots els casaments de la masia</span>
-      <details class="coord-order-calc">
-        <summary>Com s'ha calculat?</summary>
-        <div class="coord-order-calc-body">
-          ${adultsBreakdown.map(c => `${esc(c.nom)}: <strong>${c.adults}</strong> adults`).join('<br>')}<br>
-          Total = ${sumExpr} = <strong>${adults} adults</strong>
-        </div>
-      </details>`;
-  } else {
-    adultsSrcHint = `<span class="coord-order-adults-src coord-order-adults-src--warn">cap casament trobat — valor manual</span>`;
-  }
+  const adultsSrcHint = adultsFromCasaments
+    ? ''
+    : `<span class="coord-order-adults-src coord-order-adults-src--warn">cap casament trobat — valor manual</span>`;
 
   document.getElementById('comanda-edit-body').innerHTML = `
     <p class="coord-order-meta">
       Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
       · <span style="color:var(--text-dim)">${esc(comensal)}</span>
     </p>
-    <label class="coord-order-adults-wrap">
-      Adults a la masia
-      <input class="coord-order-adults" type="number" min="0" step="1" id="coord-order-adults" value="${adults}">
-    </label>
+    <span class="coord-order-adults-badge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      <strong>${adults}</strong> persones a la masia
+    </span>
     ${adultsSrcHint}
     <div class="coord-order-list" id="coord-order-list"></div>`;
 
@@ -788,14 +771,6 @@ function _renderCoordOrderEdit() {
     const input = e.target.closest('.coord-order-qty');
     if (!input) return;
     _updateCoordOrderRowClass(input.closest('.coord-order-row'));
-  });
-
-  document.getElementById('coord-order-adults').addEventListener('input', e => {
-    const newAdults = Math.max(0, parseInt(e.target.value) || 0);
-    _coordOrderData.adults = newAdults;
-    _setMasiaAdults(_coordOrderData.masia, newAdults);
-    _applyOrderRecommendations(_coordOrderData.items, newAdults);
-    _renderCoordOrderItemsList();
   });
 }
 

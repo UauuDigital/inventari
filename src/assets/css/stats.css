@@ -483,28 +483,27 @@
   padding: 20px 0;
   text-align: center;
 }
-.coord-order-adults-wrap {
-  display: flex;
+.coord-order-adults-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-dim);
-  margin-bottom: 12px;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--low);
+  background: rgba(212,149,106,.12);
+  border: 1px solid rgba(212,149,106,.3);
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  margin-bottom: 10px;
 }
-.coord-order-adults {
-  width: 64px;
-  background: rgba(var(--fg-rgb),.1);
-  border: 1px solid rgba(var(--fg-rgb),.14);
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: var(--text);
+.coord-order-adults-badge strong {
   font-size: 14px;
-  font-weight: 600;
-  text-align: right;
+  font-weight: 700;
 }
 .coord-order-adults-src {
+  display: block;
   font-size: 11px;
   color: var(--text-dimmer);
+  margin-bottom: 10px;
 }
 .coord-order-adults-src--warn {
   color: var(--danger);
