@@ -130,7 +130,7 @@ function applyTheme(theme) {
 }
 
 function initTheme() {
-  applyTheme(localStorage.getItem(STORAGE_THEME) || 'dark');
+  applyTheme(localStorage.getItem(STORAGE_THEME) || 'light');
 }
 
 function toggleTheme() {
