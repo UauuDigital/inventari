@@ -5,6 +5,7 @@ import {
   state, loadData,
 } from './config.js';
 import { setView, render } from './main.js';
+import { t } from './i18n.js';
 import { parseCSV } from './helpers.js';
 import { drainPendingInventari } from './stats.js';
 
@@ -17,7 +18,7 @@ export async function supabaseSignIn(email, password) {
     body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Credencials incorrectes');
+  if (!res.ok) throw new Error(data.error_description || data.msg || data.message || t('Credencials incorrectes'));
   return data;
 }
 
@@ -27,7 +28,7 @@ async function supabaseRefreshToken(refreshToken) {
     headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
-  if (!res.ok) throw new Error('Sessió caducada');
+  if (!res.ok) throw new Error(t('Sessió caducada'));
   return res.json();
 }
 
@@ -77,7 +78,7 @@ export function updateHeaderUser() {
   if (nameEl) nameEl.textContent = profile.nom || state.user;
   const roleEl = document.getElementById('user-pill-role');
   const ROL_DISPLAY = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
-  if (roleEl) { roleEl.textContent = ROL_DISPLAY[profile.rol] || profile.rol || ''; roleEl.hidden = !profile.rol; }
+  if (roleEl) { roleEl.textContent = t(ROL_DISPLAY[profile.rol]) || profile.rol || ''; roleEl.hidden = !profile.rol; }
 }
 
 // ── MASIA INVENTORY TAGS ─────────────────────────────────────────────
@@ -104,17 +105,17 @@ async function _loadMasiaTags() {
 
       let cls, label;
       if (!d) {
-        cls = 'never'; label = 'Sense inventari';
+        cls = 'never'; label = t('Sense inventari');
       } else if (d >= thisWeek) {
-        cls = 'current'; label = 'Aquesta setmana';
+        cls = 'current'; label = t('Aquesta setmana');
       } else {
         const weeksAgo = Math.floor((thisWeek - d) / (7 * 24 * 60 * 60 * 1000)) + 1;
         if (weeksAgo === 1) {
-          cls = 'last'; label = 'Setmana passada';
+          cls = 'last'; label = t('Setmana passada');
         } else if (weeksAgo <= 3) {
-          cls = 'old'; label = `Fa ${weeksAgo} setmanes`;
+          cls = 'old'; label = t('Fa {n} setmanes', { n: weeksAgo });
         } else {
-          cls = 'old-long'; label = `Fa ${weeksAgo} setmanes`;
+          cls = 'old-long'; label = t('Fa {n} setmanes', { n: weeksAgo });
         }
       }
 
@@ -210,20 +211,20 @@ export function showLoginScreen() {
   const pw = document.getElementById('login-password');
   if (pw) pw.value = '';
   const btn = document.querySelector('#login-form button[type="submit"]');
-  if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+  if (btn) { btn.disabled = false; btn.textContent = t('Entrar'); }
 
   const isComensal = (ROLE_MAP[state.user] || 'comensal') === 'comensal';
   const masiaLabel = (isComensal && state.masia) ? MASIA_LABELS[state.masia] || state.masia : null;
   if (masiaLabel) {
     renderCrumb('crumb-login', [
-      { label: state.user, onClick: goBackToUsers },
+      { label: t(state.user), onClick: goBackToUsers },
       { label: masiaLabel, onClick: goBackToMasia },
-      { label: 'Accés' },
+      { label: t('Accés') },
     ]);
   } else {
     renderCrumb('crumb-login', [
-      { label: state.user, onClick: goBackToUsers },
-      { label: 'Accés' },
+      { label: t(state.user), onClick: goBackToUsers },
+      { label: t('Accés') },
     ]);
   }
   setTimeout(() => { const em = document.getElementById('login-email'); if (em) em.focus(); }, 350);
@@ -236,21 +237,21 @@ export async function handleLoginSubmit(e) {
   const errEl    = document.getElementById('login-error');
   const btn      = e.target.querySelector('button[type="submit"]');
 
-  if (!email || !password) { errEl.textContent = 'Omple tots els camps'; errEl.hidden = false; return; }
+  if (!email || !password) { errEl.textContent = t('Omple tots els camps'); errEl.hidden = false; return; }
 
   btn.disabled = true;
-  btn.textContent = 'Entrant…';
+  btn.textContent = t('Entrant…');
   errEl.hidden = true;
 
   try {
     const authData = await supabaseSignIn(email, password);
     const meta = authData.user?.user_metadata || {};
     const profile = { id: authData.user?.id, email: authData.user?.email || email, nom: meta.nom, rol: meta.rol, masia: meta.masia || null };
-    if (!profile.rol) throw new Error('Perfil sense rol — afegeix user_metadata a Supabase');
+    if (!profile.rol) throw new Error(t('Perfil sense rol — afegeix user_metadata a Supabase'));
 
     const expectedRole = ROLE_MAP[state.user] || 'comensal';
     const profileRole  = (profile.rol || '').toLowerCase();
-    if (profileRole !== expectedRole) throw new Error(`Aquest compte és ${profile.rol}, no ${state.user}`);
+    if (profileRole !== expectedRole) throw new Error(t('Aquest compte és {rol}, no {user}', { rol: profile.rol, user: state.user }));
 
     const expiresAt = Date.now() + ((authData.expires_in || 3600) * 1000);
     localStorage.setItem(STORAGE_ACCESS_TOKEN,  authData.access_token);
@@ -272,7 +273,7 @@ export async function handleLoginSubmit(e) {
     errEl.textContent = err.message;
     errEl.hidden = false;
     btn.disabled = false;
-    btn.textContent = 'Entrar';
+    btn.textContent = t('Entrar');
   }
 }
 
@@ -294,7 +295,7 @@ export function applyRole(name) {
   drainPendingInventari();
 
   const importBtn      = document.getElementById('btn-import-excel');
-  const gasBtn         = document.getElementById('btn-gas-config');
+  const gasBtn         = document.getElementById('btn-config-gas');
   const reportsTab     = document.querySelector('.nav-tab[data-view="reports"]');
   const catalogMgmtTab = document.getElementById('catalog-mgmt-tab');
   if (importBtn)      importBtn.hidden      = (role !== 'admin');
@@ -321,8 +322,8 @@ export function selectUser(name) {
   const role = ROLE_MAP[name] || 'comensal';
   if (role === 'comensal') {
     renderCrumb('crumb-masia', [
-      { label: name, onClick: goBackToUsers },
-      { label: 'Masia' },
+      { label: t(name), onClick: goBackToUsers },
+      { label: t('Masia') },
     ]);
     const masiaSc = document.getElementById('screen-masia');
     masiaSc.hidden = false;
@@ -426,18 +427,18 @@ export async function saveChangePassword() {
   errEl.hidden = true;
 
   if (!current || !newPw || !confirm) {
-    errEl.textContent = 'Omple tots els camps'; errEl.hidden = false; return;
+    errEl.textContent = t('Omple tots els camps'); errEl.hidden = false; return;
   }
   if (newPw.length < 6) {
-    errEl.textContent = 'La nova contrasenya ha de tenir mínim 6 caràcters'; errEl.hidden = false; return;
+    errEl.textContent = t('La nova contrasenya ha de tenir mínim 6 caràcters'); errEl.hidden = false; return;
   }
   if (newPw !== confirm) {
-    errEl.textContent = 'Les contrasenyes no coincideixen'; errEl.hidden = false; return;
+    errEl.textContent = t('Les contrasenyes no coincideixen'); errEl.hidden = false; return;
   }
 
   btn.disabled = true;
   const orig = btn.textContent;
-  btn.textContent = 'Verificant…';
+  btn.textContent = t('Verificant…');
 
   try {
     // 1. Obté l'email (del perfil o directament de Supabase)
@@ -452,13 +453,13 @@ export async function saveChangePassword() {
       email = meData.email;
       if (email && state.authProfile) state.authProfile.email = email;
     }
-    if (!email) throw new Error('No s\'ha pogut obtenir el correu de la sessió actual');
+    if (!email) throw new Error(t('No s\'ha pogut obtenir el correu de la sessió actual'));
 
     // 2. Verifica la contrasenya actual
     await supabaseSignIn(email, current);
 
     // 2. Actualitza la contrasenya amb el token propi
-    btn.textContent = 'Canviant…';
+    btn.textContent = t('Canviant…');
     const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       method: 'PUT',
@@ -470,15 +471,15 @@ export async function saveChangePassword() {
       body: JSON.stringify({ password: newPw }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error_description || data.message || `Error ${res.status}`);
+    if (!res.ok) throw new Error(data.error_description || data.message || t('Error {status}', { status: res.status }));
 
     closeChangePasswordModal();
     // Importem toast des de helpers si cal
     const { toast } = await import('./helpers.js');
-    toast('Contrasenya canviada correctament');
+    toast(t('Contrasenya canviada correctament'));
   } catch (err) {
-    errEl.textContent = err.message === 'Credencials incorrectes'
-      ? 'La contrasenya actual no és correcta'
+    errEl.textContent = err.message === t('Credencials incorrectes')
+      ? t('La contrasenya actual no és correcta')
       : err.message;
     errEl.hidden = false;
   } finally {

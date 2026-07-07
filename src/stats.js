@@ -1,4 +1,5 @@
 import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, saveItems, saveOrders } from './config.js';
+import { t } from './i18n.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
 import { loadCatalog } from './catalog.js';
 import { ensureCasamentsLoaded, getCasamentsData } from './casaments.js';
@@ -30,7 +31,7 @@ function _resendPendingHistorial(id) {
   const idx = pending.findIndex(p => p.id === id);
   if (idx < 0) return;
   if (!navigator.onLine) {
-    toast('Encara sense connexió. S\'enviarà automàticament quan tornis a tenir WiFi.');
+    toast(t('Encara sense connexió. S\'enviarà automàticament quan tornis a tenir WiFi.'));
     return;
   }
   sendToSheet(SHEET_APPEND_URL, pending[idx].params);
@@ -38,7 +39,7 @@ function _resendPendingHistorial(id) {
   _savePendingInv(pending);
   _historialRows = _historialRows.filter(r => r[0] !== id);
   _renderHistorialCards();
-  toast('Inventari enviat.');
+  toast(t('Inventari enviat.'));
 }
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
@@ -54,7 +55,7 @@ document.addEventListener('click', e => {
   const delBtn = e.target.closest('[data-delete-historial]');
   if (delBtn && !delBtn.dataset.confirming) {
     delBtn.dataset.confirming = '1';
-    delBtn.textContent = 'Confirmar?';
+    delBtn.textContent = t('Confirmar?');
     delBtn.style.cssText = 'color:#c83030;font-size:11px;font-weight:600;padding:0 6px;background:rgba(200,48,48,.12);border-radius:6px;border:1px solid rgba(200,48,48,.35)';
     setTimeout(() => {
       if (delBtn.dataset.confirming) {
@@ -71,10 +72,10 @@ document.addEventListener('click', e => {
   if (delBtn && delBtn.dataset.confirming) {
     const id  = delBtn.dataset.deleteHistorial;
     const url = `${SHEET_APPEND_URL}?action=delete-historial&id=${encodeURIComponent(id)}`;
-    toast(`Eliminant… (id: ${id.slice(-6)})`);
+    toast(t('Eliminant… (id: {id})', { id: id.slice(-6) }));
     fetch(url, { mode: 'no-cors' })
-      .then(() => toast('Petició enviada al full'))
-      .catch(() => toast('Error de xarxa al eliminar'));
+      .then(() => toast(t('Petició enviada al full')))
+      .catch(() => toast(t('Error de xarxa al eliminar')));
     _historialRows = _historialRows.filter(r => r[0] !== id);
     _renderHistorialCards();
     return;
@@ -146,18 +147,18 @@ export function renderStatsStrip() {
   const card3 = (lowCount + zeroCount) > 0
     ? `<div class="stat-card is-warn">
          <span class="stat-value">${lowCount + zeroCount}</span>
-         <span class="stat-label">Estoc baix</span>
+         <span class="stat-label">${t('Estoc baix')}</span>
        </div>`
     : '';
 
   strip.innerHTML = `
     <div class="stat-card">
       <span class="stat-value">${total}</span>
-      <span class="stat-label">Articles</span>
+      <span class="stat-label">${t('Articles')}</span>
     </div>
     <div class="stat-card">
       <span class="stat-value">${state.categories.length}</span>
-      <span class="stat-label">Categories</span>
+      <span class="stat-label">${t('Categories')}</span>
     </div>
     ${card3}
   `;
@@ -171,17 +172,17 @@ export function renderStats() {
 
   if (document.body.dataset.role === 'comensal') {
     if (state.items.length === 0) {
-      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">Encara no s'ha comptat cap producte</span></div>`;
+      el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">${t("Encara no s'ha comptat cap producte")}</span></div>`;
       return;
     }
     const groups = new Map();
     state.items.forEach(item => {
       const cat     = state.categories.find(c => c.id === item.category);
-      const catName = cat ? cat.name : 'Sense categoria';
+      const catName = cat ? cat.name : t('Sense categoria');
       if (!groups.has(catName)) groups.set(catName, []);
       groups.get(catName).push(item);
     });
-    let html = `<div class="stats-total-row"><span class="stats-total-label">Total comptat</span><span class="stats-total-val">${state.items.length} productes</span></div>`;
+    let html = `<div class="stats-total-row"><span class="stats-total-label">${t('Total comptat')}</span><span class="stats-total-val">${t('{n} productes', { n: state.items.length })}</span></div>`;
     groups.forEach((items, catName) => {
       html += `<div class="stats-section-title">${esc(catName)}</div>`;
       items.forEach(item => {
@@ -195,7 +196,7 @@ export function renderStats() {
                      value="${boxesVal}" placeholder="0">
               <span class="stats-qty-unit">c</span>
             </div>
-            <button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="Desmarcar ${esc(item.name)}">
+            <button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(item.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -203,10 +204,10 @@ export function renderStats() {
       });
     });
     html += `<div id="pending-changes-banner" class="pending-changes-banner"${_pendingQtyChange ? '' : ' hidden'}>
-      <span>Canvis pendents d'enviar</span>
+      <span>${t("Canvis pendents d'enviar")}</span>
     </div>`;
-    html += `<textarea class="inv-comment-input" id="inv-comment" placeholder="Comentari opcional…" rows="3"></textarea>`;
-    html += `<button class="btn-send-report" data-action="send-report">Enviar inventari al coordinador</button>`;
+    html += `<textarea class="inv-comment-input" id="inv-comment" placeholder="${t('Comentari opcional…')}" rows="3"></textarea>`;
+    html += `<button class="btn-send-report" data-action="send-report">${t('Enviar inventari al coordinador')}</button>`;
     el.innerHTML = html;
     return;
   }
@@ -219,9 +220,9 @@ export function renderStats() {
     ${alertN > 0 ? `
     <div class="low-stock-alert">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span>${alertN} producte${alertN !== 1 ? 's' : ''} per sota del mínim</span>
+      <span>${t('{n} producte{s} per sota del mínim', { n: alertN, s: alertN !== 1 ? 's' : '' })}</span>
     </div>` : ''}
-    <div class="stats-section-title">Per categoria</div>
+    <div class="stats-section-title">${t('Per categoria')}</div>
 
     ${state.categories.map(cat => {
       const catItems = state.items.filter(i => i.category === cat.id);
@@ -230,26 +231,26 @@ export function renderStats() {
           <div class="cat-dot" style="background:${cat.color}"></div>
           <span class="stats-cat-name">${esc(cat.name)}</span>
           <div class="stats-cat-meta">
-            <span class="stats-cat-count">${catItems.length} art.</span>
+            <span class="stats-cat-count">${t('{n} art.', { n: catItems.length })}</span>
           </div>
         </div>
       `;
     }).join('')}
 
     ${lowItems.length > 0 ? `
-      <div class="stats-section-title" style="color:var(--low)">Estoc baix</div>
+      <div class="stats-section-title" style="color:var(--low)">${t('Estoc baix')}</div>
       ${lowItems.map(item => `
         <div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <span class="stats-cat-count" style="color:var(--low)">
-            ${fmtQtyDisplay(item)} / mín ${fmtNum(item.minStock)}
+            ${fmtQtyDisplay(item)} / ${t('mín')} ${fmtNum(item.minStock)}
           </span>
         </div>
       `).join('')}
     ` : ''}
 
     ${zeroItems.length > 0 ? `
-      <div class="stats-section-title" style="color:rgba(255,255,255,0.28)">Sense estoc</div>
+      <div class="stats-section-title" style="color:rgba(255,255,255,0.28)">${t('Sense estoc')}</div>
       ${zeroItems.map(item => `
         <div class="stats-cat-row" style="opacity:.45">
           <span class="stats-cat-name">${esc(item.name)}</span>
@@ -260,7 +261,7 @@ export function renderStats() {
 
     ${lowItems.length === 0 && zeroItems.length === 0 && state.items.length > 0 ? `
       <div class="stats-cat-row" style="justify-content:center;opacity:.4">
-        <span class="stats-cat-name" style="flex:none;font-size:13px">Tot l'estoc està en ordre ✓</span>
+        <span class="stats-cat-name" style="flex:none;font-size:13px">${t("Tot l'estoc està en ordre ✓")}</span>
       </div>
     ` : ''}
   `;
@@ -311,8 +312,8 @@ export function sendInventoryReport() {
   saveItems();
   renderStats();
   toast(wasOffline
-    ? 'Sense connexió: l\'inventari s\'ha desat i s\'enviarà quan tinguis WiFi.'
-    : 'Inventari enviat. Comprova\'l a l\'historial.');
+    ? t('Sense connexió: l\'inventari s\'ha desat i s\'enviarà quan tinguis WiFi.')
+    : t('Inventari enviat. Comprova\'l a l\'historial.'));
   setView('reports');
   renderStatsStrip();
 }
@@ -327,10 +328,10 @@ const _deleteIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
 const _editIcon   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
 function _deleteBtn(id) {
-  return `<button class="cat-delete-btn" data-delete-historial="${esc(id)}" title="Eliminar permanentment" style="margin-left:6px;flex-shrink:0">${_deleteIcon}</button>`;
+  return `<button class="cat-delete-btn" data-delete-historial="${esc(id)}" title="${t('Eliminar permanentment')}" style="margin-left:6px;flex-shrink:0">${_deleteIcon}</button>`;
 }
 function _editBtn(id) {
-  return `<button class="cat-delete-btn" data-edit-historial="${esc(id)}" title="Editar" style="margin-left:6px;flex-shrink:0;opacity:.7">${_editIcon}</button>`;
+  return `<button class="cat-delete-btn" data-edit-historial="${esc(id)}" title="${t('Editar')}" style="margin-left:6px;flex-shrink:0;opacity:.7">${_editIcon}</button>`;
 }
 
 function _cardHtml(r, role) {
@@ -345,14 +346,14 @@ function _cardHtml(r, role) {
   const delBtn        = role === 'admin' ? _deleteBtn(id) : '';
   const hasOrder      = state.orders.some(o => o.sourceHistorialId === id);
   const orderBadge    = hasOrder
-    ? `<span class="report-order-badge" title="Ja s'ha generat una comanda a partir d'aquest inventari">Comanda generada</span>`
+    ? `<span class="report-order-badge" title="${t("Ja s'ha generat una comanda a partir d'aquest inventari")}">${t('Comanda generada')}</span>`
     : '';
   const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
-    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">${hasOrder ? 'Torna a generar' : 'Genera comanda'}</button>`
+    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">${hasOrder ? t('Torna a generar') : t('Genera comanda')}</button>`
     : '';
   const canEdit = (role === 'admin' || role === 'coordinador') && !isPending;
   const resendBtn = isPending
-    ? `<button class="btn-resend-historial" data-resend-historial="${esc(id)}" type="button">Enviar ara</button>`
+    ? `<button class="btn-resend-historial" data-resend-historial="${esc(id)}" type="button">${t('Enviar ara')}</button>`
     : '';
 
   if (isProducte) {
@@ -361,7 +362,7 @@ function _cardHtml(r, role) {
     return `
       <div class="report-card" style="border:1px solid ${accentColor}33;border-left:4px solid ${accentColor};background:rgba(242,239,238,0.05);">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 16px 0">
-          <span style="font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:${accentColor};opacity:0.85">+ Producte nou</span>
+          <span style="font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:${accentColor};opacity:0.85">+ ${t('Producte nou')}</span>
           <span style="flex:1;height:1px;background:${accentColor};opacity:0.18"></span>
           <span style="font-size:9px;color:var(--text-dimmer)">${esc(date)} · ${esc(hora)}</span>
           ${delBtn}
@@ -392,8 +393,8 @@ function _cardHtml(r, role) {
   }).join('');
   const comentariHtml = comentari ? `<div class="report-comment">${esc(comentari)}</div>` : '';
   const statusBadge = isPending
-    ? `<span class="report-pending-badge">No enviat</span>`
-    : (role === 'comensal' ? `<span class="report-received-badge">Rebut</span>` : `<span class="report-count-badge">${items.length} productes</span>`);
+    ? `<span class="report-pending-badge">${t('No enviat')}</span>`
+    : (role === 'comensal' ? `<span class="report-received-badge">${t('Rebut')}</span>` : `<span class="report-count-badge">${t('{n} productes', { n: items.length })}</span>`);
   return `
     <div class="report-card${isPending ? ' report-card--pending' : ''}" style="${cardStyle}">
       <div class="report-card-header">
@@ -404,6 +405,7 @@ function _cardHtml(r, role) {
         <div style="display:flex;align-items:center;gap:6px">
           ${statusBadge}
           ${resendBtn}
+          ${role === 'comensal' ? `<span class="report-received-badge">${t('Rebut')}</span>` : `<span class="report-count-badge">${t('{n} productes', { n: items.length })}</span>`}
           ${orderBadge}
           ${editBtn}
           ${genComandaBtn}
@@ -442,7 +444,7 @@ function _renderHistorialCards() {
   }
 
   if (!data.length) {
-    cardsEl.innerHTML = `<div class="reports-loading" style="padding:40px 16px 20px">Sense resultats.</div>`;
+    cardsEl.innerHTML = `<div class="reports-loading" style="padding:40px 16px 20px">${t('Sense resultats.')}</div>`;
     return;
   }
 
@@ -450,14 +452,14 @@ function _renderHistorialCards() {
   const hasMore  = data.length > visible.length;
   cardsEl.innerHTML = visible.map(r => _cardHtml(r, role)).join('') +
     (hasMore
-      ? `<button class="load-more-btn" data-load-more>Carregar més (${data.length - visible.length} restants)</button>`
+      ? `<button class="load-more-btn" data-load-more>${t('Carregar més ({n} restants)', { n: data.length - visible.length })}</button>`
       : '');
 }
 
 export async function renderReports() {
   const el = document.getElementById('reports-content');
   if (!el) return;
-  el.innerHTML = `<div class="reports-loading">Carregant historial…</div>`;
+  el.innerHTML = `<div class="reports-loading">${t('Carregant historial…')}</div>`;
 
   const role = document.body.dataset.role || 'comensal';
   _historialFilter = new Set(['tot']);
@@ -480,8 +482,8 @@ export async function renderReports() {
       const isCorrectSheet = headers.some(h => h === 'inventari' || h === 'data' || h === 'hora');
       if (!isCorrectSheet) {
         el.innerHTML = `<div class="stats-cat-row" style="flex-direction:column;gap:6px;padding:20px 16px">
-          <span class="stats-cat-name" style="flex:none;font-size:13px;color:var(--low)">Error: s'està llegint el full incorrecte.</span>
-          <span class="stats-cat-count">Capçaleres trobades: ${esc((rows[0] || []).join(', '))}</span>
+          <span class="stats-cat-name" style="flex:none;font-size:13px;color:var(--low)">${t("Error: s'està llegint el full incorrecte.")}</span>
+          <span class="stats-cat-count">${t('Capçaleres trobades:')} ${esc((rows[0] || []).join(', '))}</span>
         </div>`;
         return;
       }
@@ -511,7 +513,7 @@ export async function renderReports() {
 
   if (!_historialRows.length) {
     if (fetchFailed) {
-      el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant historial. Comprova la connexió.</div>`;
+      el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">${t('Error carregant historial. Comprova la connexió.')}</div>`;
     } else {
       el.innerHTML = `
         <div class="empty-state">
@@ -519,10 +521,10 @@ export async function renderReports() {
             <rect x="10" y="8" width="44" height="50" rx="4"/>
             <path d="M10 22h44"/><path d="M20 36h24M20 44h16"/>
           </svg>
-          <p class="empty-title">Sense historial</p>
+          <p class="empty-title">${t('Sense historial')}</p>
           <p class="empty-text">${role === 'comensal'
-            ? 'Els teus inventaris enviats i productes creats apareixeran aquí.'
-            : 'Els encarregats enviaran informes quan acabin l\'inventari.'}</p>
+            ? t('Els teus inventaris enviats i productes creats apareixeran aquí.')
+            : t('Els encarregats enviaran informes quan acabin l\'inventari.')}</p>
         </div>`;
     }
     return;
@@ -539,14 +541,14 @@ export async function renderReports() {
     : '';
 
   el.innerHTML = `
-    ${fetchFailed ? `<div class="reports-offline-notice" style="margin:14px 16px 0">Sense connexió — mostrant només els inventaris pendents d'enviar.</div>` : ''}
+    ${fetchFailed ? `<div class="reports-offline-notice" style="margin:14px 16px 0">${t("Sense connexió — mostrant només els inventaris pendents d'enviar.")}</div>` : ''}
     <div style="padding:14px 16px 0">
-      <input class="search-input" id="historial-search" placeholder="Cerca producte, usuari…" autocomplete="off" style="height:40px">
+      <input class="search-input" id="historial-search" placeholder="${t('Cerca producte, usuari…')}" autocomplete="off" style="height:40px">
     </div>
     <div class="filter-pills" id="historial-filters" style="padding-top:10px">
-      <button class="filter-pill active" data-hfilter="tot">Tot</button>
-      <button class="filter-pill" data-hfilter="inventari">Inventaris</button>
-      <button class="filter-pill" data-hfilter="producte">Productes nous</button>
+      <button class="filter-pill active" data-hfilter="tot">${t('Tot')}</button>
+      <button class="filter-pill" data-hfilter="inventari">${t('Inventaris')}</button>
+      <button class="filter-pill" data-hfilter="producte">${t('Productes nous')}</button>
       ${masiaPills}
     </div>
     <div class="reports-list" id="reports-cards"></div>`;
@@ -692,7 +694,7 @@ function _renderCoordOrderItemsList() {
     const isOk  = !isLow && item.orderQty === 0;
     const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
     const stock = item.minStock > 0
-      ? `${item.qtyStr || item.qty} / mín. ${item.minStock}`
+      ? `${item.qtyStr || item.qty} / ${t('mín.')} ${item.minStock}`
       : `${item.qtyStr || item.qty}`;
     const orderUnit = item.upb > 0 ? 'c' : 'u';
     const boxUnit = item.upb > 0 ? 'c' : 'u';
@@ -700,29 +702,29 @@ function _renderCoordOrderItemsList() {
     let hint = '';
     let calc = '';
     if (item.orderSrc === 'mitja') {
-      hint = `<span class="coord-order-hint coord-order-hint--mitja" title="Recomanació basada en la mitjana de caixes per adult">~${_fmt2(item.avgQty)} c/adult · ${item.numCom} com.</span>`;
+      hint = `<span class="coord-order-hint coord-order-hint--mitja" title="${t('Recomanació basada en la mitjana de caixes per adult')}">~${_fmt2(item.avgQty)} ${t('c/adult')} · ${t('{n} com.', { n: item.numCom })}</span>`;
       calc = `
         <details class="coord-order-calc">
-          <summary>Com s'ha calculat?</summary>
+          <summary>${t("Com s'ha calculat?")}</summary>
           <ol class="coord-order-calc-body">
-            <li>Estoc actual: <strong>${_fmt2(item.currentBoxes)} ${boxUnit}</strong></li>
-            <li>Mitjana de caixes/adult d'aquest producte (calculada amb ${item.numCom} comanda${item.numCom !== 1 ? 's' : ''} anteriors): <strong>${_fmt2(item.avgQty)} ${boxUnit}/adult</strong></li>
-            <li>Adults d'aquesta masia: <strong>${adults}</strong></li>
-            <li>Objectiu de caixes = mitjana × adults = ${_fmt2(item.avgQty)} × ${adults} = <strong>${_fmt2(item.targetBoxes)} ${boxUnit}</strong></li>
-            <li>Quantitat a demanar = objectiu − estoc actual = ${_fmt2(item.targetBoxes)} − ${_fmt2(item.currentBoxes)} = ${_fmt2(item.rawDeficit)} ${boxUnit}</li>
-            <li>Arrodonit amunt a caixes senceres → <strong>${item.orderQty} ${boxUnit}</strong></li>
+            <li>${t('Estoc actual:')} <strong>${_fmt2(item.currentBoxes)} ${boxUnit}</strong></li>
+            <li>${t("Mitjana de caixes/adult d'aquest producte (calculada amb {n} comanda{s} anteriors):", { n: item.numCom, s: item.numCom !== 1 ? 's' : '' })} <strong>${_fmt2(item.avgQty)} ${boxUnit}/${t('adult')}</strong></li>
+            <li>${t("Adults d'aquesta masia:")} <strong>${adults}</strong></li>
+            <li>${t('Objectiu de caixes = mitjana × adults')} = ${_fmt2(item.avgQty)} × ${adults} = <strong>${_fmt2(item.targetBoxes)} ${boxUnit}</strong></li>
+            <li>${t('Quantitat a demanar = objectiu − estoc actual')} = ${_fmt2(item.targetBoxes)} − ${_fmt2(item.currentBoxes)} = ${_fmt2(item.rawDeficit)} ${boxUnit}</li>
+            <li>${t('Arrodonit amunt a caixes senceres')} → <strong>${item.orderQty} ${boxUnit}</strong></li>
           </ol>
         </details>`;
     } else {
-      hint = `<span class="coord-order-hint" title="Encara sense mitjana; recomanació basada en el mínim del catàleg">sense mitjana</span>`;
+      hint = `<span class="coord-order-hint" title="${t('Encara sense mitjana; recomanació basada en el mínim del catàleg')}">${t('sense mitjana')}</span>`;
       calc = `
         <details class="coord-order-calc">
-          <summary>Com s'ha calculat?</summary>
+          <summary>${t("Com s'ha calculat?")}</summary>
           <ol class="coord-order-calc-body">
-            <li>Aquest producte no té cap comanda anterior registrada${adults <= 0 ? ' (o falten adults de la masia)' : ''}, per tant no hi ha mitjana → es fa servir el mínim del catàleg</li>
-            <li>Mínim del catàleg: <strong>${item.minStock}</strong></li>
-            <li>Estoc actual: <strong>${item.qty}</strong></li>
-            <li>Quantitat a demanar = mínim − estoc actual = ${item.minStock} − ${item.qty} = ${Math.max(0, item.minStock - item.qty)} → <strong>${item.orderQty} ${boxUnit}</strong></li>
+            <li>${t('Aquest producte no té cap comanda anterior registrada{note}, per tant no hi ha mitjana → es fa servir el mínim del catàleg', { note: adults <= 0 ? t(' (o falten adults de la masia)') : '' })}</li>
+            <li>${t('Mínim del catàleg:')} <strong>${item.minStock}</strong></li>
+            <li>${t('Estoc actual:')} <strong>${item.qty}</strong></li>
+            <li>${t('Quantitat a demanar = mínim − estoc actual')} = ${item.minStock} − ${item.qty} = ${Math.max(0, item.minStock - item.qty)} → <strong>${item.orderQty} ${boxUnit}</strong></li>
           </ol>
         </details>`;
     }
@@ -731,7 +733,7 @@ function _renderCoordOrderItemsList() {
     <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
       <span class="coord-order-name">${esc(item.name)}</span>
       <span class="coord-order-stock">${stock}</span>
-      <label class="coord-order-qty-wrap" aria-label="Quantitat a demanar">
+      <label class="coord-order-qty-wrap" aria-label="${t('Quantitat a demanar')}">
         <input class="coord-order-qty" type="number" min="0" step="1"
                value="${item.orderQty}" data-idx="${i}">
         <span class="coord-order-qty-unit">${orderUnit}</span>
@@ -743,16 +745,28 @@ function _renderCoordOrderItemsList() {
 }
 
 function _renderCoordOrderEdit() {
-  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments } = _coordOrderData;
-  document.getElementById('comanda-edit-title').textContent = `Comanda — ${masiaLabel}`;
+  const { date, hora, masiaLabel, comensal, adults, adultsFromCasaments, adultsBreakdown } = _coordOrderData;
+  document.getElementById('comanda-edit-title').textContent = t('Comanda — {masia}', { masia: masiaLabel });
 
-  const adultsSrcHint = adultsFromCasaments
-    ? ''
-    : `<span class="coord-order-adults-src coord-order-adults-src--warn">cap casament trobat — valor manual</span>`;
+  let adultsSrcHint;
+  if (adultsFromCasaments) {
+    const sumExpr = adultsBreakdown.map(c => c.adults).join(' + ');
+    adultsSrcHint = `
+      <span class="coord-order-adults-src">${t('suma de tots els casaments de la masia')}</span>
+      <details class="coord-order-calc">
+        <summary>${t("Com s'ha calculat?")}</summary>
+        <div class="coord-order-calc-body">
+          ${adultsBreakdown.map(c => `${esc(c.nom)}: <strong>${c.adults}</strong> ${t('adults')}`).join('<br>')}<br>
+          ${t('Total')} = ${sumExpr} = <strong>${t('{n} adults', { n: adults })}</strong>
+        </div>
+      </details>`;
+  } else {
+    adultsSrcHint = `<span class="coord-order-adults-src coord-order-adults-src--warn">${t('cap casament trobat — valor manual')}</span>`;
+  }
 
   document.getElementById('comanda-edit-body').innerHTML = `
     <p class="coord-order-meta">
-      Inventari del <strong>${esc(date)}</strong> a les <strong>${esc(hora)}</strong>
+      ${t('Inventari del')} <strong>${esc(date)}</strong> ${t('a les')} <strong>${esc(hora)}</strong>
       · <span style="color:var(--text-dim)">${esc(comensal)}</span>
     </p>
     <span class="coord-order-adults-badge">
@@ -812,7 +826,7 @@ export function coordOrderAccept() {
 
   const today = new Date().toISOString().slice(0, 10);
   const desc  = orderItems.length === 0
-    ? 'Cap producte per demanar'
+    ? t('Cap producte per demanar')
     : orderItems.map(i => `${i.name}: ${i.orderQty} c`).join(' | ');
   state.orders.unshift({
     id:        uid(),
@@ -821,7 +835,7 @@ export function coordOrderAccept() {
     masia:     _coordOrderData.masia,
     status:    'pendent',
     desc,
-    notes:     `Inventari del ${date} (${hora}) · ${comensal}`,
+    notes:     t('Inventari del {date} ({hora}) · {comensal}', { date, hora, comensal }),
     createdBy: state.authProfile?.nom || state.user || comensal || '',
     sourceHistorialId: _coordOrderData.id,
     mitjaSnapshot,
@@ -945,5 +959,5 @@ export function saveEditHistorial() {
 
   closeEditHistorialModal();
   _renderHistorialCards();
-  toast('Inventari actualitzat');
+  toast(t('Inventari actualitzat'));
 }

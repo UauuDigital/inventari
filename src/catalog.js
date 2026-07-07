@@ -4,6 +4,7 @@ import {
 } from './config.js';
 import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, createTagSearch, matchesTags } from './helpers.js';
 import { ensureCategory } from './items.js';
+import { t, getLang } from './i18n.js';
 
 let _catalogTags    = [];
 let _catalogText    = '';
@@ -105,7 +106,7 @@ function openProductDropdown(results, query) {
   if (!dd) return;
 
   if (results.length === 0) {
-    dd.innerHTML = `<p class="product-dd-empty">Sense coincidències</p>`;
+    dd.innerHTML = `<p class="product-dd-empty">${t('Sense coincidències')}</p>`;
     dd.hidden = false;
     return;
   }
@@ -156,7 +157,7 @@ export function initCatalogSearch() {
     if (!state.catalogReady) {
       if (q.length >= 2) {
         const dd = document.getElementById('product-dropdown');
-        dd.innerHTML = `<p class="product-dd-loading">Carregant catàleg…</p>`;
+        dd.innerHTML = `<p class="product-dd-loading">${t('Carregant catàleg…')}</p>`;
         dd.hidden = false;
         loadCatalog().then(() => {
           const results = state.catalog.filter(p =>
@@ -205,7 +206,7 @@ function loadHtml5QrCode() {
     const s = document.createElement('script');
     s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
     s.onload  = () => { _html5QrLoaded = true; resolve(); };
-    s.onerror = () => reject(new Error("No s'ha pogut carregar l'escàner."));
+    s.onerror = () => reject(new Error(t("No s'ha pogut carregar l'escàner.")));
     document.head.appendChild(s);
   });
 }
@@ -217,12 +218,12 @@ export async function openScanModalForField(fieldId) {
 
 export async function openScanModal() {
   document.getElementById('modal-scan').classList.add('open');
-  document.getElementById('scan-status-text').textContent = 'Apunta la càmera al codi de barres';
+  document.getElementById('scan-status-text').textContent = t('Apunta la càmera al codi de barres');
 
   try {
     await loadHtml5QrCode();
   } catch {
-    document.getElementById('scan-status-text').textContent = "Error carregant l'escàner. Comprova la connexió.";
+    document.getElementById('scan-status-text').textContent = t("Error carregant l'escàner. Comprova la connexió.");
     return;
   }
 
@@ -235,7 +236,7 @@ export async function openScanModal() {
       () => {}
     );
   } catch {
-    document.getElementById('scan-status-text').textContent = "No s'ha pogut accedir a la càmera.";
+    document.getElementById('scan-status-text').textContent = t("No s'ha pogut accedir a la càmera.");
   }
 }
 
@@ -244,7 +245,7 @@ export async function closeScanModal() {
   document.getElementById('barcode-reader').hidden = false;
   document.getElementById('scan-result').hidden     = true;
   const statusEl = document.getElementById('scan-status-text');
-  if (statusEl) statusEl.textContent = 'Apunta la càmera al codi';
+  if (statusEl) statusEl.textContent = t('Apunta la càmera al codi');
   _pendingCreate  = null;
   _scanFillTarget = null;
   if (state.scannerInstance) {
@@ -296,12 +297,12 @@ async function handleBarcode(code) {
   }
 
   const statusEl = document.getElementById('scan-status-text');
-  if (statusEl) statusEl.textContent = 'Buscant producte…';
+  if (statusEl) statusEl.textContent = t('Buscant producte…');
 
   const localIdx = state.catalog.findIndex(p => p.code && p.code === code);
   if (localIdx >= 0) {
     closeScanModal();
-    toast(`Trobat: ${state.catalog[localIdx].name}`);
+    toast(t('Trobat: {name}', { name: state.catalog[localIdx].name }));
     openQtyModal(localIdx);
     return;
   }
@@ -314,10 +315,10 @@ async function handleBarcode(code) {
 
   if (offProduct) {
     _pendingCreate = { ...offProduct, code };
-    msgEl.textContent = `"${offProduct.name}" no és al nostre catàleg però existeix a la base de dades pública. Vols afegir-lo?`;
+    msgEl.textContent = t('"{name}" no és al nostre catàleg però existeix a la base de dades pública. Vols afegir-lo?', { name: offProduct.name });
   } else {
     _pendingCreate = { code };
-    msgEl.textContent = `El codi ${code} no és al nostre catàleg. Vols crear un producte nou a partir d'aquest codi?`;
+    msgEl.textContent = t("El codi {code} no és al nostre catàleg. Vols crear un producte nou a partir d'aquest codi?", { code });
   }
 }
 
@@ -348,17 +349,17 @@ export function renderCatalogView() {
   if (!panel) return;
 
   if (!state.catalogReady) {
-    panel.innerHTML = '<div class="catalog-loading">Carregant catàleg…</div>';
+    panel.innerHTML = `<div class="catalog-loading">${t('Carregant catàleg…')}</div>`;
     loadCatalog()
       .then(() => renderCatalogView())
       .catch(() => {
-        panel.innerHTML = "<div class=\"catalog-empty\">No s'ha pogut carregar el catàleg.<br>Comprova la connexió a internet.</div>";
+        panel.innerHTML = `<div class="catalog-empty">${t("No s'ha pogut carregar el catàleg.<br>Comprova la connexió a internet.")}</div>`;
       });
     return;
   }
 
   if (state.catalog.length === 0) {
-    panel.innerHTML = '<div class="catalog-empty">Cap producte al catàleg.</div>';
+    panel.innerHTML = `<div class="catalog-empty">${t('Cap producte al catàleg.')}</div>`;
     return;
   }
 
@@ -371,7 +372,7 @@ export function renderCatalogView() {
     // ── Editor view: flat list grouped by category ──────────────────
     const groups = new Map();
     state.catalog.forEach((p, i) => {
-      const cat = p.category || 'Sense categoria';
+      const cat = p.category || t('Sense categoria');
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat).push({ p, i });
     });
@@ -386,7 +387,7 @@ export function renderCatalogView() {
             <span class="catalog-btn-name">${esc(p.name)}</span>
             <div style="display:flex;align-items:center;gap:6px">
               ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
-              <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="Editar ${esc(p.name)}">${editSvg}</button>
+              <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">${editSvg}</button>
             </div>
           </div>
         `);
@@ -412,7 +413,7 @@ export function renderCatalogView() {
           <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
           <line x1="17" y1="12" x2="17" y2="12.01"/>
         </svg>
-        Escaneja codi de barres
+        ${t('Escaneja codi de barres')}
       </button>`;
 
     const cards = state.catalog.map((p, i) => {
@@ -438,7 +439,7 @@ export function renderCatalogView() {
 
     panel.innerHTML = `
       <div class="catalog-list">
-        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cerca producte…" value="${esc(_catalogText)}">
+        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${t('Cerca producte…')}" value="${esc(_catalogText)}">
         ${scanBtn}
       </div>
       ${cats.length ? `<div class="catalog-cat-pills" id="catalog-cat-pills">${catPills}</div>` : ''}
@@ -474,12 +475,12 @@ export function renderCatalogView() {
   createTagSearch(
     document.getElementById('catalog-tag-search'),
     tags => { _catalogTags = tags; _filterCatalogView(panel); },
-    'Nom, categoria, proveïdor… (Enter per text)',
+    t('Nom, categoria, proveïdor… (Enter per text)'),
     () => {
       const cats2 = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort()
-        .map(c => ({ value: c.toLowerCase(), label: c, type: 'Categoria' }));
+        .map(c => ({ value: c.toLowerCase(), label: c, type: t('Categoria') }));
       const supps = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort()
-        .map(s => ({ value: s.toLowerCase(), label: s, type: 'Proveïdor' }));
+        .map(s => ({ value: s.toLowerCase(), label: s, type: t('Proveïdor') }));
       return [...cats2, ...supps];
     },
     _catalogTags
@@ -529,7 +530,10 @@ function _updateQtyLabels() {
   const boxesInput = document.getElementById('f-qty-boxes');
   const boxesLabel = document.getElementById('qty-boxes-label');
   const boxesVal   = boxesInput.value === '' ? 1 : boxesInput.value;
-  boxesLabel.textContent = _cap(_pluralCa('caixa', boxesVal));
+  const label = getLang() === 'es'
+    ? (Math.abs(parseFloat(boxesVal)) === 1 ? 'Caja' : 'Cajas')
+    : _cap(_pluralCa('caixa', boxesVal));
+  boxesLabel.textContent = label;
 }
 
 document.addEventListener('input', e => {
@@ -565,7 +569,7 @@ export function removeQtyItem() {
   state.items = state.items.filter(i => i.name.toLowerCase() !== product.name.toLowerCase());
   saveItems();
   closeQtyModal();
-  toast(`${product.name} desmarcat`);
+  toast(t('{name} desmarcat', { name: product.name }));
   renderCatalogView();
 }
 
@@ -625,10 +629,10 @@ export function saveGasUrl() {
   const url = document.getElementById('f-gas-url').value.trim();
   if (url) {
     localStorage.setItem('uauu_inv_gas_url', url);
-    toast('URL desada correctament');
+    toast(t('URL desada correctament'));
   } else {
     localStorage.removeItem('uauu_inv_gas_url');
-    toast('URL eliminada');
+    toast(t('URL eliminada'));
   }
   closeGasModal();
 }
@@ -636,12 +640,12 @@ export function saveGasUrl() {
 export function testGasUrl() {
   const url = document.getElementById('f-gas-url').value.trim()
            || localStorage.getItem('uauu_inv_gas_url') || '';
-  if (!url) { toast('Enganxa primer la URL'); return; }
+  if (!url) { toast(t('Enganxa primer la URL')); return; }
   const params = new URLSearchParams({
     id: 0, producte: 'TEST_CONNEXIO', proveidor: '', categoria: 'TEST', codi: '',
   });
   window.open(`${url}?${params}`, '_blank');
-  toast('Comprova si ha aparegut una fila TEST al full');
+  toast(t('Comprova si ha aparegut una fila TEST al full'));
 }
 
 // ── NOU PRODUCTE (Comensal) ──────────────────────────────────────────
@@ -655,8 +659,8 @@ function _fillProductDataLists() {
 
 export function openNewProductModal(prefill = {}) {
   state.editingCatalogProductIdx = null;
-  document.getElementById('modal-np-title').textContent = 'Nou producte';
-  document.getElementById('btn-save-new-product').textContent = 'Afegir al catàleg';
+  document.getElementById('modal-np-title').textContent = t('Nou producte');
+  document.getElementById('btn-save-new-product').textContent = t('Afegir al catàleg');
   const delBtn = document.getElementById('btn-delete-product');
   if (delBtn) delBtn.hidden = true;
 
@@ -677,8 +681,8 @@ export function openEditProductModal(idx) {
   if (!product) return;
   state.editingCatalogProductIdx = idx;
 
-  document.getElementById('modal-np-title').textContent = 'Editar producte';
-  document.getElementById('btn-save-new-product').textContent = 'Desar canvis';
+  document.getElementById('modal-np-title').textContent = t('Editar producte');
+  document.getElementById('btn-save-new-product').textContent = t('Desar canvis');
 
   _fillProductDataLists();
   document.getElementById('f-np-name').value        = product.name        || '';
@@ -731,7 +735,7 @@ export function saveEditProduct() {
 
   closeNewProductModal();
   renderCatalogView();
-  toast(`"${name}" actualitzat`);
+  toast(t('"{name}" actualitzat', { name }));
 }
 
 export function deleteEditProduct() {
@@ -742,7 +746,7 @@ export function deleteEditProduct() {
   const extraIdx = state.catalogExtra.findIndex(p => p.id === product.id);
   if (extraIdx < 0) return;
 
-  if (!confirm(`Eliminar "${product.name}" del catàleg?`)) return;
+  if (!confirm(t('Eliminar "{name}" del catàleg?', { name: product.name }))) return;
 
   state.catalogExtra.splice(extraIdx, 1);
   localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
@@ -750,7 +754,7 @@ export function deleteEditProduct() {
 
   closeNewProductModal();
   renderCatalogView();
-  toast(`"${product.name}" eliminat del catàleg`);
+  toast(t('"{name}" eliminat del catàleg', { name: product.name }));
 }
 
 export function closeNewProductModal() {
@@ -807,14 +811,14 @@ export function saveNewProduct() {
       });
       sendToSheet(SHEET_APPEND_URL, histParams.toString());
 
-      toast(`"${name}" afegit i enviat al full`);
+      toast(t('"{name}" afegit i enviat al full', { name }));
     } else {
-      toast(`"${name}" desat localment`);
+      toast(t('"{name}" desat localment', { name }));
     }
 
     closeNewProductModal();
     renderCatalogView();
   } catch (err) {
-    toast(`Error al desar: ${err.message}`);
+    toast(t('Error al desar: {msg}', { msg: err.message }));
   }
 }

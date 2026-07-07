@@ -1,4 +1,5 @@
 import { state, MASIA_LABELS, MASIA_COLORS, STATUS_LABELS } from './config.js';
+import { t } from './i18n.js';
 import { esc } from './helpers.js';
 import { getCasamentsData, ensureCasamentsLoaded } from './casaments.js';
 
@@ -36,7 +37,7 @@ function _donutSvg(data) {
   return `<svg viewBox="0 0 200 200" class="donut-svg" aria-hidden="true">
     <g transform="rotate(-90 ${CX} ${CY})">${circles}</g>
     <text x="${CX}" y="${CY - 8}" text-anchor="middle" dominant-baseline="middle" class="donut-center-val">${total}</text>
-    <text x="${CX}" y="${CY + 14}" text-anchor="middle" dominant-baseline="middle" class="donut-center-lbl">total</text>
+    <text x="${CX}" y="${CY + 14}" text-anchor="middle" dominant-baseline="middle" class="donut-center-lbl">${t('total')}</text>
   </svg>`;
 }
 
@@ -82,7 +83,7 @@ function _legendItem(d, total) {
 function _legend(data, maxItems = Infinity) {
   const total   = data.reduce((s, d) => s + d.value, 0);
   const visible = data.filter(d => d.value > 0);
-  if (!visible.length) return `<p class="est-empty">Sense dades</p>`;
+  if (!visible.length) return `<p class="est-empty">${t('Sense dades')}</p>`;
 
   const shown  = visible.slice(0, maxItems);
   const rest   = visible.slice(maxItems);
@@ -90,7 +91,7 @@ function _legend(data, maxItems = Infinity) {
   const moreHtml = rest.length > 0 ? `
     <li class="est-legend-more" hidden>${rest.map(d => _legendItem(d, total)).join('')}</li>
     <li class="est-legend-expand-li">
-      <button class="est-legend-expand-btn" type="button">Veure tots (${rest.length} més)</button>
+      <button class="est-legend-expand-btn" type="button">${t('Veure tots ({n} més)', { n: rest.length })}</button>
     </li>` : '';
 
   return `<ul class="est-legend">
@@ -117,13 +118,13 @@ const CAT_PALETTE = [
 function _chartCategories() {
   const byCategory = new Map();
   for (const p of state.catalog) {
-    const cat = p.category || 'Sense categoria';
+    const cat = p.category || t('Sense categoria');
     byCategory.set(cat, (byCategory.get(cat) || 0) + 1);
   }
   const data = [...byCategory.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([label, value], i) => ({ label, value, color: CAT_PALETTE[i % CAT_PALETTE.length] }));
-  return _card('Productes per categoria', _donutSvg(data), _legend(data, 4));
+  return _card(t('Productes per categoria'), _donutSvg(data), _legend(data, 4));
 }
 
 const STATUS_COLORS = {
@@ -139,9 +140,9 @@ function _chartOrders() {
     if (o.status in counts) counts[o.status]++;
   }
   const data = Object.entries(counts).map(([k, v]) => ({
-    label: STATUS_LABELS[k] || k, value: v, color: STATUS_COLORS[k],
+    label: t(STATUS_LABELS[k]) || k, value: v, color: STATUS_COLORS[k],
   }));
-  return _card('Estat de les comandes', _donutSvg(data), _legend(data));
+  return _card(t('Estat de les comandes'), _donutSvg(data), _legend(data));
 }
 
 function _chartAdults() {
@@ -154,13 +155,13 @@ function _chartAdults() {
   const data = Object.entries(MASIA_LABELS).map(([id, label]) => ({
     label, value: counts[id] || 0, color: MASIA_COLORS[id] || '#ccc',
   }));
-  return _card('Adults per masia', _donutSvg(data), _legend(data));
+  return _card(t('Adults per masia'), _donutSvg(data), _legend(data));
 }
 
 export async function renderEstadistiques() {
   const el = document.getElementById('estadistiques-content');
   if (!el) return;
-  el.innerHTML = `<div class="reports-loading">Carregant…</div>`;
+  el.innerHTML = `<div class="reports-loading">${t('Carregant…')}</div>`;
   await ensureCasamentsLoaded();
   el.innerHTML = `<div class="est-grid">
     ${_chartOrders()}
