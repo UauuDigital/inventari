@@ -29,6 +29,7 @@
   flex-shrink: 0;
   align-self: flex-start;
 }
+:root[data-theme="light"] .users-brand-logo { filter: brightness(0); }
 
 .users-inner {
   flex: 1;
@@ -99,8 +100,8 @@
   align-items: center;
   gap: 18px;
   padding: clamp(20px, 4vw, 36px) clamp(12px, 3vw, 24px) clamp(18px, 3.5vw, 30px);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--fg-rgb),0.04);
+  border: 1px solid rgba(var(--fg-rgb),0.1);
   border-radius: 24px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -122,6 +123,7 @@
   filter: brightness(0) invert(1);
   opacity: 0.85;
 }
+:root[data-theme="light"] .masia-card-logo { filter: brightness(0); }
 .masia-card-logo[src*="can-macia"],
 .masia-card-logo[src*="castell-de-tous"],
 .masia-card-logo[src*="mas-vivencs"] {
@@ -130,8 +132,8 @@
 }
 
 .user-card:hover {
-  border-color: rgba(255,255,255,0.38);
-  background: rgba(255,255,255,0.07);
+  border-color: rgba(var(--fg-rgb),0.38);
+  background: rgba(var(--fg-rgb),0.07);
   transform: translateY(-4px);
 }
 .user-card:active { transform: scale(0.97) translateY(0); }
@@ -140,8 +142,9 @@
   width: clamp(64px, 14vw, 88px);
   height: clamp(64px, 14vw, 88px);
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(var(--fg-rgb),0.14);
+  background: rgba(var(--fg-rgb),0.03);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,8 +152,8 @@
   transition: border-color .32s ease, background .32s ease;
 }
 .user-card:hover .user-card-icon {
-  border-color: rgba(255,255,255,0.28);
-  background: rgba(255,255,255,0.06);
+  border-color: rgba(var(--fg-rgb),0.28);
+  background: rgba(var(--fg-rgb),0.06);
 }
 
 .user-card-name {
@@ -235,7 +238,7 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px 5px 8px;
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(var(--fg-rgb),0.18);
   border-radius: var(--r-pill);
   background: transparent;
   cursor: default;
@@ -265,7 +268,7 @@
   font-weight: 400;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.55);
+  color: rgba(var(--fg-rgb),0.55);
   white-space: nowrap;
   max-width: 88px;
   overflow: hidden;
@@ -277,7 +280,7 @@
   font-size: 9px;
   font-weight: 300;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.32);
+  color: rgba(var(--fg-rgb),0.32);
   white-space: nowrap;
 }
 
@@ -295,7 +298,7 @@
   font-family: var(--font-sans);
   font-size: 12px;
   line-height: 1;
-  color: rgba(242,239,238,0.4);
+  color: rgba(var(--fg-rgb),0.4);
 }
 
 .crumb-link {
@@ -305,17 +308,17 @@
   cursor: pointer;
   font-family: var(--font-sans);
   font-size: 12px;
-  color: rgba(242,239,238,0.6);
+  color: rgba(var(--fg-rgb),0.6);
   text-decoration: underline;
   text-underline-offset: 2px;
-  text-decoration-color: rgba(242,239,238,0.25);
+  text-decoration-color: rgba(var(--fg-rgb),0.25);
   transition: color .15s;
 }
-.crumb-link:hover { color: rgba(242,239,238,0.95); }
+.crumb-link:hover { color: rgba(var(--fg-rgb),0.95); }
 
-.crumb-sep { color: rgba(242,239,238,0.25); }
+.crumb-sep { color: rgba(var(--fg-rgb),0.25); }
 
-.crumb-current { color: rgba(242,239,238,0.85); }
+.crumb-current { color: rgba(var(--fg-rgb),0.85); }
 
 /* ── LOGIN FORM ──────────────────────────────────────────────────── */
 
@@ -339,7 +342,7 @@
   box-sizing: border-box;
 }
 .login-input::placeholder { color: var(--text-dim); }
-.login-input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+.login-input:focus { outline: none; border-color: rgba(var(--fg-rgb),0.3); }
 
 .login-error {
   font-size: 13px;
@@ -390,8 +393,8 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color .2s, background .2s;
 }
-.user-manage-card:hover { border-color: rgba(255,255,255,0.28); }
-.user-manage-card:active { background: rgba(255,255,255,0.04); }
+.user-manage-card:hover { border-color: rgba(var(--fg-rgb),0.28); }
+.user-manage-card:active { background: rgba(var(--fg-rgb),0.04); }
 
 .user-manage-main {
   display: flex;
@@ -419,7 +422,7 @@
 .user-manage-masia {
   font-family: var(--font-sans);
   font-size: 11px;
-  color: rgba(242,239,238,0.45);
+  color: rgba(var(--fg-rgb),0.45);
 }
 
 .user-manage-rol {
@@ -430,8 +433,8 @@
   letter-spacing: .03em;
   padding: 5px 11px;
   border-radius: var(--r-pill);
-  border: 1px solid rgba(255,255,255,0.16);
-  color: rgba(242,239,238,0.75);
+  border: 1px solid rgba(var(--fg-rgb),0.16);
+  color: rgba(var(--fg-rgb),0.75);
 }
 .user-manage-rol.rol-admin {
   border-color: rgba(212,160,90,0.5);
@@ -477,8 +480,8 @@
   color: #f04040;
 }
 .masia-inv-tag--never {
-  background: rgba(255,255,255,.05);
-  border-color: rgba(255,255,255,.12);
+  background: rgba(var(--fg-rgb),.05);
+  border-color: rgba(var(--fg-rgb),.12);
   color: var(--text-dimmer);
 }
 

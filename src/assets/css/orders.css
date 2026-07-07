@@ -28,7 +28,7 @@
   gap: 8px;
   transition: border-color .2s;
 }
-.order-card:hover { border-color: rgba(255,255,255,0.18); }
+.order-card:hover { border-color: rgba(var(--fg-rgb),0.18); }
 
 .order-card-top {
   display: flex;
@@ -86,7 +86,7 @@
 .order-status-badge.status-pendent      { color: #D4956A; border-color: rgba(212,149,106,0.45); }
 .order-status-badge.status-en_curs      { color: #7BA4C8; border-color: rgba(123,164,200,0.45); }
 .order-status-badge.status-rebuda       { color: #8AB89A; border-color: rgba(138,184,154,0.45); }
-.order-status-badge.status-cancel_lada  { color: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.15); }
+.order-status-badge.status-cancel_lada  { color: rgba(var(--fg-rgb),0.3); border-color: rgba(var(--fg-rgb),0.15); }
 
 .order-supplier {
   font-size: 15px;
@@ -128,15 +128,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--fg-rgb),0.05);
+  border: 1px solid rgba(var(--fg-rgb),0.1);
   border-radius: 8px;
   color: var(--text-dim);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: color .2s, background .2s;
 }
-.order-edit-btn:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+.order-edit-btn:hover { color: var(--white); background: rgba(var(--fg-rgb),0.1); }
 
 /* ── EXCEL IMPORT MODAL ──────────────────────────────────────────── */
 
@@ -254,15 +254,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(var(--fg-rgb),.05);
+  border: 1px solid rgba(var(--fg-rgb),.1);
   border-radius: 8px;
   color: var(--text-dim);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background .15s, color .15s;
 }
-.order-icon-btn:hover { background: rgba(255,255,255,.1); color: var(--white); }
+.order-icon-btn:hover { background: rgba(var(--fg-rgb),.1); color: var(--white); }
 .order-icon-btn--danger:hover { background: rgba(176,32,32,.15); border-color: rgba(176,32,32,.3); color: #e06060; }
 
 /* ── Taula articles de comanda (format estructurat) ──────────────────── */
@@ -283,7 +283,7 @@
 .order-desc-name {
   flex: 1;
   font-size: 13px;
-  color: var(--dark);
+  color: var(--ink);
 }
 .order-desc-qty-wrap {
   display: flex;
@@ -298,7 +298,7 @@
   width: 50px;
   background: transparent;
   border: none;
-  color: var(--dark);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 600;
   text-align: right;
@@ -318,7 +318,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0; right: 0;
-  background: var(--surface, #fff);
+  background: var(--cream);
   border: 1px solid rgba(34,31,30,.14);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,.12);
@@ -332,7 +332,7 @@
   justify-content: space-between;
   padding: 10px 14px;
   font-size: 13px;
-  color: var(--dark);
+  color: var(--ink);
   cursor: pointer;
   gap: 8px;
 }
@@ -379,7 +379,7 @@
 .order-product-name {
   flex: 1;
   font-size: 13px;
-  color: var(--dark);
+  color: var(--ink);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -401,7 +401,7 @@
   width: 44px;
   background: transparent;
   border: none;
-  color: var(--dark);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 600;
   text-align: right;

@@ -54,7 +54,7 @@
   font-family: var(--font-serif);
   font-size: 23px;
   letter-spacing: -0.025em;
-  color: var(--dark);
+  color: var(--ink);
 }
 
 .modal-close {
@@ -108,7 +108,7 @@
   padding: 11px 14px;
   font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--dark);
+  color: var(--ink);
   outline: none;
   width: 100%;
   -webkit-appearance: none;
@@ -171,8 +171,8 @@
   font-weight: 400;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--white);
-  background: var(--dark);
+  color: var(--paper);
+  background: var(--ink);
   border: none;
   border-radius: var(--r-pill);
   padding: 16px 32px;
@@ -312,7 +312,7 @@
 }
 .color-swatch:hover  { transform: scale(1.1); }
 .color-swatch.active {
-  border-color: var(--dark);
+  border-color: var(--ink);
   transform: scale(1.1);
   box-shadow: 0 0 0 2px rgba(34,31,30,0.4);
 }
