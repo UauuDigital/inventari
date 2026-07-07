@@ -1,4 +1,5 @@
 import { CASAMENTS_URL, MASIA_COLORS, MASIA_LABELS } from './config.js';
+import { t, getLang } from './i18n.js';
 import { esc, parseCSV, findCol } from './helpers.js';
 
 const MASIES = ['ca-nalzina', 'can-macia', 'castell-de-tous', 'mas-vivencs'];
@@ -29,7 +30,7 @@ function _fmtTime(str) {
   const ts = _parseDate(str);
   if (!ts) return str;
   const d = new Date(ts);
-  return d.toLocaleString('ca-ES', {
+  return d.toLocaleString(getLang() === 'es' ? 'es-ES' : 'ca-ES', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -80,7 +81,7 @@ function _buildUpdatedBanner() {
   if (!_lastUpdated) {
     return `<div class="cas-update-banner cas-update--old">
       <span class="cas-update-icon">⚠</span>
-      <span class="cas-update-text">Sense data d'actualització</span>
+      <span class="cas-update-text">${t("Sense data d'actualització")}</span>
     </div>`;
   }
 
@@ -92,11 +93,11 @@ function _buildUpdatedBanner() {
   }
   const ts   = _parseSheetDate(_lastUpdated);
   if (!ts) return `<div class="cas-update-banner cas-update--ok">
-    <span class="cas-update-text">Actualitzat: ${esc(_lastUpdated)}</span>
+    <span class="cas-update-text">${t('Actualitzat:')} ${esc(_lastUpdated)}</span>
   </div>`;
 
   const days = Math.floor((Date.now() - ts) / 86400000);
-  const fmt  = new Date(ts).toLocaleDateString('ca-ES', {
+  const fmt  = new Date(ts).toLocaleDateString(getLang() === 'es' ? 'es-ES' : 'ca-ES', {
     day: 'numeric', month: 'short', year: 'numeric',
   });
 
@@ -104,8 +105,8 @@ function _buildUpdatedBanner() {
     return `<div class="cas-update-banner cas-update--old">
       <span class="cas-update-icon">⚠</span>
       <div>
-        <span class="cas-update-label">Dades desactualitzades</span>
-        <span class="cas-update-text">Última actualització fa ${days} dies — ${esc(fmt)}</span>
+        <span class="cas-update-label">${t('Dades desactualitzades')}</span>
+        <span class="cas-update-text">${t('Última actualització fa {days} dies — {date}', { days, date: esc(fmt) })}</span>
       </div>
     </div>`;
   }
@@ -113,7 +114,7 @@ function _buildUpdatedBanner() {
     return `<div class="cas-update-banner cas-update--warn">
       <span class="cas-update-icon">●</span>
       <div>
-        <span class="cas-update-label">Actualització fa ${days} dies</span>
+        <span class="cas-update-label">${t('Actualització fa {days} dies', { days })}</span>
         <span class="cas-update-text">${esc(fmt)}</span>
       </div>
     </div>`;
@@ -121,7 +122,7 @@ function _buildUpdatedBanner() {
   return `<div class="cas-update-banner cas-update--ok">
     <span class="cas-update-icon">●</span>
     <div>
-      <span class="cas-update-label">Al dia</span>
+      <span class="cas-update-label">${t('Al dia')}</span>
       <span class="cas-update-text">${esc(fmt)}</span>
     </div>
   </div>`;
@@ -155,8 +156,8 @@ function _renderMasies() {
         <button class="cas-masia-card" data-masia="${id}">
           <span class="cas-masia-dot" style="background:${esc(color)}"></span>
           <span class="cas-masia-name">${esc(label)}</span>
-          <span class="cas-masia-adults">${totals[id]} adults</span>
-          <span class="cas-masia-count">${counts[id]} casament${counts[id] !== 1 ? 's' : ''}</span>
+          <span class="cas-masia-adults">${t('{n} adults', { n: totals[id] })}</span>
+          <span class="cas-masia-count">${t('{n} casament{s}', { n: counts[id], s: counts[id] !== 1 ? 's' : '' })}</span>
         </button>`;
       }).join('')}
     </div>`;
@@ -172,7 +173,7 @@ function _renderMasies() {
 // ── BUILD LLISTA HTML ─────────────────────────────────────────────────────
 
 function _buildLlista(llista) {
-  if (!llista.length) return '<p class="cas-empty">Sense resultats</p>';
+  if (!llista.length) return `<p class="cas-empty">${t('Sense resultats')}</p>`;
   return llista.map(c => {
     const intolHtml = c.intol ? esc(c.intol).replace(/\n/g, '<br>') : '';
     return `
@@ -180,15 +181,15 @@ function _buildLlista(llista) {
       <div class="cas-item-row">
         <span class="cas-item-nom">${esc(c.nom)}</span>
         <span class="cas-item-meta">
-          ${c.adults ? `<span class="cas-item-adults">${c.adults} adults</span>` : ''}
+          ${c.adults ? `<span class="cas-item-adults">${t('{n} adults', { n: c.adults })}</span>` : ''}
           ${c.data   ? `<span class="cas-item-hora">${esc(_fmtTime(c.data))}</span>` : ''}
         </span>
       </div>
       ${intolHtml ? `
       <details class="cas-intol-details">
-        <summary class="cas-intol-summary">Comentaris</summary>
+        <summary class="cas-intol-summary">${t('Comentaris')}</summary>
         <div class="cas-intol-body">${intolHtml}</div>
-      </details>` : '<p class="cas-intol-none">Sense comentaris registrats</p>'}
+      </details>` : `<p class="cas-intol-none">${t('Sense comentaris registrats')}</p>`}
     </div>`;
   }).join('');
 }
@@ -203,7 +204,6 @@ function _renderDetall() {
   const color   = MASIA_COLORS[_selectedMasia] || '#ccc';
   const all     = _casaments.filter(c => c.masiaId === _selectedMasia);
   const total   = all.reduce((s, c) => s + c.adults, 0);
-  const now     = Date.now();
 
   let llista = all;
   if (_detallSearch) {
@@ -217,16 +217,16 @@ function _renderDetall() {
     <div class="cas-detall-header">
       <button class="cas-back-btn" id="cas-back">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Tornar
+        ${t('Tornar')}
       </button>
       <span class="cas-detall-title">
         <span class="cas-masia-dot" style="background:${esc(color)}"></span>
         ${esc(label)}
       </span>
-      <span class="cas-detall-total">${total} adults</span>
+      <span class="cas-detall-total">${t('{n} adults', { n: total })}</span>
     </div>
     <div class="cas-detall-toolbar">
-      <input class="casaments-search-input" id="cas-search" placeholder="Cercar nom, al·lèrgia…"
+      <input class="casaments-search-input" id="cas-search" placeholder="${t('Cercar nom, al·lèrgia…')}"
              value="${esc(_detallSearch)}" autocomplete="off">
     </div>
     <div class="cas-detall-list" id="cas-detall-list">
@@ -276,14 +276,14 @@ export async function renderCasamentsView() {
     return;
   }
 
-  el.innerHTML = `<div class="reports-loading">Carregant casaments…</div>`;
+  el.innerHTML = `<div class="reports-loading">${t('Carregant casaments…')}</div>`;
 
   try {
     const res  = await fetch(`${CASAMENTS_URL}&t=${Date.now()}`, { cache: 'no-store' });
     const text = await res.text();
     _casaments = _parseRows(parseCSV(text));
   } catch {
-    el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">Error carregant casaments. Comprova la connexió.</div>`;
+    el.innerHTML = `<div class="reports-loading" style="color:var(--text-dim)">${t('Error carregant casaments. Comprova la connexió.')}</div>`;
     return;
   }
 

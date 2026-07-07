@@ -1,4 +1,5 @@
 import { state, saveItems, saveCats } from './config.js';
+import { t } from './i18n.js';
 import { uid, esc, toast, parseCSV, findCol } from './helpers.js';
 import { ensureCategory } from './items.js';
 
@@ -10,7 +11,7 @@ function loadSheetJS() {
     const s = document.createElement('script');
     s.src     = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
     s.onload  = () => { _xlsxLoaded = true; resolve(window.XLSX); };
-    s.onerror = () => reject(new Error("No s'ha pogut carregar la llibreria Excel.\nConnecta't a internet i torna a intentar-ho."));
+    s.onerror = () => reject(new Error(t("No s'ha pogut carregar la llibreria Excel.\nConnecta't a internet i torna a intentar-ho.")));
     document.head.appendChild(s);
   });
 }
@@ -23,7 +24,7 @@ function rowsToItems(rows) {
   const iUnit  = findCol(headers, ['unitat', 'unit']);
   const iMin   = findCol(headers, ['mínim', 'minim', 'min stock', 'estoc mínim']);
 
-  if (iName === -1) throw new Error('Columna "Nom" no trobada. Comprova les capçaleres.');
+  if (iName === -1) throw new Error(t('Columna "Nom" no trobada. Comprova les capçaleres.'));
 
   return rows.slice(1)
     .filter(r => String(r[iName] || '').trim())
@@ -54,17 +55,17 @@ export async function processImportFile(file) {
   const confirmBtn = document.getElementById('btn-confirm-import');
 
   if (state.importRows.length === 0) {
-    preview.innerHTML = '<p style="padding:12px;font-size:13px;color:rgba(34,31,30,0.5)">Cap fila vàlida trobada.</p>';
+    preview.innerHTML = `<p style="padding:12px;font-size:13px;color:rgba(34,31,30,0.5)">${t('Cap fila vàlida trobada.')}</p>`;
     preview.hidden    = false;
     confirmBtn.hidden = true;
     return;
   }
 
   const cols   = [
-    { k: 'name',     l: 'Nom' },
-    { k: 'category', l: 'Categoria' },
-    { k: 'quantity', l: 'Quantitat' },
-    { k: 'unit',     l: 'Unitat' },
+    { k: 'name',     l: t('Nom') },
+    { k: 'category', l: t('Categoria') },
+    { k: 'quantity', l: t('Quantitat') },
+    { k: 'unit',     l: t('Unitat') },
   ];
   const sample = state.importRows.slice(0, 5);
 
@@ -77,10 +78,10 @@ export async function processImportFile(file) {
         ).join('')}
       </tbody>
     </table>
-    <p class="import-count">${state.importRows.length} articles detectats${state.importRows.length > 5 ? ' (mostrant 5)' : ''}</p>
+    <p class="import-count">${t('{n} articles detectats{more}', { n: state.importRows.length, more: state.importRows.length > 5 ? t(' (mostrant 5)') : '' })}</p>
   `;
   preview.hidden        = false;
-  confirmBtn.textContent = `Importar ${state.importRows.length} article${state.importRows.length !== 1 ? 's' : ''}`;
+  confirmBtn.textContent = t('Importar {n} article{s}', { n: state.importRows.length, s: state.importRows.length !== 1 ? 's' : '' });
   confirmBtn.hidden      = false;
 }
 
@@ -114,7 +115,7 @@ export function confirmImport() {
   saveItems();
   state.importRows = [];
   closeImportModal();
-  toast(`Importació completada: ${created} nous, ${updated} actualitzats`);
+  toast(t('Importació completada: {created} nous, {updated} actualitzats', { created, updated }));
 }
 
 export function openImportModal() {

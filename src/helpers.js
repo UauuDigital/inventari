@@ -1,4 +1,5 @@
 import { state } from './config.js';
+import { t as translate, getLang } from './i18n.js';
 
 export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -28,7 +29,7 @@ export function filteredItems() {
   return list;
 }
 
-export function createTagSearch(container, onChange, placeholder = 'Filtra…', getSuggestions = null, initialTags = []) {
+export function createTagSearch(container, onChange, placeholder = translate('Filtra…'), getSuggestions = null, initialTags = []) {
   container.classList.add('tag-search-widget');
   container.innerHTML = `<div class="tsw-inner"><input class="tsw-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${esc(placeholder)}"></div>${getSuggestions ? '<div class="tsw-suggestions"></div>' : ''}`;
   const inner   = container.querySelector('.tsw-inner');
@@ -57,7 +58,7 @@ export function createTagSearch(container, onChange, placeholder = 'Filtra…', 
     tags.forEach((tag, i) => {
       const chip = document.createElement('span');
       chip.className = 'tsw-tag';
-      chip.innerHTML = `${esc(tag.label || tag.value)}<button class="tsw-tag-del" data-i="${i}" tabindex="-1" aria-label="Eliminar filtre">×</button>`;
+      chip.innerHTML = `${esc(tag.label || tag.value)}<button class="tsw-tag-del" data-i="${i}" tabindex="-1" aria-label="${translate('Eliminar filtre')}">×</button>`;
       inner.insertBefore(chip, input);
     });
     onChange([...tags]);
@@ -134,7 +135,7 @@ export function esc(s) {
 export function fmtDate(iso) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleDateString('ca', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString(getLang() === 'es' ? 'es' : 'ca', { day: 'numeric', month: 'short', year: 'numeric' });
   } catch { return iso; }
 }
 
@@ -206,7 +207,7 @@ export function updateOfflineQueueBadge() {
   if (!badge) return;
   const count = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]').length;
   badge.hidden = count === 0;
-  badge.textContent = count === 1 ? '1 enviament pendent' : `${count} enviaments pendents`;
+  badge.textContent = count === 1 ? translate('1 enviament pendent') : translate('{n} enviaments pendents', { n: count });
 }
 
 export function sendToSheet(gasUrl, params) {
@@ -216,7 +217,7 @@ export function sendToSheet(gasUrl, params) {
     queue.push(url);
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
     updateOfflineQueueBadge();
-    toast('Sense connexió — s\'enviarà quan hi hagi WiFi');
+    toast(translate('Sense connexió — s\'enviarà quan hi hagi WiFi'));
     return;
   }
   _fireIframe(url);
@@ -228,5 +229,5 @@ export function drainOfflineQueue() {
   queue.forEach(url => _fireIframe(url));
   localStorage.removeItem(OFFLINE_QUEUE_KEY);
   updateOfflineQueueBadge();
-  toast(`${queue.length} ${queue.length === 1 ? 'enviament pendent enviat' : 'enviaments pendents enviats'}`);
+  toast(queue.length === 1 ? translate('1 enviament pendent enviat') : translate('{n} enviaments pendents enviats', { n: queue.length }));
 }

@@ -1,4 +1,5 @@
 import { state } from './config.js';
+import { t } from './i18n.js';
 import { esc } from './helpers.js';
 
 const ICONS = {
@@ -119,13 +120,13 @@ function _flowHtml(f) {
   const steps = f.steps.map((s, i) => `
     <div class="help-step">
       <span class="help-step-num" style="background:${f.color}22;color:${f.color}">${i + 1}</span>
-      <span class="help-step-text">${s}</span>
+      <span class="help-step-text">${t(s)}</span>
     </div>`).join('');
   return `
     <div class="help-flow">
       <div class="help-flow-head" style="color:${f.color}">
         <span class="help-flow-icon" style="background:${f.color}18">${icon}</span>
-        <span class="help-flow-title">${esc(f.title)}</span>
+        <span class="help-flow-title">${esc(t(f.title))}</span>
       </div>
       <div class="help-flow-steps">${steps}</div>
     </div>`;
@@ -133,7 +134,7 @@ function _flowHtml(f) {
 
 export function openHelpModal() {
   const rol    = (state.authProfile?.rol || '').toLowerCase() || 'comensal';
-  const label  = ROL_LABEL[rol] || 'Usuari';
+  const label  = t(ROL_LABEL[rol]) || t('Usuari');
   const color  = ROL_COLOR[rol] || '#4e9d7a';
   const flows  = rol === 'admin'
     ? [...(FLOWS.admin || []), ...(FLOWS.coordinador || [])]

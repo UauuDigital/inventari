@@ -235,6 +235,34 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── CONFIG MODAL ────────────────────────────────────────────────── */
+
+.lang-switch {
+  display: flex;
+  gap: 8px;
+}
+.lang-btn {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(34,31,30,0.55);
+  background: transparent;
+  border: 1px solid rgba(34,31,30,0.18);
+  border-radius: var(--r-pill);
+  padding: 12px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.lang-btn.active {
+  color: var(--white);
+  background: var(--dark);
+  border-color: var(--dark);
+}
+
+.config-row-btn { width: 100%; margin-top: 4px; }
+
 .modal-footer {
   flex-shrink: 0;
   display: flex;

@@ -1,4 +1,5 @@
 import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
+import { t } from './i18n.js';
 import { uid, esc, fmtDate, toast } from './helpers.js';
 import { revertOrderMitja } from './stats.js';
 
@@ -72,28 +73,28 @@ export function renderOrders() {
           ${o.date ? `<span class="order-date">${fmtDate(o.date)}</span>` : ''}
           ${o.createdBy ? `<span class="order-created-by">${esc(o.createdBy)}</span>` : ''}
         </div>
-        <button class="order-status-badge ${STATUS_CSS[o.status] || ''}" data-cycle-status="${o.id}" title="Clic per canviar estat">
-          ${esc(STATUS_LABELS[o.status] || o.status)}
+        <button class="order-status-badge ${STATUS_CSS[o.status] || ''}" data-cycle-status="${o.id}" title="${t('Clic per canviar estat')}">
+          ${esc(t(STATUS_LABELS[o.status]) || o.status)}
         </button>
       </div>
       ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
       ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
       <div class="order-card-footer">
         <div class="order-card-actions">
-          <button class="order-icon-btn" data-print-order="${o.id}" aria-label="Imprimir comanda">
+          <button class="order-icon-btn" data-print-order="${o.id}" aria-label="${t('Imprimir comanda')}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="6 9 6 2 18 2 18 9"/>
               <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
               <rect x="6" y="14" width="12" height="8"/>
             </svg>
           </button>
-          <button class="order-icon-btn" data-edit-order="${o.id}" aria-label="Editar comanda">
+          <button class="order-icon-btn" data-edit-order="${o.id}" aria-label="${t('Editar comanda')}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
-          <button class="order-icon-btn order-icon-btn--danger" data-delete-order-direct="${o.id}" aria-label="Eliminar comanda">
+          <button class="order-icon-btn order-icon-btn--danger" data-delete-order-direct="${o.id}" aria-label="${t('Eliminar comanda')}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
@@ -120,7 +121,7 @@ function _renderOrderProductList() {
   const el = document.getElementById('order-product-list');
   if (!el) return;
   if (!_orderItems.length) {
-    el.innerHTML = `<p class="order-product-empty">Cap producte afegit</p>`;
+    el.innerHTML = `<p class="order-product-empty">${t('Cap producte afegit')}</p>`;
     return;
   }
   el.innerHTML = _orderItems.map((item, i) => {
@@ -136,7 +137,7 @@ function _renderOrderProductList() {
           <span class="order-product-unit">c</span>
         </label>
       </div>
-      <button class="order-product-remove" data-remove="${i}" aria-label="Treure">
+      <button class="order-product-remove" data-remove="${i}" aria-label="${t('Treure')}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>`;
@@ -204,7 +205,7 @@ function _initProductSearch() {
 
 export function openOrderModal(order = null) {
   state.editingOrderId = order?.id || null;
-  document.getElementById('modal-order-title').textContent = order ? 'Editar comanda' : 'Nova comanda';
+  document.getElementById('modal-order-title').textContent = order ? t('Editar comanda') : t('Nova comanda');
   document.getElementById('btn-delete-order').hidden = !order;
 
   document.getElementById('f-order-ref').value      = order?.ref      ?? '';
@@ -235,14 +236,14 @@ export function openOrderModal(order = null) {
       textarea.hidden   = true;
       table.hidden      = false;
       table.innerHTML   = _buildDescTable(structured);
-      label.textContent = 'Articles';
+      label.textContent = t('Articles');
       label.removeAttribute('for');
     } else {
       textarea.hidden   = false;
       textarea.value    = order?.desc ?? '';
       table.hidden      = true;
       table.innerHTML   = '';
-      label.textContent = 'Articles / Descripció *';
+      label.textContent = t('Articles / Descripció *');
       label.setAttribute('for', 'f-order-desc');
     }
   }
@@ -295,11 +296,11 @@ export function saveOrder() {
   if (state.editingOrderId) {
     const idx = state.orders.findIndex(o => o.id === state.editingOrderId);
     if (idx >= 0) state.orders[idx] = { ...state.orders[idx], ...data };
-    toast('Comanda actualitzada');
+    toast(t('Comanda actualitzada'));
   } else {
     const createdBy = state.authProfile?.nom || state.user || '';
     state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), createdBy, ...data });
-    toast('Comanda afegida');
+    toast(t('Comanda afegida'));
   }
   saveOrders();
   closeOrderModal();
@@ -307,21 +308,21 @@ export function saveOrder() {
 }
 
 function _toastDeleteResult(result) {
-  if (!result) return toast('Comanda eliminada');
+  if (!result) return toast(t('Comanda eliminada'));
   const { reverted, skipped } = result;
   if (skipped.length) {
-    toast(`Comanda eliminada. No s'ha pogut revertir la mitjana de: ${skipped.join(', ')} (ja s'han tornat a comandar)`);
+    toast(t("Comanda eliminada. No s'ha pogut revertir la mitjana de: {list} (ja s'han tornat a comandar)", { list: skipped.join(', ') }));
   } else if (reverted.length) {
-    toast(`Comanda eliminada i mitjana revertida (${reverted.length} producte${reverted.length !== 1 ? 's' : ''})`);
+    toast(t('Comanda eliminada i mitjana revertida ({n} producte{s})', { n: reverted.length, s: reverted.length !== 1 ? 's' : '' }));
   } else {
-    toast('Comanda eliminada');
+    toast(t('Comanda eliminada'));
   }
 }
 
 export function deleteOrder() {
   if (!state.editingOrderId) return;
   const o = state.orders.find(x => x.id === state.editingOrderId);
-  if (!confirm(`Eliminar la comanda${o?.ref ? ' ' + o.ref : ''}?`)) return;
+  if (!confirm(t('Eliminar la comanda{ref}?', { ref: o?.ref ? ' ' + o.ref : '' }))) return;
   const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== state.editingOrderId);
   saveOrders();
@@ -339,13 +340,13 @@ export function cycleOrderStatus(id) {
   o.updatedAt = new Date().toISOString();
   saveOrders();
   renderOrders();
-  toast(`Estat: ${STATUS_LABELS[o.status]}`);
+  toast(t('Estat: {status}', { status: t(STATUS_LABELS[o.status]) }));
 }
 
 export function deleteOrderDirect(id) {
   const o = state.orders.find(x => x.id === id);
   if (!o) return;
-  if (!confirm(`Eliminar la comanda${o.ref ? ' ' + o.ref : ''}?`)) return;
+  if (!confirm(t('Eliminar la comanda{ref}?', { ref: o.ref ? ' ' + o.ref : '' }))) return;
   const result = revertOrderMitja(o);
   state.orders = state.orders.filter(x => x.id !== id);
   saveOrders();
@@ -362,7 +363,7 @@ export function printOrder(id) {
 
   const bodyHtml = structured
     ? `<table class="print-comanda-table">
-        <thead><tr><th>Producte</th><th>Quantitat</th><th>Notes</th></tr></thead>
+        <thead><tr><th>${t('Producte')}</th><th>${t('Quantitat')}</th><th>${t('Notes')}</th></tr></thead>
         <tbody>
           ${structured.map(item => `
             <tr>
@@ -373,7 +374,7 @@ export function printOrder(id) {
         </tbody>
         <tfoot>
           <tr>
-            <td class="tr" colspan="1"><strong>Total caixes:</strong></td>
+            <td class="tr" colspan="1"><strong>${t('Total caixes:')}</strong></td>
             <td class="tc"><strong>${structured.reduce((s, i) => s + i.qty, 0)} c</strong></td>
             <td></td>
           </tr>
@@ -385,22 +386,22 @@ export function printOrder(id) {
     <div class="print-comanda">
       <div class="print-comanda-header">
         <div>
-          <h1 class="print-comanda-title">Comanda</h1>
+          <h1 class="print-comanda-title">${t('Comanda')}</h1>
           <p class="print-comanda-org">UAUU Wedding &amp; Events</p>
         </div>
         <div class="print-comanda-info">
-          ${o.ref  ? `<p><strong>Referència:</strong> ${esc(o.ref)}</p>`        : ''}
-          ${o.date ? `<p><strong>Data comanda:</strong> ${fmtDate(o.date)}</p>` : ''}
-          <p><strong>Data impressió:</strong> ${today}</p>
-          ${o.createdBy ? `<p><strong>Coordinador:</strong> ${esc(o.createdBy)}</p>` : ''}
+          ${o.ref  ? `<p><strong>${t('Referència:')}</strong> ${esc(o.ref)}</p>`        : ''}
+          ${o.date ? `<p><strong>${t('Data comanda:')}</strong> ${fmtDate(o.date)}</p>` : ''}
+          <p><strong>${t('Data impressió:')}</strong> ${today}</p>
+          ${o.createdBy ? `<p><strong>${t('Coordinador:')}</strong> ${esc(o.createdBy)}</p>` : ''}
         </div>
       </div>
       ${bodyHtml}
-      ${o.notes ? `<p style="font-size:10pt;color:#555;margin-top:6mm"><em>Notes: ${esc(o.notes)}</em></p>` : ''}
+      ${o.notes ? `<p style="font-size:10pt;color:#555;margin-top:6mm"><em>${t('Notes:')} ${esc(o.notes)}</em></p>` : ''}
       <div class="print-comanda-sigs">
-        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>Responsable</p></div>
-        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>Proveïdor</p></div>
-        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>Data lliurament</p></div>
+        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>${t('Responsable')}</p></div>
+        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>${t('Proveïdor')}</p></div>
+        <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>${t('Data lliurament')}</p></div>
       </div>
     </div>`;
 

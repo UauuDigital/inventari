@@ -26,8 +26,8 @@
     <div class="users-inner">
 
       <div class="users-heading-wrap">
-        <h1 class="users-title">Qui ets?</h1>
-        <p class="users-sub">Selecciona el teu perfil per continuar</p>
+        <h1 class="users-title" data-i18n="Qui ets?">Qui ets?</h1>
+        <p class="users-sub" data-i18n="Selecciona el teu perfil per continuar">Selecciona el teu perfil per continuar</p>
       </div>
 
       <div class="users-grid">
@@ -48,7 +48,7 @@
                     fill="rgba(255,255,255,0.07)"/>
             </svg>
           </div>
-          <span class="user-card-name">Encarregat</span>
+          <span class="user-card-name" data-i18n="Encarregat">Encarregat</span>
         </button>
 
         <!-- Coordinador -->
@@ -66,7 +66,7 @@
                     stroke="white" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <span class="user-card-name">Coordinador</span>
+          <span class="user-card-name" data-i18n="Coordinador">Coordinador</span>
         </button>
 
         <!-- Admin -->
@@ -83,7 +83,7 @@
               <path d="M46 46 L52 40" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
             </svg>
           </div>
-          <span class="user-card-name">Admin</span>
+          <span class="user-card-name" data-i18n="Admin">Admin</span>
         </button>
 
       </div>
@@ -93,11 +93,11 @@
   <!-- ── PANTALLA SELECCIÓ MASIA ── -->
   <div id="screen-masia" hidden>
     <img src="src/assets/logo-uauu-black.png" alt="Uauu Digital" class="users-brand-logo">
-    <nav class="breadcrumb" id="crumb-masia" aria-label="Ruta"></nav>
+    <nav class="breadcrumb" id="crumb-masia" aria-label="Ruta" data-i18n-aria-label="Ruta"></nav>
     <div class="users-inner">
       <div class="users-heading-wrap">
-        <h1 class="users-title">Quina masia?</h1>
-        <p class="users-sub">Selecciona la masia per continuar</p>
+        <h1 class="users-title" data-i18n="Quina masia?">Quina masia?</h1>
+        <p class="users-sub" data-i18n="Selecciona la masia per continuar">Selecciona la masia per continuar</p>
       </div>
       <div class="users-grid">
         <button class="user-card" data-masia="ca-nalzina">
@@ -131,17 +131,17 @@
   <!-- ── PANTALLA LOGIN ── -->
   <div id="screen-login" hidden>
     <img src="src/assets/logo-uauu-black.png" alt="Uauu Digital" class="users-brand-logo">
-    <nav class="breadcrumb" id="crumb-login" aria-label="Ruta"></nav>
+    <nav class="breadcrumb" id="crumb-login" aria-label="Ruta" data-i18n-aria-label="Ruta"></nav>
     <div class="users-inner">
       <div class="users-heading-wrap">
-        <h1 class="users-title">Inicia sessió</h1>
-        <p class="users-sub">Entra les teves credencials per continuar</p>
+        <h1 class="users-title" data-i18n="Inicia sessió">Inicia sessió</h1>
+        <p class="users-sub" data-i18n="Entra les teves credencials per continuar">Entra les teves credencials per continuar</p>
       </div>
       <form class="login-form" id="login-form" novalidate>
         <input class="login-input" id="login-email" type="email" placeholder="Email" autocomplete="email" inputmode="email">
-        <input class="login-input" id="login-password" type="password" placeholder="Contrasenya" autocomplete="current-password">
+        <input class="login-input" id="login-password" type="password" placeholder="Contrasenya" autocomplete="current-password" data-i18n-placeholder="Contrasenya">
         <p class="login-error" id="login-error" hidden></p>
-        <button class="login-btn" type="submit">Entrar</button>
+        <button class="login-btn" type="submit" data-i18n="Entrar">Entrar</button>
       </form>
     </div>
   </div>
@@ -160,35 +160,28 @@
             <span class="user-pill-role" id="user-pill-role" hidden></span>
           </div>
         </div>
-        <button class="icon-btn help-btn" id="btn-help" aria-label="Ajuda">?</button>
-        <button class="icon-btn" id="btn-change-password" aria-label="Canviar contrasenya">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0110 0v4"/>
+        <button class="icon-btn help-btn" id="btn-help" aria-label="Ajuda" data-i18n-aria-label="Ajuda">?</button>
+        <button class="icon-btn" id="btn-open-config" aria-label="Configuració" data-i18n-aria-label="Configuració">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
           </svg>
         </button>
-        <button class="icon-btn" id="btn-logout" aria-label="Tancar sessió">
+        <button class="icon-btn" id="btn-logout" aria-label="Tancar sessió" data-i18n-aria-label="Tancar sessió">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </button>
-        <button class="icon-btn role-admin-only" id="btn-gas-config" aria-label="Configurar sincronització" hidden>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
-            <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
-          </svg>
-        </button>
-        <button class="icon-btn role-admin-only" id="btn-import-excel" aria-label="Importar Excel" hidden>
+        <button class="icon-btn role-admin-only" id="btn-import-excel" aria-label="Importar Excel" data-i18n-aria-label="Importar Excel" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <path d="M12 18v-6M9 15l3 3 3-3"/>
           </svg>
         </button>
-        <button class="icon-btn" id="btn-search" aria-label="Cerca" hidden>
+        <button class="icon-btn" id="btn-search" aria-label="Cerca" data-i18n-aria-label="Cerca" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
@@ -215,8 +208,8 @@
           <path d="M24 30V20a8 8 0 0116 0v10"/>
           <path d="M26 42h12"/>
         </svg>
-        <p class="empty-title">Inventari buit</p>
-        <p class="empty-text">Afegeix el primer article per<br>començar a gestionar l'estoc.</p>
+        <p class="empty-title" data-i18n="Inventari buit">Inventari buit</p>
+        <p class="empty-text" data-i18n="Afegeix el primer article per&lt;br&gt;començar a gestionar l'estoc.">Afegeix el primer article per<br>començar a gestionar l'estoc.</p>
       </div>
     </div>
 
@@ -246,18 +239,18 @@
     <!-- VIEW: EDITAR COMANDA (Coordinador) -->
     <div id="view-comanda-edit" class="view-panel" hidden>
       <div class="comanda-edit-header">
-        <button class="comanda-edit-back" id="btn-comanda-back-hist" aria-label="Tornar a l'historial">
+        <button class="comanda-edit-back" id="btn-comanda-back-hist" aria-label="Tornar a l'historial" data-i18n-aria-label="Tornar a l'historial">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
-          Historial
+          <span data-i18n="Historial">Historial</span>
         </button>
         <h2 class="comanda-edit-title" id="comanda-edit-title">Comanda</h2>
       </div>
       <div class="comanda-edit-body" id="comanda-edit-body"></div>
       <div class="comanda-edit-actions">
-        <button class="btn btn-secondary" id="btn-comanda-cancel">Cancel·lar</button>
-        <button class="btn btn-primary"   id="btn-comanda-accept">Genera comanda →</button>
+        <button class="btn btn-secondary" id="btn-comanda-cancel" data-i18n="Cancel·lar">Cancel·lar</button>
+        <button class="btn btn-primary"   id="btn-comanda-accept" data-i18n="Genera comanda →">Genera comanda →</button>
       </div>
     </div>
 
@@ -274,11 +267,11 @@
     <!-- VIEW: COMANDES (Coordinador + Admin) -->
     <div id="view-orders" class="view-panel" hidden>
       <div class="orders-filter-strip" id="orders-filter-strip">
-        <button class="filter-pill active" data-status="">Totes</button>
-        <button class="filter-pill" data-status="pendent">Pendents</button>
-        <button class="filter-pill" data-status="en_curs">En curs</button>
-        <button class="filter-pill" data-status="rebuda">Rebudes</button>
-        <button class="filter-pill" data-status="cancel·lada">Cancel·lades</button>
+        <button class="filter-pill active" data-status="" data-i18n="Totes">Totes</button>
+        <button class="filter-pill" data-status="pendent" data-i18n="Pendents">Pendents</button>
+        <button class="filter-pill" data-status="en_curs" data-i18n="En curs">En curs</button>
+        <button class="filter-pill" data-status="rebuda" data-i18n="Rebudes">Rebudes</button>
+        <button class="filter-pill" data-status="cancel·lada" data-i18n="Cancel·lades">Cancel·lades</button>
       </div>
       <div class="orders-list" id="orders-list"></div>
       <div class="empty-state" id="orders-empty" hidden>
@@ -287,91 +280,91 @@
           <path d="M10 22h44"/>
           <path d="M20 36h24M20 44h16"/>
         </svg>
-        <p class="empty-title">Sense comandes</p>
-        <p class="empty-text">Afegeix la primera comanda<br>amb el botó de sota.</p>
+        <p class="empty-title" data-i18n="Sense comandes">Sense comandes</p>
+        <p class="empty-text" data-i18n="Afegeix la primera comanda&lt;br&gt;amb el botó de sota.">Afegeix la primera comanda<br>amb el botó de sota.</p>
       </div>
     </div>
 
   </main>
 
   <!-- ── OFFLINE SYNC BADGE ── -->
-  <div class="offline-sync-badge" id="offline-sync-badge" hidden aria-live="polite">Pendent d'enviar</div>
+  <div class="offline-sync-badge" id="offline-sync-badge" hidden aria-live="polite" data-i18n="Pendent d'enviar">Pendent d'enviar</div>
 
   <!-- ── FAB ── -->
-  <button class="fab" id="btn-add" aria-label="Nou article">
+  <button class="fab" id="btn-add" aria-label="Nou article" data-i18n-aria-label="Nou article">
     <span class="fab-icon" aria-hidden="true">+</span>
-    <span>Nou article</span>
+    <span data-i18n="Nou article">Nou article</span>
   </button>
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav" aria-label="Navegació principal">
     <!-- Tabs Comensal -->
-    <button class="nav-tab active role-comensal-only" data-view="catalog" aria-label="Articles">
+    <button class="nav-tab active role-comensal-only" data-view="catalog" aria-label="Articles" data-i18n-aria-label="Articles">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
         <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
       </svg>
-      Articles
+      <span data-i18n="Articles">Articles</span>
     </button>
-    <button class="nav-tab" data-view="cats" aria-label="Categories" hidden>
+    <button class="nav-tab" data-view="cats" aria-label="Categories" data-i18n-aria-label="Categories" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/>
         <path d="M10 6h10M10 12h10M10 18h6"/>
         <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
         <circle cx="5" cy="18" r="1.5" fill="currentColor" stroke="none"/>
       </svg>
-      Categories
+      <span data-i18n="Categories">Categories</span>
     </button>
-    <button class="nav-tab role-comensal-only" data-view="stats" aria-label="Resum">
+    <button class="nav-tab role-comensal-only" data-view="stats" aria-label="Resum" data-i18n-aria-label="Resum">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 20V10M12 20V4M6 20v-6"/>
       </svg>
-      Resum
+      <span data-i18n="Resum">Resum</span>
     </button>
     <!-- Tabs Coordinador / Admin -->
-    <button class="nav-tab" data-view="catalog" id="catalog-mgmt-tab" aria-label="Catàleg" hidden>
+    <button class="nav-tab" data-view="catalog" id="catalog-mgmt-tab" aria-label="Catàleg" data-i18n-aria-label="Catàleg" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
         <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
       </svg>
-      Catàleg
+      <span data-i18n="Catàleg">Catàleg</span>
     </button>
-    <button class="nav-tab" data-view="reports" aria-label="Historial" hidden>
+    <button class="nav-tab" data-view="reports" aria-label="Historial" data-i18n-aria-label="Historial" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="4" y="3" width="16" height="19" rx="2"/>
         <path d="M4 9h16M8 6h.01M8 13h8M8 17h5"/>
       </svg>
-      Historial
+      <span data-i18n="Historial">Historial</span>
     </button>
-    <button class="nav-tab role-coord-only" data-view="orders" aria-label="Comandes" hidden>
+    <button class="nav-tab role-coord-only" data-view="orders" aria-label="Comandes" data-i18n-aria-label="Comandes" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="4" y="3" width="16" height="19" rx="2"/>
         <path d="M4 9h16M8 15h8M8 19h5"/>
       </svg>
-      Comandes
+      <span data-i18n="Comandes">Comandes</span>
     </button>
-    <button class="nav-tab role-coord-only role-admin-only" data-view="casaments" aria-label="Casaments" hidden>
+    <button class="nav-tab role-coord-only role-admin-only" data-view="casaments" aria-label="Casaments" data-i18n-aria-label="Casaments" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="4" width="18" height="18" rx="2"/>
         <path d="M16 2v4M8 2v4M3 10h18"/>
         <path d="M9 16l2 2 4-4"/>
       </svg>
-      Casaments
+      <span data-i18n="Casaments">Casaments</span>
     </button>
-    <button class="nav-tab role-coord-only role-admin-only" data-view="estadistiques" aria-label="Estadístiques" hidden>
+    <button class="nav-tab role-coord-only role-admin-only" data-view="estadistiques" aria-label="Estadístiques" data-i18n-aria-label="Estadístiques" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="9"/>
         <path d="M12 3v9l5 3"/>
       </svg>
-      Estadístiques
+      <span data-i18n="Estadístiques">Estadístiques</span>
     </button>
-    <button class="nav-tab role-admin-only" data-view="users" aria-label="Usuaris" hidden>
+    <button class="nav-tab role-admin-only" data-view="users" aria-label="Usuaris" data-i18n-aria-label="Usuaris" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
       </svg>
-      Usuaris
+      <span data-i18n="Usuaris">Usuaris</span>
     </button>
   </nav>
 
@@ -380,8 +373,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-item-title">Nou article</h2>
-        <button class="modal-close" id="btn-modal-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-item-title" data-i18n="Nou article">Nou article</h2>
+        <button class="modal-close" id="btn-modal-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -389,40 +382,40 @@
       </div>
       <form class="modal-form" id="item-form" autocomplete="off" novalidate>
         <div class="form-field product-search-wrap">
-          <label class="form-label" for="f-name">Nom *</label>
-          <input class="form-input" id="f-name" type="text" placeholder="Nom de l'article" required autocomplete="off">
-          <div class="product-dropdown" id="product-dropdown" hidden role="listbox" aria-label="Suggeriments de productes"></div>
+          <label class="form-label" for="f-name" data-i18n="Nom *">Nom *</label>
+          <input class="form-input" id="f-name" type="text" placeholder="Nom de l'article" required autocomplete="off" data-i18n-placeholder="Nom de l'article">
+          <div class="product-dropdown" id="product-dropdown" hidden role="listbox" aria-label="Suggeriments de productes" data-i18n-aria-label="Suggeriments de productes"></div>
         </div>
         <div class="form-row row-qty-unit">
           <div class="form-field">
-            <label class="form-label" for="f-quantity">Quantitat</label>
+            <label class="form-label" for="f-quantity" data-i18n="Quantitat">Quantitat</label>
             <input class="form-input" id="f-quantity" type="number" min="0" step="any" placeholder="0">
           </div>
           <div class="form-field field-unit">
-            <label class="form-label" for="f-unit">Unitat</label>
-            <input class="form-input" id="f-unit" type="text" placeholder="u, kg, l…">
+            <label class="form-label" for="f-unit" data-i18n="Unitat">Unitat</label>
+            <input class="form-input" id="f-unit" type="text" placeholder="u, kg, l…" data-i18n-placeholder="u, kg, l…">
           </div>
         </div>
         <div class="form-row row-adv">
           <div class="form-field">
-            <label class="form-label" for="f-min-stock">Estoc mínim</label>
+            <label class="form-label" for="f-min-stock" data-i18n="Estoc mínim">Estoc mínim</label>
             <input class="form-input" id="f-min-stock" type="number" min="0" step="any" placeholder="—">
           </div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-category">Categoria</label>
+          <label class="form-label" for="f-category" data-i18n="Categoria">Categoria</label>
           <div class="form-select-wrap">
             <select class="form-select" id="f-category"></select>
           </div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-notes">Notes</label>
-          <textarea class="form-textarea" id="f-notes" placeholder="Informació addicional…"></textarea>
+          <label class="form-label" for="f-notes" data-i18n="Notes">Notes</label>
+          <textarea class="form-textarea" id="f-notes" placeholder="Informació addicional…" data-i18n-placeholder="Informació addicional…"></textarea>
         </div>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-item">Desar article</button>
-        <button class="btn-danger" id="btn-delete-item" hidden>Eliminar article</button>
+        <button class="btn-primary" id="btn-save-item" data-i18n="Desar article">Desar article</button>
+        <button class="btn-danger" id="btn-delete-item" hidden data-i18n="Eliminar article">Eliminar article</button>
       </div>
     </div>
   </div>
@@ -432,8 +425,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-cat-title">Nova categoria</h2>
-        <button class="modal-close" id="btn-cat-modal-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-cat-title" data-i18n="Nova categoria">Nova categoria</h2>
+        <button class="modal-close" id="btn-cat-modal-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -441,16 +434,16 @@
       </div>
       <form class="modal-form" id="cat-form" autocomplete="off" novalidate>
         <div class="form-field">
-          <label class="form-label" for="f-cat-name">Nom de la categoria *</label>
-          <input class="form-input" id="f-cat-name" type="text" placeholder="p.ex. Alimentació">
+          <label class="form-label" for="f-cat-name" data-i18n="Nom de la categoria *">Nom de la categoria *</label>
+          <input class="form-input" id="f-cat-name" type="text" placeholder="p.ex. Alimentació" data-i18n-placeholder="p.ex. Alimentació">
         </div>
         <div class="form-field">
-          <label class="form-label">Color</label>
+          <label class="form-label" data-i18n="Color">Color</label>
           <div class="color-picker" id="color-picker"></div>
         </div>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-cat">Desar categoria</button>
+        <button class="btn-primary" id="btn-save-cat" data-i18n="Desar categoria">Desar categoria</button>
       </div>
     </div>
   </div>
@@ -460,8 +453,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-order-title">Nova comanda</h2>
-        <button class="modal-close" id="btn-order-modal-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-order-title" data-i18n="Nova comanda">Nova comanda</h2>
+        <button class="modal-close" id="btn-order-modal-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -470,53 +463,53 @@
       <form class="modal-form" id="order-form" autocomplete="off" novalidate>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="f-order-ref">Referència</label>
+            <label class="form-label" for="f-order-ref" data-i18n="Referència">Referència</label>
             <input class="form-input" id="f-order-ref" type="text" placeholder="CMD-001">
           </div>
           <div class="form-field">
-            <label class="form-label" for="f-order-date">Data</label>
+            <label class="form-label" for="f-order-date" data-i18n="Data">Data</label>
             <input class="form-input" id="f-order-date" type="date">
           </div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-order-supplier">Proveïdor</label>
-          <input class="form-input" id="f-order-supplier" type="text" placeholder="Nom del proveïdor">
+          <label class="form-label" for="f-order-supplier" data-i18n="Proveïdor">Proveïdor</label>
+          <input class="form-input" id="f-order-supplier" type="text" placeholder="Nom del proveïdor" data-i18n-placeholder="Nom del proveïdor">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-order-status">Estat</label>
+          <label class="form-label" for="f-order-status" data-i18n="Estat">Estat</label>
           <div class="form-select-wrap">
             <select class="form-select" id="f-order-status">
-              <option value="pendent">Pendent</option>
-              <option value="en_curs">En curs</option>
-              <option value="rebuda">Rebuda</option>
-              <option value="cancel·lada">Cancel·lada</option>
+              <option value="pendent" data-i18n="Pendent">Pendent</option>
+              <option value="en_curs" data-i18n="En curs">En curs</option>
+              <option value="rebuda" data-i18n="Rebuda">Rebuda</option>
+              <option value="cancel·lada" data-i18n="Cancel·lada">Cancel·lada</option>
             </select>
           </div>
         </div>
         <!-- Selector de productes (nova comanda) -->
         <div class="form-field" id="order-product-picker" hidden>
-          <label class="form-label">Articles *</label>
+          <label class="form-label" data-i18n="Articles *">Articles *</label>
           <div class="order-search-wrap">
             <input class="form-input" id="f-order-product-search" type="text"
-                   placeholder="Cerca producte…" autocomplete="off">
+                   placeholder="Cerca producte…" autocomplete="off" data-i18n-placeholder="Cerca producte…">
             <div class="order-product-dropdown" id="order-product-dropdown" hidden></div>
           </div>
           <div class="order-product-list" id="order-product-list"></div>
         </div>
         <!-- Descripció lliure / taula (editar comanda existent) -->
         <div class="form-field" id="order-desc-field">
-          <label class="form-label" id="label-order-desc" for="f-order-desc">Articles / Descripció *</label>
-          <textarea class="form-textarea" id="f-order-desc" placeholder="Detall dels articles demanats…" style="min-height:90px"></textarea>
+          <label class="form-label" id="label-order-desc" for="f-order-desc" data-i18n="Articles / Descripció *">Articles / Descripció *</label>
+          <textarea class="form-textarea" id="f-order-desc" placeholder="Detall dels articles demanats…" style="min-height:90px" data-i18n-placeholder="Detall dels articles demanats…"></textarea>
           <div id="order-desc-table" hidden></div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-order-notes">Notes</label>
-          <textarea class="form-textarea" id="f-order-notes" placeholder="Observacions…"></textarea>
+          <label class="form-label" for="f-order-notes" data-i18n="Notes">Notes</label>
+          <textarea class="form-textarea" id="f-order-notes" placeholder="Observacions…" data-i18n-placeholder="Observacions…"></textarea>
         </div>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-order">Desar comanda</button>
-        <button class="btn-danger" id="btn-delete-order" hidden>Eliminar comanda</button>
+        <button class="btn-primary" id="btn-save-order" data-i18n="Desar comanda">Desar comanda</button>
+        <button class="btn-danger" id="btn-delete-order" hidden data-i18n="Eliminar comanda">Eliminar comanda</button>
       </div>
     </div>
   </div>
@@ -526,8 +519,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-user-title">Nou usuari</h2>
-        <button class="modal-close" id="btn-user-modal-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-user-title" data-i18n="Nou usuari">Nou usuari</h2>
+        <button class="modal-close" id="btn-user-modal-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -535,30 +528,30 @@
       </div>
       <form class="modal-form" id="user-form" autocomplete="off" novalidate>
         <div class="form-field">
-          <label class="form-label" for="f-user-nom">Nom *</label>
-          <input class="form-input" id="f-user-nom" type="text" placeholder="Nom complet" autocomplete="off">
+          <label class="form-label" for="f-user-nom" data-i18n="Nom *">Nom *</label>
+          <input class="form-input" id="f-user-nom" type="text" placeholder="Nom complet" autocomplete="off" data-i18n-placeholder="Nom complet">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-user-email">Email *</label>
+          <label class="form-label" for="f-user-email" data-i18n="Email *">Email *</label>
           <input class="form-input" id="f-user-email" type="email" placeholder="usuari@uauu.cat" autocomplete="off" inputmode="email">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-user-password">Contrasenya <span id="user-pw-hint" class="form-hint-inline"></span></label>
-          <input class="form-input" id="f-user-password" type="text" placeholder="Mínim 6 caràcters" autocomplete="off">
+          <label class="form-label" for="f-user-password"><span data-i18n="Contrasenya">Contrasenya</span> <span id="user-pw-hint" class="form-hint-inline"></span></label>
+          <input class="form-input" id="f-user-password" type="text" placeholder="Mínim 6 caràcters" autocomplete="off" data-i18n-placeholder="Mínim 6 caràcters">
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="f-user-rol">Rol *</label>
+            <label class="form-label" for="f-user-rol" data-i18n="Rol *">Rol *</label>
             <div class="form-select-wrap">
               <select class="form-select" id="f-user-rol">
-                <option value="comensal">Encarregat</option>
-                <option value="coordinador">Coordinador</option>
-                <option value="admin">Admin</option>
+                <option value="comensal" data-i18n="Encarregat">Encarregat</option>
+                <option value="coordinador" data-i18n="Coordinador">Coordinador</option>
+                <option value="admin" data-i18n="Admin">Admin</option>
               </select>
             </div>
           </div>
           <div class="form-field" id="user-masia-field">
-            <label class="form-label" for="f-user-masia">Masia</label>
+            <label class="form-label" for="f-user-masia" data-i18n="Masia">Masia</label>
             <div class="form-select-wrap">
               <select class="form-select" id="f-user-masia">
                 <option value="">—</option>
@@ -573,8 +566,8 @@
         <p class="login-error" id="user-error" hidden></p>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-user">Desar usuari</button>
-        <button class="btn-danger" id="btn-delete-user" hidden>Eliminar usuari</button>
+        <button class="btn-primary" id="btn-save-user" data-i18n="Desar usuari">Desar usuari</button>
+        <button class="btn-danger" id="btn-delete-user" hidden data-i18n="Eliminar usuari">Eliminar usuari</button>
       </div>
     </div>
   </div>
@@ -584,32 +577,32 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-import-title">Importar articles</h2>
-        <button class="modal-close" id="btn-import-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-import-title" data-i18n="Importar articles">Importar articles</h2>
+        <button class="modal-close" id="btn-import-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
       <div class="modal-form" id="import-body">
-        <p class="import-hint">
+        <p class="import-hint" data-i18n="Puja un fitxer .xlsx o .csv amb les columnes:">
           Puja un fitxer <strong>.xlsx</strong> o <strong>.csv</strong> amb les columnes:<br>
           <code>Nom · Categoria · Quantitat · Unitat · Estoc Mínim</code>
         </p>
-        <div class="file-drop-zone" id="file-drop-zone" tabindex="0" role="button" aria-label="Seleccionar fitxer">
+        <div class="file-drop-zone" id="file-drop-zone" tabindex="0" role="button" aria-label="Seleccionar fitxer" data-i18n-aria-label="Seleccionar fitxer">
           <input type="file" id="f-import-file" accept=".xlsx,.xls,.csv" hidden>
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(34,31,30,0.3)" aria-hidden="true">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <path d="M12 18v-6M9 15l3 3 3-3"/>
           </svg>
-          <p class="file-drop-label">Clica o arrossega el fitxer aquí</p>
+          <p class="file-drop-label" data-i18n="Clica o arrossega el fitxer aquí">Clica o arrossega el fitxer aquí</p>
           <p class="file-drop-hint">.xlsx · .xls · .csv</p>
         </div>
         <div class="import-preview" id="import-preview" hidden></div>
       </div>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-confirm-import" hidden>Importar articles</button>
+        <button class="btn-primary" id="btn-confirm-import" hidden data-i18n="Importar articles">Importar articles</button>
       </div>
     </div>
   </div>
@@ -619,8 +612,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-gas-title">Sincronització full</h2>
-        <button class="modal-close" id="btn-gas-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-gas-title" data-i18n="Sincronització full">Sincronització full</h2>
+        <button class="modal-close" id="btn-gas-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -631,7 +624,7 @@
           Enganxa aquí la URL del <strong>Google Apps Script</strong> per desar productes nous directament al full de Google.
         </p>
         <div class="form-field">
-          <label class="form-label" for="f-gas-url">URL Apps Script</label>
+          <label class="form-label" for="f-gas-url" data-i18n="URL Apps Script">URL Apps Script</label>
           <input class="form-input" id="f-gas-url" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false">
         </div>
         <p class="gas-script-hint">
@@ -648,8 +641,8 @@
 }</pre>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-gas">Desar URL</button>
-        <button class="btn-danger" id="btn-test-gas" type="button">Testa connexió</button>
+        <button class="btn-primary" id="btn-save-gas" data-i18n="Desar URL">Desar URL</button>
+        <button class="btn-danger" id="btn-test-gas" type="button" data-i18n="Testa connexió">Testa connexió</button>
       </div>
     </div>
   </div>
@@ -659,8 +652,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-np-title">Nou producte</h2>
-        <button class="modal-close" id="btn-np-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-np-title" data-i18n="Nou producte">Nou producte</h2>
+        <button class="modal-close" id="btn-np-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -668,36 +661,36 @@
       </div>
       <form class="modal-form" id="new-product-form" autocomplete="off" novalidate>
         <div class="form-field">
-          <label class="form-label" for="f-np-name">Nom del producte *</label>
-          <input class="form-input" id="f-np-name" type="text" placeholder="p.ex. Farina de blat">
+          <label class="form-label" for="f-np-name" data-i18n="Nom del producte *">Nom del producte *</label>
+          <input class="form-input" id="f-np-name" type="text" placeholder="p.ex. Farina de blat" data-i18n-placeholder="p.ex. Farina de blat">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-np-category">Categoria</label>
-          <input class="form-input" id="f-np-category" type="text" placeholder="p.ex. Alimentació" list="dl-np-categories" autocomplete="off">
+          <label class="form-label" for="f-np-category" data-i18n="Categoria">Categoria</label>
+          <input class="form-input" id="f-np-category" type="text" placeholder="p.ex. Alimentació" list="dl-np-categories" autocomplete="off" data-i18n-placeholder="p.ex. Alimentació">
           <datalist id="dl-np-categories"></datalist>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="f-np-supplier">Proveïdor</label>
-            <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor" list="dl-np-suppliers" autocomplete="off">
+            <label class="form-label" for="f-np-supplier" data-i18n="Proveïdor">Proveïdor</label>
+            <input class="form-input" id="f-np-supplier" type="text" placeholder="Nom del proveïdor" list="dl-np-suppliers" autocomplete="off" data-i18n-placeholder="Nom del proveïdor">
             <datalist id="dl-np-suppliers"></datalist>
           </div>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="f-np-unit">Unitat</label>
-            <input class="form-input" id="f-np-unit" type="text" placeholder="p.ex. ampolla">
+            <label class="form-label" for="f-np-unit" data-i18n="Unitat">Unitat</label>
+            <input class="form-input" id="f-np-unit" type="text" placeholder="p.ex. ampolla" data-i18n-placeholder="p.ex. ampolla">
           </div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-np-minstock">Estoc mínim</label>
+          <label class="form-label" for="f-np-minstock" data-i18n="Estoc mínim">Estoc mínim</label>
           <input class="form-input" id="f-np-minstock" type="number" min="0" step="1" placeholder="0">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-np-code">Codi de barres</label>
+          <label class="form-label" for="f-np-code" data-i18n="Codi de barres">Codi de barres</label>
           <div class="scan-field-wrap">
-            <input class="form-input" id="f-np-code" type="text" placeholder="Escaneja o escriu el codi" autocomplete="off" inputmode="numeric">
-            <button class="scan-field-btn" id="btn-scan-np-code" type="button" aria-label="Escanejar codi de barres">
+            <input class="form-input" id="f-np-code" type="text" placeholder="Escaneja o escriu el codi" autocomplete="off" inputmode="numeric" data-i18n-placeholder="Escaneja o escriu el codi">
+            <button class="scan-field-btn" id="btn-scan-np-code" type="button" aria-label="Escanejar codi de barres" data-i18n-aria-label="Escanejar codi de barres">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
                 <line x1="7" y1="12" x2="7" y2="12.01"/>
@@ -709,8 +702,8 @@
         </div>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-new-product">Afegir al catàleg</button>
-        <button class="btn-danger" id="btn-delete-product" hidden>Eliminar producte</button>
+        <button class="btn-primary" id="btn-save-new-product" data-i18n="Afegir al catàleg">Afegir al catàleg</button>
+        <button class="btn-danger" id="btn-delete-product" hidden data-i18n="Eliminar producte">Eliminar producte</button>
       </div>
     </div>
   </div>
@@ -721,7 +714,7 @@
       <div class="modal-handle"></div>
       <div class="modal-header">
         <h2 class="modal-title modal-qty-title" id="modal-qty-title"></h2>
-        <button class="modal-close" id="btn-qty-close" aria-label="Tancar">
+        <button class="modal-close" id="btn-qty-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -730,26 +723,26 @@
       <form class="modal-form" id="qty-form" autocomplete="off" novalidate>
         <div class="qty-dual-row">
           <div class="form-field" id="qty-boxes-field">
-            <label class="form-label" id="qty-boxes-label" for="f-qty-boxes">Caixes</label>
+            <label class="form-label" id="qty-boxes-label" for="f-qty-boxes" data-i18n="Caixes">Caixes</label>
             <input class="form-input qty-big-input" id="f-qty-boxes" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
           </div>
         </div>
       </form>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-save-qty">Desar</button>
-        <button class="btn-danger" id="btn-remove-qty" hidden>Desmarcar</button>
+        <button class="btn-primary" id="btn-save-qty" data-i18n="Desar">Desar</button>
+        <button class="btn-danger" id="btn-remove-qty" hidden data-i18n="Desmarcar">Desmarcar</button>
       </div>
     </div>
   </div>
 
   <!-- ── MODAL: ESCÀNER ── -->
-  <div id="modal-scan" role="dialog" aria-modal="true" aria-label="Escanejar codi de barres">
+  <div id="modal-scan" role="dialog" aria-modal="true" aria-label="Escanejar codi de barres" data-i18n-aria-label="Escanejar codi de barres">
     <div class="scan-header">
       <div>
-        <p class="scan-title">Codi de barres</p>
-        <p class="scan-subtitle" id="scan-status-text">Apunta la càmera al codi</p>
+        <p class="scan-title" data-i18n="Codi de barres">Codi de barres</p>
+        <p class="scan-subtitle" id="scan-status-text" data-i18n="Apunta la càmera al codi">Apunta la càmera al codi</p>
       </div>
-      <button class="scan-close-btn" id="btn-scan-close" aria-label="Tancar">
+      <button class="scan-close-btn" id="btn-scan-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
           <path d="M18 6 6 18M6 6l12 12"/>
         </svg>
@@ -758,7 +751,7 @@
     <div id="barcode-reader"></div>
     <div id="scan-result" hidden>
       <p class="scan-result-msg" id="scan-result-msg"></p>
-      <button class="scan-create-btn" id="btn-scan-create">Crear producte</button>
+      <button class="scan-create-btn" id="btn-scan-create" data-i18n="Crear producte">Crear producte</button>
     </div>
   </div>
 
@@ -768,28 +761,28 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-chpw-title">Canviar contrasenya</h2>
-        <button class="modal-close" id="btn-chpw-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-chpw-title" data-i18n="Canviar contrasenya">Canviar contrasenya</h2>
+        <button class="modal-close" id="btn-chpw-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-form">
         <div class="form-field">
-          <label class="form-label" for="f-chpw-current">Contrasenya actual *</label>
-          <input class="form-input" type="password" id="f-chpw-current" autocomplete="current-password" placeholder="Contrasenya actual">
+          <label class="form-label" for="f-chpw-current" data-i18n="Contrasenya actual *">Contrasenya actual *</label>
+          <input class="form-input" type="password" id="f-chpw-current" autocomplete="current-password" placeholder="Contrasenya actual" data-i18n-placeholder="Contrasenya actual">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-chpw-new">Nova contrasenya *</label>
-          <input class="form-input" type="password" id="f-chpw-new" autocomplete="new-password" placeholder="Mínim 6 caràcters">
+          <label class="form-label" for="f-chpw-new" data-i18n="Nova contrasenya *">Nova contrasenya *</label>
+          <input class="form-input" type="password" id="f-chpw-new" autocomplete="new-password" placeholder="Mínim 6 caràcters" data-i18n-placeholder="Mínim 6 caràcters">
         </div>
         <div class="form-field">
-          <label class="form-label" for="f-chpw-confirm">Confirma la nova contrasenya *</label>
-          <input class="form-input" type="password" id="f-chpw-confirm" autocomplete="new-password" placeholder="Repeteix la nova contrasenya">
+          <label class="form-label" for="f-chpw-confirm" data-i18n="Confirma la nova contrasenya *">Confirma la nova contrasenya *</label>
+          <input class="form-input" type="password" id="f-chpw-confirm" autocomplete="new-password" placeholder="Repeteix la nova contrasenya" data-i18n-placeholder="Repeteix la nova contrasenya">
         </div>
         <p class="form-error" id="chpw-error" hidden></p>
       </div>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-chpw-save">Canviar contrasenya</button>
+        <button class="btn-primary" id="btn-chpw-save" data-i18n="Canviar contrasenya">Canviar contrasenya</button>
       </div>
     </div>
   </div>
@@ -799,8 +792,8 @@
     <div class="modal modal--tall">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-help-title">Com funciona</h2>
-        <button class="modal-close" id="btn-help-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-help-title" data-i18n="Com funciona">Com funciona</h2>
+        <button class="modal-close" id="btn-help-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -814,8 +807,8 @@
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-edit-historial-title">Editar inventari</h2>
-        <button class="modal-close" id="btn-edit-historial-close" aria-label="Tancar">
+        <h2 class="modal-title" id="modal-edit-historial-title" data-i18n="Editar inventari">Editar inventari</h2>
+        <button class="modal-close" id="btn-edit-historial-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -825,16 +818,41 @@
         <p id="edit-historial-meta" style="font-size:12px;color:rgba(34,31,30,.45);margin:0 0 14px"></p>
         <div id="edit-historial-items" class="edit-hist-list"></div>
         <div class="form-field">
-          <label class="form-label" for="edit-historial-comment">Comentari</label>
-          <textarea class="form-textarea" id="edit-historial-comment" placeholder="Comentari opcional…" rows="2"></textarea>
+          <label class="form-label" for="edit-historial-comment" data-i18n="Comentari">Comentari</label>
+          <textarea class="form-textarea" id="edit-historial-comment" placeholder="Comentari opcional…" rows="2" data-i18n-placeholder="Comentari opcional…"></textarea>
         </div>
       </div>
       <div class="form-actions">
-        <button class="btn-primary" id="btn-edit-historial-save">Desar canvis</button>
+        <button class="btn-primary" id="btn-edit-historial-save" data-i18n="Desar canvis">Desar canvis</button>
       </div>
     </div>
   </div>
 
+  <!-- ── MODAL: CONFIGURACIÓ ─────────────────────────────────────── -->
+  <div class="modal-overlay" id="modal-config" role="dialog" aria-modal="true" aria-labelledby="modal-config-title">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-config-title" data-i18n="Configuració">Configuració</h2>
+        <button class="modal-close" id="btn-config-close" aria-label="Tancar" data-i18n-aria-label="Tancar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-form">
+        <div class="form-field">
+          <label class="form-label" data-i18n="Idioma">Idioma</label>
+          <div class="lang-switch" id="lang-switch">
+            <button type="button" class="lang-btn" data-lang="ca">Català</button>
+            <button type="button" class="lang-btn" data-lang="es">Castellano</button>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary config-row-btn" id="btn-config-change-password" data-i18n="Canviar contrasenya">Canviar contrasenya</button>
+        <button type="button" class="btn-secondary config-row-btn role-admin-only" id="btn-config-gas" hidden data-i18n="Sincronització full">Sincronització full</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── ÀREA D'IMPRESSIÓ ── -->
   <div id="print-area" aria-hidden="true"></div>

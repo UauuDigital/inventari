@@ -1,4 +1,5 @@
 import { state, CAT_COLORS, saveItems, saveCats } from './config.js';
+import { t } from './i18n.js';
 import { uid, esc, fmtNum, toast } from './helpers.js';
 import { render, renderItems } from './main.js';
 import { renderStatsStrip, renderStats } from './stats.js';
@@ -22,8 +23,8 @@ export function renderCats() {
 
   wrap.innerHTML = `
     <div class="cat-view-header">
-      <span class="cat-view-title">Categories</span>
-      <button class="cat-new-btn" id="btn-new-cat">+ Nova</button>
+      <span class="cat-view-title">${t('Categories')}</span>
+      <button class="cat-new-btn" id="btn-new-cat">+ ${t('Nova')}</button>
     </div>
     ${state.categories.map(cat => {
       const count = state.items.filter(i => i.category === cat.id).length;
@@ -31,10 +32,10 @@ export function renderCats() {
         <div class="cat-row">
           <div class="cat-dot" style="background:${cat.color}"></div>
           <span class="cat-name-text">${esc(cat.name)}</span>
-          <span class="cat-count-badge">${count} ${count === 1 ? 'article' : 'articles'}</span>
+          <span class="cat-count-badge">${count} ${count === 1 ? t('article') : t('articles')}</span>
           ${cat.id !== 'cat_general' ? `
             <button class="cat-delete-btn" data-del-cat="${cat.id}"
-                    aria-label="Eliminar ${esc(cat.name)}">
+                    aria-label="${t('Eliminar')} ${esc(cat.name)}">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
@@ -54,7 +55,7 @@ export function renderColorPicker() {
     <button class="color-swatch${state.selColor === c ? ' active' : ''}"
             data-color="${c}"
             style="background:${c}"
-            aria-label="Color ${c}"
+            aria-label="${t('Color')} ${c}"
             type="button"></button>
   `).join('');
 }
@@ -86,19 +87,19 @@ export function saveCat() {
   saveCats();
   closeCatModal();
   render();
-  toast('Categoria creada');
+  toast(t('Categoria creada'));
 }
 
 export function deleteCategory(id) {
   const cat = state.categories.find(c => c.id === id);
-  if (!confirm(`Eliminar la categoria "${cat?.name}"?\nEls articles passaran a "General".`)) return;
+  if (!confirm(t('Eliminar la categoria "{name}"?\nEls articles passaran a "General".', { name: cat?.name }))) return;
   state.categories = state.categories.filter(c => c.id !== id);
   state.items.forEach(item => { if (item.category === id) item.category = 'cat_general'; });
   if (state.filter === id) state.filter = null;
   saveCats();
   saveItems();
   render();
-  toast('Categoria eliminada');
+  toast(t('Categoria eliminada'));
 }
 
 // ── ITEMS ────────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ export function deleteCategory(id) {
 export function openItemModal(item = null) {
   state.editingId = item?.id || null;
 
-  document.getElementById('modal-item-title').textContent = item ? 'Editar article' : 'Nou article';
+  document.getElementById('modal-item-title').textContent = item ? t('Editar article') : t('Nou article');
   document.getElementById('btn-delete-item').hidden = !item;
 
   const catSel = document.getElementById('f-category');
@@ -157,10 +158,10 @@ export function saveItem() {
   if (state.editingId) {
     const idx = state.items.findIndex(i => i.id === state.editingId);
     if (idx >= 0) state.items[idx] = { ...state.items[idx], ...data };
-    toast('Article actualitzat');
+    toast(t('Article actualitzat'));
   } else {
     state.items.unshift({ id: uid(), createdAt: new Date().toISOString(), ...data });
-    toast('Article afegit');
+    toast(t('Article afegit'));
   }
 
   saveItems();
@@ -171,12 +172,12 @@ export function saveItem() {
 export function deleteItem() {
   if (!state.editingId) return;
   const item = state.items.find(i => i.id === state.editingId);
-  if (!confirm(`Eliminar "${item?.name}"?`)) return;
+  if (!confirm(t('Eliminar "{name}"?', { name: item?.name }))) return;
   state.items = state.items.filter(i => i.id !== state.editingId);
   saveItems();
   closeItemModal();
   render();
-  toast('Article eliminat');
+  toast(t('Article eliminat'));
 }
 
 // ── QUANTITY BUTTONS ─────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { state, loadData } from './config.js';
+import { t, getLang, setLang, applyI18n } from './i18n.js';
 import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit, openChangePasswordModal, closeChangePasswordModal, saveChangePassword } from './auth.js';
 import {
@@ -43,16 +44,16 @@ export function renderNav() {
 
   const fab      = document.getElementById('btn-add');
   const fabLabel = fab.querySelector('span:last-child');
-  if (state.view === 'orders')  { fab.hidden = false; fabLabel.textContent = 'Nova comanda'; }
-  else if (state.view === 'list')    { fab.hidden = false; fabLabel.textContent = 'Nou article'; }
-  else if (state.view === 'catalog') { fab.hidden = false; fabLabel.textContent = 'Nou producte'; }
-  else if (state.view === 'users')   { fab.hidden = false; fabLabel.textContent = 'Nou usuari'; }
+  if (state.view === 'orders')  { fab.hidden = false; fabLabel.textContent = t('Nova comanda'); }
+  else if (state.view === 'list')    { fab.hidden = false; fabLabel.textContent = t('Nou article'); }
+  else if (state.view === 'catalog') { fab.hidden = false; fabLabel.textContent = t('Nou producte'); }
+  else if (state.view === 'users')   { fab.hidden = false; fabLabel.textContent = t('Nou usuari'); }
   else { fab.hidden = true; }
 }
 
 export function renderFilterPills() {
   const wrap  = document.getElementById('filter-pills');
-  const pills = [{ id: null, name: 'Tots' }, ...state.categories];
+  const pills = [{ id: null, name: t('Tots') }, ...state.categories];
   wrap.innerHTML = pills.map(p => `
     <button class="filter-pill${state.filter === p.id ? ' active' : ''}"
             data-cat="${p.id ?? ''}">
@@ -86,7 +87,7 @@ export function renderItems() {
       <div class="item-card${isLow ? ' is-low' : ''}${isZero ? ' is-zero' : ''}" data-id="${item.id}">
         <div class="item-card-top">
           <span class="item-name">${esc(item.name)}</span>
-          <button class="item-edit-btn" data-edit="${item.id}" aria-label="Editar ${esc(item.name)}">
+          <button class="item-edit-btn" data-edit="${item.id}" aria-label="${t('Editar')} ${esc(item.name)}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -96,12 +97,12 @@ export function renderItems() {
         ${catBadge}
         <div class="item-card-qty">
           <button class="qty-btn" data-qty="${item.id}" data-delta="-1"
-                  ${item.quantity === 0 ? 'disabled' : ''} aria-label="Reduir quantitat">−</button>
+                  ${item.quantity === 0 ? 'disabled' : ''} aria-label="${t('Reduir quantitat')}">−</button>
           <div class="qty-display">
             <span class="qty-value">${fmtNum(item.quantity)}</span>
             ${item.unit ? `<span class="qty-unit">${esc(item.unit)}</span>` : ''}
           </div>
-          <button class="qty-btn" data-qty="${item.id}" data-delta="1" aria-label="Augmentar quantitat">+</button>
+          <button class="qty-btn" data-qty="${item.id}" data-delta="1" aria-label="${t('Augmentar quantitat')}">+</button>
         </div>
       </div>
     `;
@@ -131,6 +132,22 @@ export function setView(view) {
   if (view === 'casaments')    renderCasamentsView();
   if (view === 'estadistiques') renderEstadistiques();
   if (view === 'users')     renderUsers();
+}
+
+export function updateLangSwitch() {
+  const lang = getLang();
+  document.querySelectorAll('#lang-switch .lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+export function openConfigModal() {
+  updateLangSwitch();
+  document.getElementById('modal-config').classList.add('open');
+}
+
+export function closeConfigModal() {
+  document.getElementById('modal-config').classList.remove('open');
 }
 
 let _itemTagSearch = null;
@@ -232,6 +249,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'modal-new-product')      { closeNewProductModal();       return; }
   if (e.target.id === 'modal-gas')              { closeGasModal();              return; }
   if (e.target.id === 'modal-edit-historial')   { closeEditHistorialModal();    return; }
+  if (e.target.id === 'modal-config')           { closeConfigModal();           return; }
 });
 
 document.addEventListener('keydown', e => {
@@ -248,6 +266,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('modal-scan').classList.contains('open'))          { closeScanModal();              return; }
   if (document.getElementById('modal-change-password').classList.contains('open')){ closeChangePasswordModal();  return; }
   if (document.getElementById('modal-help').classList.contains('open'))           { closeHelpModal();             return; }
+  if (document.getElementById('modal-config').classList.contains('open'))        { closeConfigModal();           return; }
   if (state.searchOpen) toggleSearch();
 });
 
@@ -255,17 +274,48 @@ document.addEventListener('keydown', e => {
 
 function init() {
   loadData();
+  document.documentElement.lang = getLang();
+  applyI18n();
+  updateLangSwitch();
   render();
   initUserScreen();
   updateOfflineQueueBadge();
   drainOfflineQueue();
   drainPendingInventari();
   window.addEventListener('online', () => { drainOfflineQueue(); drainPendingInventari(); updateOfflineQueueBadge(); });
-  document.getElementById('btn-change-password').addEventListener('click', openChangePasswordModal);
   document.getElementById('btn-chpw-close').addEventListener('click', closeChangePasswordModal);
   document.getElementById('btn-chpw-save').addEventListener('click', saveChangePassword);
   document.getElementById('modal-change-password').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeChangePasswordModal();
+  });
+
+  // Modal configuració
+  document.getElementById('btn-open-config').addEventListener('click', openConfigModal);
+  document.getElementById('btn-config-close').addEventListener('click', closeConfigModal);
+  document.getElementById('modal-config').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeConfigModal();
+  });
+  document.getElementById('lang-switch').addEventListener('click', e => {
+    const btn = e.target.closest('[data-lang]');
+    if (btn) {
+      setLang(btn.dataset.lang);
+      updateLangSwitch();
+      render();
+      if (state.view === 'orders')  renderOrders();
+      if (state.view === 'catalog') renderCatalogView();
+      if (state.view === 'reports')   renderReports();
+      if (state.view === 'casaments')    renderCasamentsView();
+      if (state.view === 'estadistiques') renderEstadistiques();
+      if (state.view === 'users')     renderUsers();
+    }
+  });
+  document.getElementById('btn-config-change-password').addEventListener('click', () => {
+    closeConfigModal();
+    openChangePasswordModal();
+  });
+  document.getElementById('btn-config-gas').addEventListener('click', () => {
+    closeConfigModal();
+    openGasModal();
   });
   document.getElementById('btn-help').addEventListener('click', openHelpModal);
   document.getElementById('btn-help-close').addEventListener('click', closeHelpModal);
@@ -278,8 +328,8 @@ function init() {
   _itemTagSearch = createTagSearch(
     document.getElementById('search-tag-input'),
     tags => { state.search = tags; renderItems(); },
-    'Nom o categoria… (Enter per text)',
-    () => state.categories.map(c => ({ value: c.name.toLowerCase(), label: c.name, type: 'Categoria' }))
+    t('Nom o categoria… (Enter per text)'),
+    () => state.categories.map(c => ({ value: c.name.toLowerCase(), label: c.name, type: t('Categoria') }))
   );
 
   document.getElementById('btn-add').addEventListener('click', () => {
@@ -322,7 +372,6 @@ function init() {
   document.getElementById('btn-comanda-accept').addEventListener('click', coordOrderAccept);
 
   // Modal configuració GAS
-  document.getElementById('btn-gas-config').addEventListener('click', openGasModal);
   document.getElementById('btn-gas-close').addEventListener('click', closeGasModal);
   document.getElementById('btn-save-gas').addEventListener('click', saveGasUrl);
   document.getElementById('btn-test-gas').addEventListener('click', testGasUrl);
