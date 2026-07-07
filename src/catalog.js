@@ -1,8 +1,8 @@
 import {
-  CATALOG_URL, OPEN_FOOD_FACTS_URL, SHEET_APPEND_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS,
+  CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
-import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, createTagSearch, matchesTags } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags } from './helpers.js';
 import { ensureCategory } from './items.js';
 import { t, getLang } from './i18n.js';
 
@@ -615,7 +615,7 @@ export function saveQty() {
 // ── GAS CONFIG (Admin) ───────────────────────────────────────────────
 
 export function openGasModal() {
-  const saved = localStorage.getItem('uauu_inv_gas_url') || '';
+  const saved = localStorage.getItem(STORAGE_GAS_URL) || '';
   document.getElementById('f-gas-url').value = saved;
   document.getElementById('modal-gas').classList.add('open');
   setTimeout(() => document.getElementById('f-gas-url').focus(), 380);
@@ -628,10 +628,10 @@ export function closeGasModal() {
 export function saveGasUrl() {
   const url = document.getElementById('f-gas-url').value.trim();
   if (url) {
-    localStorage.setItem('uauu_inv_gas_url', url);
+    localStorage.setItem(STORAGE_GAS_URL, url);
     toast(t('URL desada correctament'));
   } else {
-    localStorage.removeItem('uauu_inv_gas_url');
+    localStorage.removeItem(STORAGE_GAS_URL);
     toast(t('URL eliminada'));
   }
   closeGasModal();
@@ -639,7 +639,7 @@ export function saveGasUrl() {
 
 export function testGasUrl() {
   const url = document.getElementById('f-gas-url').value.trim()
-           || localStorage.getItem('uauu_inv_gas_url') || '';
+           || localStorage.getItem(STORAGE_GAS_URL) || '';
   if (!url) { toast(t('Enganxa primer la URL')); return; }
   const params = new URLSearchParams({
     id: 0, producte: 'TEST_CONNEXIO', proveidor: '', categoria: 'TEST', codi: '',
@@ -787,7 +787,7 @@ export function saveNewProduct() {
     state.catalogReady = true;
     localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
 
-    const gasUrl = localStorage.getItem('uauu_inv_gas_url') || SHEET_APPEND_URL;
+    const gasUrl = getGasUrl();
     if (gasUrl) {
       const params = new URLSearchParams({
         action: 'add-producte',
@@ -809,7 +809,7 @@ export function saveNewProduct() {
         inventari: `[PRODUCTE]: ${name}`,
         comentari: [category, supplier].filter(Boolean).join(' · '),
       });
-      sendToSheet(SHEET_APPEND_URL, histParams.toString());
+      sendToSheet(gasUrl, histParams.toString());
 
       toast(t('"{name}" afegit i enviat al full', { name }));
     } else {

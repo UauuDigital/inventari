@@ -1,5 +1,10 @@
-import { state } from './config.js';
+import { state, SHEET_APPEND_URL, STORAGE_GAS_URL } from './config.js';
 import { t as translate, getLang } from './i18n.js';
+
+// URL del GAS configurada per l'usuari (Admin → Configuració), amb fallback a la de config.js.
+export function getGasUrl() {
+  return localStorage.getItem(STORAGE_GAS_URL) || SHEET_APPEND_URL;
+}
 
 export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -193,13 +198,12 @@ export function findCol(headers, candidates) {
 
 const OFFLINE_QUEUE_KEY = 'uauu_inv_offline_queue';
 
-function _fireIframe(url) {
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('aria-hidden', 'true');
-  iframe.style.cssText = 'position:fixed;width:0;height:0;opacity:0;pointer-events:none';
-  document.body.appendChild(iframe);
-  iframe.src = url;
-  setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 8000);
+// Google respon amb X-Frame-Options a script.google.com, així que carregar-lo
+// dins un <iframe> amagat (la tècnica que es feia servir abans) sempre dona
+// 403. fetch en mode 'no-cors' no pateix aquesta restricció (no intenta
+// renderitzar la resposta, només disparar la petició).
+function _sendGasRequest(url) {
+  fetch(url, { method: 'GET', mode: 'no-cors', keepalive: true }).catch(() => {});
 }
 
 export function updateOfflineQueueBadge() {
@@ -220,13 +224,39 @@ export function sendToSheet(gasUrl, params) {
     toast(translate('Sense connexió — s\'enviarà quan hi hagi WiFi'));
     return;
   }
-  _fireIframe(url);
+  _sendGasRequest(url);
+}
+
+// Sincronitza una comanda amb la pestanya "Comandes" del Google Sheets
+// (action: 'add-comanda' | 'update-comanda').
+export function sendComandaToSheet(order, action = 'add-comanda') {
+  sendToSheet(getGasUrl(), new URLSearchParams({
+    action,
+    id:                order.id || '',
+    ref:               order.ref || '',
+    date:              order.date || '',
+    supplier:          order.supplier || '',
+    status:            order.status || '',
+    desc:              order.desc || '',
+    notes:             order.notes || '',
+    createdBy:         order.createdBy || '',
+    masia:             order.masia || '',
+    sourceHistorialId: order.sourceHistorialId || '',
+    createdAt:         order.createdAt || '',
+    updatedAt:         order.updatedAt || '',
+    adults:            order.adults || 0,
+  }).toString());
+}
+
+// Elimina la comanda de la pestanya "Comandes" del Google Sheets.
+export function deleteComandaFromSheet(id) {
+  sendToSheet(getGasUrl(), new URLSearchParams({ action: 'delete-comanda', id }).toString());
 }
 
 export function drainOfflineQueue() {
   const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
   if (!queue.length) return;
-  queue.forEach(url => _fireIframe(url));
+  queue.forEach(url => _sendGasRequest(url));
   localStorage.removeItem(OFFLINE_QUEUE_KEY);
   updateOfflineQueueBadge();
   toast(queue.length === 1 ? translate('1 enviament pendent enviat') : translate('{n} enviaments pendents enviats', { n: queue.length }));

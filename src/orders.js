@@ -1,7 +1,13 @@
 import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
 import { t } from './i18n.js';
-import { uid, esc, fmtDate, toast } from './helpers.js';
+import { uid, esc, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet } from './helpers.js';
 import { revertOrderMitja } from './stats.js';
+
+// Si la comanda prové d'un inventari rebut, elimina també aquell registre del Sheets.
+function _deleteSourceHistorial(order) {
+  if (!order?.sourceHistorialId) return;
+  sendToSheet(getGasUrl(), new URLSearchParams({ action: 'delete-historial', id: order.sourceHistorialId }).toString());
+}
 
 function _parseStructuredDesc(desc) {
   if (!desc || !desc.includes(': ')) return null;
@@ -295,11 +301,16 @@ export function saveOrder() {
   };
   if (state.editingOrderId) {
     const idx = state.orders.findIndex(o => o.id === state.editingOrderId);
-    if (idx >= 0) state.orders[idx] = { ...state.orders[idx], ...data };
+    if (idx >= 0) {
+      state.orders[idx] = { ...state.orders[idx], ...data };
+      sendComandaToSheet(state.orders[idx], 'update-comanda');
+    }
     toast(t('Comanda actualitzada'));
   } else {
     const createdBy = state.authProfile?.nom || state.user || '';
-    state.orders.unshift({ id: uid(), createdAt: new Date().toISOString(), createdBy, ...data });
+    const newOrder  = { id: uid(), createdAt: new Date().toISOString(), createdBy, ...data };
+    state.orders.unshift(newOrder);
+    sendComandaToSheet(newOrder, 'add-comanda');
     toast(t('Comanda afegida'));
   }
   saveOrders();
@@ -324,6 +335,8 @@ export function deleteOrder() {
   const o = state.orders.find(x => x.id === state.editingOrderId);
   if (!confirm(t('Eliminar la comanda{ref}?', { ref: o?.ref ? ' ' + o.ref : '' }))) return;
   const result = revertOrderMitja(o);
+  _deleteSourceHistorial(o);
+  deleteComandaFromSheet(o.id);
   state.orders = state.orders.filter(x => x.id !== state.editingOrderId);
   saveOrders();
   closeOrderModal();
@@ -340,6 +353,7 @@ export function cycleOrderStatus(id) {
   o.updatedAt = new Date().toISOString();
   saveOrders();
   renderOrders();
+  sendComandaToSheet(o, 'update-comanda');
   toast(t('Estat: {status}', { status: t(STATUS_LABELS[o.status]) }));
 }
 
@@ -348,6 +362,8 @@ export function deleteOrderDirect(id) {
   if (!o) return;
   if (!confirm(t('Eliminar la comanda{ref}?', { ref: o.ref ? ' ' + o.ref : '' }))) return;
   const result = revertOrderMitja(o);
+  _deleteSourceHistorial(o);
+  deleteComandaFromSheet(o.id);
   state.orders = state.orders.filter(x => x.id !== id);
   saveOrders();
   renderOrders();

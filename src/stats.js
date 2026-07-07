@@ -1,6 +1,6 @@
-import { state, SHEET_APPEND_URL, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, saveItems, saveOrders } from './config.js';
+import { state, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, saveItems, saveOrders } from './config.js';
 import { t } from './i18n.js';
-import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet } from './helpers.js';
+import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet, sendComandaToSheet, getGasUrl } from './helpers.js';
 import { loadCatalog } from './catalog.js';
 import { ensureCategory } from './items.js';
 import { ensureCasamentsLoaded, getCasamentsData } from './casaments.js';
@@ -24,7 +24,7 @@ export function drainPendingInventari() {
   if (!navigator.onLine) return;
   const pending = _loadPendingInv();
   if (!pending.length) return;
-  pending.forEach(entry => sendToSheet(SHEET_APPEND_URL, entry.params));
+  pending.forEach(entry => sendToSheet(getGasUrl(), entry.params));
   _savePendingInv([]);
   _historialRows = _historialRows.filter(r => !r[7]);
   _renderHistorialCards();
@@ -38,7 +38,7 @@ function _resendPendingHistorial(id) {
     toast(t('Encara sense connexió. S\'enviarà automàticament quan tornis a tenir WiFi.'));
     return;
   }
-  sendToSheet(SHEET_APPEND_URL, pending[idx].params);
+  sendToSheet(getGasUrl(), pending[idx].params);
   pending.splice(idx, 1);
   _savePendingInv(pending);
   _historialRows = _historialRows.filter(r => r[0] !== id);
@@ -75,11 +75,8 @@ document.addEventListener('click', e => {
   // Segon clic: confirmat, elimina
   if (delBtn && delBtn.dataset.confirming) {
     const id  = delBtn.dataset.deleteHistorial;
-    const url = `${SHEET_APPEND_URL}?action=delete-historial&id=${encodeURIComponent(id)}`;
     toast(t('Eliminant… (id: {id})', { id: id.slice(-6) }));
-    fetch(url, { mode: 'no-cors' })
-      .then(() => toast(t('Petició enviada al full')))
-      .catch(() => toast(t('Error de xarxa al eliminar')));
+    sendToSheet(getGasUrl(), new URLSearchParams({ action: 'delete-historial', id }).toString());
     _historialRows = _historialRows.filter(r => r[0] !== id);
     _renderHistorialCards();
     return;
@@ -334,7 +331,7 @@ export function sendInventoryReport() {
     });
     _savePendingInv(pending);
   } else {
-    sendToSheet(SHEET_APPEND_URL, params.toString());
+    sendToSheet(getGasUrl(), params.toString());
   }
   _pendingQtyChange = false;
 
@@ -810,7 +807,7 @@ export function coordOrderAccept() {
         avgQty:      newAvg,
         numCom:      newNum,
       });
-      sendToSheet(SHEET_APPEND_URL, params.toString());
+      sendToSheet(getGasUrl(), params.toString());
       // Actualitza el catàleg local perquè la propera comanda ja tingui el valor nou
       const cat = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
       if (cat) { cat.avgQty = newAvg; cat.numCom = newNum; }
@@ -822,7 +819,7 @@ export function coordOrderAccept() {
   const desc  = orderItems.length === 0
     ? t('Cap producte per demanar')
     : orderItems.map(i => `${i.name}: ${i.orderQty} c`).join(' | ');
-  state.orders.unshift({
+  const newOrder = {
     id:        uid(),
     date:      today,
     supplier:  masiaLabel,
@@ -833,9 +830,12 @@ export function coordOrderAccept() {
     createdBy: state.authProfile?.nom || state.user || comensal || '',
     sourceHistorialId: _coordOrderData.id,
     mitjaSnapshot,
+    adults,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  });
+  };
+  state.orders.unshift(newOrder);
+  sendComandaToSheet(newOrder, 'add-comanda');
   saveOrders();
   _coordOrderData = null;
   setView('orders');
@@ -868,7 +868,7 @@ export function revertOrderMitja(order) {
       avgQty:      entry.prevAvg,
       numCom:      entry.prevNum,
     });
-    sendToSheet(SHEET_APPEND_URL, params.toString());
+    sendToSheet(getGasUrl(), params.toString());
     cat.avgQty = entry.prevAvg;
     cat.numCom = entry.prevNum;
     reverted.push(entry.productName);
@@ -941,7 +941,7 @@ export function saveEditHistorial() {
     inventari: newInventari,
     comentari,
   });
-  sendToSheet(SHEET_APPEND_URL, params.toString());
+  sendToSheet(getGasUrl(), params.toString());
 
   const rowIdx = _historialRows.findIndex(r => r[0] === _editingHistorialId);
   if (rowIdx >= 0) {
