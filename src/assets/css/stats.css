@@ -562,11 +562,18 @@
 }
 
 .coord-order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px 10px;
+}
+@media (min-width: 640px) {
+  .coord-order-list { grid-template-columns: repeat(3, 1fr); }
 }
 .coord-order-section-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .06em;
@@ -617,19 +624,6 @@
   outline: none;
 }
 .coord-order-qty-unit { font-size: 11px; color: var(--text-dim); }
-
-.coord-order-hint {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: var(--r-pill, 99px);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.coord-order-hint--mitja {
-  background: rgba(123,164,200,.12);
-  border: 1px solid rgba(123,164,200,.3);
-  color: #7BA4C8;
-}
 
 /* ── EDIT HISTORIAL MODAL ────────────────────────────────────────── */
 
