@@ -370,18 +370,25 @@ export function deleteOrderDirect(id) {
   _toastDeleteResult(result);
 }
 
-export function printOrder(id) {
-  const o = state.orders.find(x => x.id === id);
-  if (!o) return;
+// Agrupa els articles estructurats d'una comanda pel proveïdor de cada producte
+// al catàleg (no pel camp "supplier" manual de la comanda, que és un sol text lliure).
+function _groupItemsBySupplier(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    const product  = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+    const supplier = (product?.supplier || '').trim() || t('Sense proveïdor assignat');
+    if (!groups.has(supplier)) groups.set(supplier, []);
+    groups.get(supplier).push(item);
+  });
+  return groups;
+}
 
-  const today   = new Date().toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-  const structured = _parseStructuredDesc(o.desc ?? '');
-
-  const bodyHtml = structured
+function _printComandaBlockHtml(o, today, supplier, items) {
+  const bodyHtml = items
     ? `<table class="print-comanda-table">
         <thead><tr><th>${t('Producte')}</th><th>${t('Quantitat')}</th><th>${t('Notes')}</th></tr></thead>
         <tbody>
-          ${structured.map(item => `
+          ${items.map(item => `
             <tr>
               <td>${esc(item.name)}</td>
               <td class="tc">${item.qty} c</td>
@@ -391,14 +398,14 @@ export function printOrder(id) {
         <tfoot>
           <tr>
             <td class="tr" colspan="1"><strong>${t('Total caixes:')}</strong></td>
-            <td class="tc"><strong>${structured.reduce((s, i) => s + i.qty, 0)} c</strong></td>
+            <td class="tc"><strong>${items.reduce((s, i) => s + i.qty, 0)} c</strong></td>
             <td></td>
           </tr>
         </tfoot>
       </table>`
     : `<p style="font-size:11pt;line-height:1.7;margin:8mm 0">${esc(o.desc ?? '')}</p>`;
 
-  document.getElementById('print-area').innerHTML = `
+  return `
     <div class="print-comanda">
       <div class="print-comanda-header">
         <div>
@@ -406,6 +413,7 @@ export function printOrder(id) {
           <p class="print-comanda-org">UAUU Wedding &amp; Events</p>
         </div>
         <div class="print-comanda-info">
+          <p><strong>${t('Proveïdor:')}</strong> ${esc(supplier)}</p>
           ${o.ref  ? `<p><strong>${t('Referència:')}</strong> ${esc(o.ref)}</p>`        : ''}
           ${o.date ? `<p><strong>${t('Data comanda:')}</strong> ${fmtDate(o.date)}</p>` : ''}
           <p><strong>${t('Data impressió:')}</strong> ${today}</p>
@@ -420,6 +428,23 @@ export function printOrder(id) {
         <div class="print-comanda-sig"><div class="print-comanda-sig-line"></div><p>${t('Data lliurament')}</p></div>
       </div>
     </div>`;
+}
+
+export function printOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+
+  const today       = new Date().toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const structured  = _parseStructuredDesc(o.desc ?? '');
+
+  // Un document per proveïdor quan es poden distingir els articles; si la comanda
+  // té una descripció de text lliure (no estructurada), no es pot separar per
+  // proveïdor i s'imprimeix un únic document com fins ara.
+  const blocksHtml = structured
+    ? [..._groupItemsBySupplier(structured)].map(([supplier, items]) => _printComandaBlockHtml(o, today, supplier, items)).join('')
+    : _printComandaBlockHtml(o, today, o.supplier || t('Sense proveïdor assignat'), null);
+
+  document.getElementById('print-area').innerHTML = blocksHtml;
 
   window.print();
   setTimeout(() => { document.getElementById('print-area').innerHTML = ''; }, 1500);

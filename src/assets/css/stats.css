@@ -769,8 +769,13 @@
   #print-area, #print-area * { visibility: visible !important; }
   #print-area {
     display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
+    /* position:fixed clipava el contingut a una sola pàgina (o el repetia a
+       totes): amb comandes llargues es tallaven productes. absolute + alçada
+       automàtica permet que el contingut flueixi per tantes pàgines com calgui. */
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
     background: #fff !important;
     z-index: 99999 !important;
   }
@@ -781,6 +786,8 @@
   color: #111;
   padding: 20mm 18mm;
 }
+/* Un document per proveïdor: cadascun comença en una pàgina nova (excepte el primer) */
+.print-comanda + .print-comanda { page-break-before: always; }
 .print-comanda-header {
   display: flex;
   justify-content: space-between;
@@ -821,6 +828,8 @@
   text-transform: uppercase;
   letter-spacing: .07em;
 }
+.print-comanda-table thead { display: table-header-group; } /* repeteix la capçalera a cada pàgina */
+.print-comanda-table tr    { page-break-inside: avoid; }
 .print-comanda-table td {
   padding: 3mm 3mm;
   border-bottom: .5px solid #ccc;
