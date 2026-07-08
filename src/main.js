@@ -1,6 +1,6 @@
 import { state, loadData, STORAGE_THEME } from './config.js';
 import { t, getLang, setLang, applyI18n } from './i18n.js';
-import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch } from './helpers.js';
+import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch, sortByCategory } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit, openChangePasswordModal, closeChangePasswordModal, saveChangePassword } from './auth.js';
 import {
   openItemModal, closeItemModal, saveItem, deleteItem,
@@ -10,7 +10,7 @@ import {
 import {
   loadCatalog, initCatalogSearch, renderCatalogView,
   openScanModal, closeScanModal, openScanModalForField, scanCreateProduct,
-  openQtyModal,  closeQtyModal,  saveQty,  navQtyModal,
+  openQtyModal,  closeQtyModal,  saveQty,  navQtyModal,  submitQtyModal,
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
   openEditProductModal, saveEditProduct, deleteEditProduct,
@@ -65,7 +65,7 @@ export function renderFilterPills() {
 export function renderItems() {
   const grid  = document.getElementById('items-grid');
   const empty = document.getElementById('empty-state');
-  const items = filteredItems();
+  const items = sortByCategory(filteredItems(), i => getCat(i.category)?.name, i => i.name);
 
   if (items.length === 0) {
     grid.innerHTML = '';
@@ -422,7 +422,7 @@ function init() {
   document.getElementById('btn-qty-next').addEventListener('click', () => navQtyModal(1));
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);
   document.getElementById('btn-remove-qty').addEventListener('click', removeQtyItem);
-  document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); saveQty(); });
+  document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); submitQtyModal(); });
 
   // Modal editar historial
   document.getElementById('btn-edit-historial-close').addEventListener('click', closeEditHistorialModal);

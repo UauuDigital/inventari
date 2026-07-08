@@ -21,6 +21,22 @@ export function matchesTags(haystack, tags) {
   return Object.values(groups).every(vals => vals.some(v => haystack.includes(v)));
 }
 
+// Posició de la categoria dins l'ordre canònic de state.categories (el mateix ordre
+// que es fa servir a les píndoles de filtre). Sense categoria queda sempre al final.
+function _categoryRank(catName) {
+  if (!catName) return Infinity;
+  const idx = state.categories.findIndex(c => c.name.toLowerCase() === catName.toLowerCase());
+  return idx === -1 ? Infinity : idx;
+}
+
+export function sortByCategory(list, getCatName, getName) {
+  return [...list].sort((a, b) => {
+    const diff = _categoryRank(getCatName(a)) - _categoryRank(getCatName(b));
+    if (diff !== 0) return diff;
+    return (getName(a) || '').localeCompare(getName(b) || '', 'ca');
+  });
+}
+
 export function filteredItems() {
   let list = state.items;
   if (state.filter) list = list.filter(i => i.category === state.filter);

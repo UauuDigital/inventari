@@ -110,6 +110,10 @@
   cursor: default;
 }
 
+.modal-qty-cat-badge {
+  margin: 8px 22px 0;
+}
+
 /* ── FORM ────────────────────────────────────────────────────────── */
 
 .modal-form {

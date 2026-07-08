@@ -2,7 +2,7 @@ import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
-import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategory } from './helpers.js';
 import { ensureCategory } from './items.js';
 import { t, getLang } from './i18n.js';
 
@@ -369,29 +369,31 @@ export function renderCatalogView() {
   const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
   if (isEditor) {
-    // ── Editor view: flat list grouped by category ──────────────────
-    const groups = new Map();
-    state.catalog.forEach((p, i) => {
-      const cat = p.category || t('Sense categoria');
-      if (!groups.has(cat)) groups.set(cat, []);
-      groups.get(cat).push({ p, i });
-    });
+    // ── Editor view: flat list grouped by category, in category order ──
+    const sorted = sortByCategory(
+      state.catalog.map((p, i) => ({ p, i })),
+      ({ p }) => p.category,
+      ({ p }) => p.name
+    );
 
     const html = [`<div class="catalog-list"><div id="catalog-tag-search"></div>`];
-    groups.forEach((entries, catName) => {
-      html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
-      entries.forEach(({ p, i }) => {
-        const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
-        html.push(`
-          <div class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}">
-            <span class="catalog-btn-name">${esc(p.name)}</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
-              <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">${editSvg}</button>
-            </div>
+    let lastCat = undefined;
+    sorted.forEach(({ p, i }) => {
+      const catName = p.category || t('Sense categoria');
+      if (catName !== lastCat) {
+        html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
+        lastCat = catName;
+      }
+      const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
+      html.push(`
+        <div class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}">
+          <span class="catalog-btn-name">${esc(p.name)}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
+            <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">${editSvg}</button>
           </div>
-        `);
-      });
+        </div>
+      `);
     });
     html.push('</div>');
     panel.innerHTML = html.join('');
@@ -416,7 +418,13 @@ export function renderCatalogView() {
         ${t('Escaneja codi de barres')}
       </button>`;
 
-    const cards = state.catalog.map((p, i) => {
+    const catalogSorted = sortByCategory(
+      state.catalog.map((p, i) => ({ p, i })),
+      ({ p }) => p.category,
+      ({ p }) => p.name
+    );
+
+    const cards = catalogSorted.map(({ p, i }) => {
       const existing  = state.items.find(it => it.name.toLowerCase() === p.name.toLowerCase());
       const qty       = existing != null ? fmtQtyDisplay(existing) : '';
       const hasQty    = !!qty;
@@ -563,6 +571,17 @@ function _loadQtyModal(idx) {
 
   document.getElementById('modal-qty-title').textContent = product.name;
 
+  const catBadge = document.getElementById('modal-qty-cat');
+  if (product.category) {
+    const color = _catColor(product.category);
+    catBadge.textContent = product.category;
+    catBadge.style.color = color;
+    catBadge.style.borderColor = `${color}55`;
+    catBadge.hidden = false;
+  } else {
+    catBadge.hidden = true;
+  }
+
   const boxesInput = document.getElementById('f-qty-boxes');
   boxesInput.value = existing?.boxes != null ? existing.boxes : '';
   _updateQtyLabels();
@@ -642,6 +661,15 @@ export function saveQty() {
   _persistQty();
   closeQtyModal();
   renderCatalogView();
+}
+
+export function submitQtyModal() {
+  const pos = _qtyNavList.indexOf(state.editingCatalogIdx);
+  if (pos !== -1 && pos < _qtyNavList.length - 1) {
+    navQtyModal(1);
+  } else {
+    saveQty();
+  }
 }
 
 export function navQtyModal(delta) {
