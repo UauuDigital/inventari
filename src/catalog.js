@@ -540,7 +540,21 @@ document.addEventListener('input', e => {
   if (e.target.id === 'f-qty-boxes') _updateQtyLabels();
 });
 
-export function openQtyModal(idx) {
+let _qtyNavList = [];
+
+function _visibleCatalogIndices() {
+  return Array.from(document.querySelectorAll('#view-catalog [data-catalog]'))
+    .filter(el => !el.hidden)
+    .map(el => parseInt(el.dataset.catalog, 10));
+}
+
+function _updateQtyNavButtons() {
+  const pos = _qtyNavList.indexOf(state.editingCatalogIdx);
+  document.getElementById('btn-qty-prev').disabled = pos <= 0;
+  document.getElementById('btn-qty-next').disabled = pos === -1 || pos >= _qtyNavList.length - 1;
+}
+
+function _loadQtyModal(idx) {
   const product = state.catalog[idx];
   if (!product) return;
   state.editingCatalogIdx = idx;
@@ -554,13 +568,23 @@ export function openQtyModal(idx) {
   _updateQtyLabels();
 
   document.getElementById('btn-remove-qty').hidden = !existing;
+  _updateQtyNavButtons();
+}
+
+export function openQtyModal(idx) {
+  if (!state.catalog[idx]) return;
+  _qtyNavList = _visibleCatalogIndices();
+  _loadQtyModal(idx);
+
   document.getElementById('modal-qty').classList.add('open');
+  const boxesInput = document.getElementById('f-qty-boxes');
   setTimeout(() => { boxesInput.focus(); boxesInput.select(); }, 350);
 }
 
 export function closeQtyModal() {
   document.getElementById('modal-qty').classList.remove('open');
   state.editingCatalogIdx = null;
+  _qtyNavList = [];
 }
 
 export function removeQtyItem() {
@@ -573,16 +597,12 @@ export function removeQtyItem() {
   renderCatalogView();
 }
 
-export function saveQty() {
+function _persistQty() {
   const product = state.catalog[state.editingCatalogIdx];
   if (!product) return;
 
   const boxesVal = document.getElementById('f-qty-boxes').value;
-
-  if (boxesVal === '') {
-    document.getElementById('f-qty-boxes').focus();
-    return;
-  }
+  if (boxesVal === '') return;
 
   const boxes = parseFloat(boxesVal) || 0;
 
@@ -607,9 +627,35 @@ export function saveQty() {
   }
 
   saveItems();
-  closeQtyModal();
   toast(`${product.name}: ${fmtQtyDisplay({ boxes, unit: product.unit || 'u' })}`);
+}
+
+export function saveQty() {
+  const product = state.catalog[state.editingCatalogIdx];
+  if (!product) return;
+
+  if (document.getElementById('f-qty-boxes').value === '') {
+    document.getElementById('f-qty-boxes').focus();
+    return;
+  }
+
+  _persistQty();
+  closeQtyModal();
   renderCatalogView();
+}
+
+export function navQtyModal(delta) {
+  const pos = _qtyNavList.indexOf(state.editingCatalogIdx);
+  const nextPos = pos + delta;
+  if (pos === -1 || nextPos < 0 || nextPos >= _qtyNavList.length) return;
+
+  _persistQty();
+  _loadQtyModal(_qtyNavList[nextPos]);
+  renderCatalogView();
+
+  const boxesInput = document.getElementById('f-qty-boxes');
+  boxesInput.focus();
+  boxesInput.select();
 }
 
 // ── GAS CONFIG (Admin) ───────────────────────────────────────────────

@@ -10,7 +10,7 @@ import {
 import {
   loadCatalog, initCatalogSearch, renderCatalogView,
   openScanModal, closeScanModal, openScanModalForField, scanCreateProduct,
-  openQtyModal,  closeQtyModal,  saveQty,
+  openQtyModal,  closeQtyModal,  saveQty,  navQtyModal,
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
   openEditProductModal, saveEditProduct, deleteEditProduct,
@@ -418,6 +418,8 @@ function init() {
 
   // Modal quantitat
   document.getElementById('btn-qty-close').addEventListener('click', closeQtyModal);
+  document.getElementById('btn-qty-prev').addEventListener('click', () => navQtyModal(-1));
+  document.getElementById('btn-qty-next').addEventListener('click', () => navQtyModal(1));
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);
   document.getElementById('btn-remove-qty').addEventListener('click', removeQtyItem);
   document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); saveQty(); });
