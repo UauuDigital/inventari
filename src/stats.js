@@ -231,6 +231,7 @@ export function renderStats() {
     html += `<textarea class="inv-comment-input" id="inv-comment" placeholder="${t('Comentari opcional…')}" rows="3"></textarea>`;
     html += `<button class="btn-send-report" data-action="send-report">${t('Enviar inventari al coordinador')}</button>`;
     el.innerHTML = html;
+    _initScrollFab('btn-stats-scrolltop', 'btn-stats-scrollbottom');
     return;
   }
 
@@ -287,6 +288,7 @@ export function renderStats() {
       </div>
     ` : ''}
   `;
+  _initScrollFab('btn-stats-scrolltop', 'btn-stats-scrollbottom');
 }
 
 // ── INVENTORY REPORT ─────────────────────────────────────────────────
@@ -700,6 +702,27 @@ async function _openCoordOrderEdit(row) {
   setView('comanda-edit');
 }
 
+// Botons flotants "anar a dalt/a baix" per a vistes amb llistes llargues. El que
+// realment fa scroll és sempre #app-main (tota la pàgina), no el contenidor de la
+// vista, així que els botons són position:fixed i mesuren el scroll d'#app-main.
+function _initScrollFab(btnTopId, btnBottomId) {
+  const scrollEl = document.getElementById('app-main');
+  const btnTop   = document.getElementById(btnTopId);
+  const btnBottom = document.getElementById(btnBottomId);
+  if (!scrollEl || !btnTop || !btnBottom) return;
+  const update = () => {
+    btnBottom.hidden = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < 40;
+    btnTop.hidden    = scrollEl.scrollTop < 40;
+  };
+  scrollEl.onscroll  = update;
+  btnBottom.onclick  = () => scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+  btnTop.onclick     = () => scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+  // La vista pot encara estar amagada (hidden) en aquest punt, cosa que fa que
+  // scrollHeight/clientHeight donin 0; ajornem el primer càlcul a després que es
+  // faci visible.
+  requestAnimationFrame(update);
+}
+
 function _updateCoordOrderRowClass(row) {
   const qty      = parseFloat(row.dataset.qty)      || 0;
   const minStock = parseFloat(row.dataset.minstock) || 0;
@@ -777,6 +800,8 @@ function _renderCoordOrderEdit() {
     if (!input) return;
     _updateCoordOrderRowClass(input.closest('.coord-order-row'));
   });
+
+  _initScrollFab('btn-comanda-scrolltop', 'btn-comanda-scrollbottom');
 }
 
 export function coordOrderAccept() {

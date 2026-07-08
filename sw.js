@@ -1,4 +1,4 @@
-const CACHE = 'uauu-inv-v0.115';
+const CACHE = 'uauu-inv-v0.120';
 
 const ASSETS = [
   './',

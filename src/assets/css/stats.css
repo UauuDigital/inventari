@@ -422,6 +422,34 @@
   flex-direction: column;
 }
 
+/* Botons flotants "anar a dalt/a baix" reutilitzables a qualsevol vista amb llistes
+   llargues. Fixed respecte al viewport perquè qui fa scroll és sempre #app-main
+   (tota la pàgina), no el contenidor de la vista en si. */
+.scroll-fab-bottom,
+.scroll-fab-top {
+  position: fixed;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--text);
+  color: var(--dark);
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  cursor: pointer;
+  z-index: 5;
+  transition: opacity .15s, transform .15s;
+}
+.scroll-fab-bottom { bottom: calc(20px + var(--safe-bot)); }
+.scroll-fab-top    { bottom: calc(68px + var(--safe-bot)); }
+.scroll-fab-bottom:hover,
+.scroll-fab-top:hover { transform: translateY(-2px); }
+.scroll-fab-bottom[hidden],
+.scroll-fab-top[hidden] { display: none; }
+
 .comanda-edit-header {
   display: flex;
   align-items: center;
