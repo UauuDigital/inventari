@@ -736,12 +736,13 @@ function _initScrollFab(btnTopId, btnBottomId) {
 }
 
 function _updateCoordOrderRowClass(row) {
+  const notCounted = row.dataset.notcounted === '1';
   const qty      = parseFloat(row.dataset.qty)      || 0;
   const minStock = parseFloat(row.dataset.minstock) || 0;
   const input    = row.querySelector('.coord-order-qty');
   const orderQty = parseFloat(input?.value)         || 0;
   row.classList.remove('is-ok', 'is-low');
-  if (minStock > 0 && qty + orderQty < minStock) {
+  if (!notCounted && minStock > 0 && qty + orderQty < minStock) {
     row.classList.add('is-low');
   } else if (orderQty === 0) {
     row.classList.add('is-ok');
@@ -788,7 +789,7 @@ function _renderCoordOrderItemsList() {
       const orderUnit = item.upb > 0 ? 'c' : 'u';
 
       return `
-      <div class="coord-order-row${cls}" style="border-left:3px solid ${color}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}" data-search="${esc(item.name.toLowerCase())}">
+      <div class="coord-order-row${cls}" style="border-left:3px solid ${color}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}" data-notcounted="${item.notCounted ? '1' : '0'}" data-search="${esc(item.name.toLowerCase())}">
         <span class="coord-order-name">${esc(item.name)}</span>
         <span class="coord-order-stock">${stock}</span>
         <label class="coord-order-qty-wrap" aria-label="${t('Quantitat a demanar')}">
@@ -869,12 +870,15 @@ export function coordOrderAccept() {
   const { date, hora, masiaLabel, comensal, adults } = _coordOrderData;
   const orderItems = _coordOrderData.items.filter(i => i.orderQty > 0);
 
-  // Actualitza la mitjana de caixes/adult (inventari + comanda) de cada producte comandat
+  // Actualitza la mitjana de caixes/adult (inventari + comanda) de cada producte comandat.
+  // Els productes no comptats a l'inventari es queden fora encara que se'ls demani
+  // manualment: no sabem quantes caixes hi havia realment (currentBoxes seria 0 i
+  // falsejaria la mitjana).
   // Es guarda un "snapshot" (valors abans/després) a la comanda perquè, si s'elimina
   // més endavant, es pugui revertir la seva contribució a la mitjana (vegeu revertOrderMitja).
   const mitjaSnapshot = [];
   if (adults > 0) {
-    orderItems.forEach(item => {
+    orderItems.filter(item => !item.notCounted).forEach(item => {
       const perAdult = (item.currentBoxes + item.orderQty) / adults;
       const oldNum   = item.numCom || 0;
       const oldAvg   = item.avgQty || 0;
