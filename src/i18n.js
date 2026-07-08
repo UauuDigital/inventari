@@ -11,6 +11,8 @@ const ES = {
   'Editar':                       'Editar',
   'Reduir quantitat':             'Reducir cantidad',
   'Augmentar quantitat':          'Aumentar cantidad',
+  'Producte anterior':            'Producto anterior',
+  'Producte següent':             'Producto siguiente',
   'Tots':                         'Todos',
   'Sí':                           'Sí',
   'No':                           'No',
