@@ -62,6 +62,13 @@
 .app-header-actions .icon-btn,
 .app-header-actions .user-pill { flex-shrink: 0; }
 
+/* En mòbils estrets, més botons dels que caben sense scroll feien que
+   "Tancar sessió" quedés amagat fora de vista (i el scroll no es notava,
+   ja que la barra és invisible). Els encongim una mica per fer-los caber tots. */
+@media (max-width: 420px) {
+  .app-header-actions .icon-btn { width: 34px; height: 34px; }
+}
+
 .app-version {
   position: fixed;
   top: calc(var(--safe-top) + 8px);

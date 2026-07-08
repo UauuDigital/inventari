@@ -284,6 +284,15 @@
   white-space: nowrap;
 }
 
+/* En mòbils el "pill" d'usuari es menjava l'espai dels botons d'acció (p. ex.
+   "Tancar sessió" quedava fora de vista i calia fer scroll horitzontal sense
+   cap indicació visual que hi era). El compactem perquè tot càpiga sempre. */
+@media (max-width: 420px) {
+  .user-pill-role { display: none; }
+  .user-pill-name { max-width: 54px; }
+  .user-pill { padding: 5px 8px 5px 6px; }
+}
+
 /* ── BREADCRUMB ──────────────────────────────────────────────────── */
 
 .breadcrumb {
