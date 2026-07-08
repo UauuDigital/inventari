@@ -650,10 +650,11 @@ function _parseInventariItems(inventari) {
       const upb      = catEntry?.unitsPerBox || 0;
       const avgQty   = catEntry?.avgQty      || 0; // mitjana de caixes per adult (inventari + comanda)
       const numCom   = catEntry?.numCom      || 0;
+      const category = catEntry?.category    || '';
       const qty      = parseTotalQty(qtyStr, upb);
       const currentBoxes = upb > 0 ? qty / upb : qty;
 
-      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, currentBoxes, orderQty: 0, orderSrc: '' };
+      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, category, currentBoxes, orderQty: 0, orderSrc: '' };
     })
     .filter(Boolean);
 }
@@ -693,6 +694,7 @@ async function _openCoordOrderEdit(row) {
   const adults    = sumAdults > 0 ? sumAdults : _getMasiaAdults(masiaVal);
 
   _applyOrderRecommendations(items, adults);
+  _coordOrderSearchText = '';
   _coordOrderData = {
     id, date, hora, masia: masiaVal, masiaLabel, comensal, items, adults,
     adultsFromCasaments: sumAdults > 0,
@@ -740,34 +742,70 @@ function _fmt2(n) {
   return (Math.round(n * 100) / 100).toString().replace('.', ',');
 }
 
+let _coordOrderSearchText = '';
+
+// Agrupa els articles per categoria (seguint l'ordre de state.categories; els sense
+// categoria coneguda van al final) per facilitar-ne la revisió a l'hora de generar la comanda.
+function _sortedCoordOrderCategories(items) {
+  const present = new Set(items.map(item => item.category || ''));
+  const known   = state.categories.map(c => c.name).filter(name => present.has(name));
+  const rest    = [...present].filter(name => !known.includes(name)).sort();
+  // Deixa "Sense categoria" (nom buit) sempre al final
+  return [...known, ...rest.filter(n => n !== ''), ...(present.has('') ? [''] : [])];
+}
+
 function _renderCoordOrderItemsList() {
   const { items } = _coordOrderData;
-  document.getElementById('coord-order-list').innerHTML = items.map((item, i) => {
-    const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-    const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
-    const isOk  = !isLow && item.orderQty === 0;
-    const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
-    const stock = item.minStock > 0
-      ? `${item.qtyStr || item.qty} / ${t('mín.')} ${item.minStock}`
-      : `${item.qtyStr || item.qty}`;
-    const orderUnit = item.upb > 0 ? 'c' : 'u';
+  const withIdx = items.map((item, i) => ({ item, i }));
+  const categories = _sortedCoordOrderCategories(items);
 
-    const hint = item.orderSrc === 'mitja'
-      ? `<span class="coord-order-hint coord-order-hint--mitja" title="${t('Recomanació basada en la mitjana de caixes per adult')}">~${_fmt2(item.avgQty)} ${t('c/adult')} · ${t('{n} com.', { n: item.numCom })}</span>`
-      : `<span class="coord-order-hint" title="${t('Encara sense mitjana; recomanació basada en el mínim del catàleg')}">${t('sense mitjana')}</span>`;
+  document.getElementById('coord-order-list').innerHTML = categories.map(catName => {
+    const rowsHtml = withIdx.filter(({ item }) => (item.category || '') === catName).map(({ item, i }) => {
+      const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
+      const isLow = item.minStock > 0 && item.qty + orderUnits < item.minStock;
+      const isOk  = !isLow && item.orderQty === 0;
+      const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
+      const stock = item.minStock > 0
+        ? `${item.qtyStr || item.qty} / ${t('mín.')} ${item.minStock}`
+        : `${item.qtyStr || item.qty}`;
+      const orderUnit = item.upb > 0 ? 'c' : 'u';
 
-    return `
-    <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}">
-      <span class="coord-order-name">${esc(item.name)}</span>
-      <span class="coord-order-stock">${stock}</span>
-      <label class="coord-order-qty-wrap" aria-label="${t('Quantitat a demanar')}">
-        <input class="coord-order-qty" type="number" min="0" step="1"
-               value="${item.orderQty}" data-idx="${i}">
-        <span class="coord-order-qty-unit">${orderUnit}</span>
-      </label>
-      ${hint}
-    </div>`;
+      const hint = item.orderSrc === 'mitja'
+        ? `<span class="coord-order-hint coord-order-hint--mitja" title="${t('Recomanació basada en la mitjana de caixes per adult')}">~${_fmt2(item.avgQty)} ${t('c/adult')} · ${t('{n} com.', { n: item.numCom })}</span>`
+        : `<span class="coord-order-hint" title="${t('Encara sense mitjana; recomanació basada en el mínim del catàleg')}">${t('sense mitjana')}</span>`;
+
+      return `
+      <div class="coord-order-row${cls}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}" data-search="${esc(item.name.toLowerCase())}">
+        <span class="coord-order-name">${esc(item.name)}</span>
+        <span class="coord-order-stock">${stock}</span>
+        <label class="coord-order-qty-wrap" aria-label="${t('Quantitat a demanar')}">
+          <input class="coord-order-qty" type="number" min="0" step="1"
+                 value="${item.orderQty}" data-idx="${i}">
+          <span class="coord-order-qty-unit">${orderUnit}</span>
+        </label>
+        ${hint}
+      </div>`;
+    }).join('');
+
+    return `<div class="coord-order-section-title" data-search-section>${esc(catName || t('Sense categoria'))}</div>${rowsHtml}`;
   }).join('');
+  _filterCoordOrderItemsList();
+}
+
+function _filterCoordOrderItemsList() {
+  let lastSection = null;
+  let sectionHasVisible = false;
+  document.querySelectorAll('#coord-order-list > *').forEach(el => {
+    if (el.hasAttribute('data-search-section')) {
+      if (lastSection) lastSection.hidden = !sectionHasVisible;
+      lastSection = el;
+      sectionHasVisible = false;
+      return;
+    }
+    el.hidden = !!_coordOrderSearchText && !(el.dataset.search || '').includes(_coordOrderSearchText);
+    if (!el.hidden) sectionHasVisible = true;
+  });
+  if (lastSection) lastSection.hidden = !sectionHasVisible;
 }
 
 function _renderCoordOrderEdit() {
@@ -791,6 +829,7 @@ function _renderCoordOrderEdit() {
       <strong>${adults}</strong> persones a la masia
     </span>
     ${adultsSrcHint}
+    <input class="catalog-simple-search" id="coord-order-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${t('Cerca producte…')}" value="${esc(_coordOrderSearchText)}">
     <div class="coord-order-list" id="coord-order-list"></div>`;
 
   _renderCoordOrderItemsList();
@@ -799,6 +838,11 @@ function _renderCoordOrderEdit() {
     const input = e.target.closest('.coord-order-qty');
     if (!input) return;
     _updateCoordOrderRowClass(input.closest('.coord-order-row'));
+  });
+
+  document.getElementById('coord-order-search').addEventListener('input', e => {
+    _coordOrderSearchText = e.target.value.trim().toLowerCase();
+    _filterCoordOrderItemsList();
   });
 
   _initScrollFab('btn-comanda-scrolltop', 'btn-comanda-scrollbottom');
