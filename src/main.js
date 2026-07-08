@@ -417,7 +417,6 @@ function init() {
   document.getElementById('btn-delete-product').addEventListener('click', deleteEditProduct);
 
   // Modal quantitat
-  document.getElementById('btn-qty-close').addEventListener('click', closeQtyModal);
   document.getElementById('btn-qty-prev').addEventListener('click', () => navQtyModal(-1));
   document.getElementById('btn-qty-next').addEventListener('click', () => navQtyModal(1));
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);

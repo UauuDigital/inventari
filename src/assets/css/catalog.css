@@ -404,6 +404,7 @@
 .modal-qty-title {
   font-size: 19px;
   max-width: calc(100% - 50px);
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
