@@ -1,6 +1,77 @@
 import { state, SHEET_APPEND_URL, STORAGE_GAS_URL } from './config.js';
 import { t as translate, getLang } from './i18n.js';
 
+// Avalua una expressió aritmètica senzilla escrita per l'usuari a un input de
+// quantitat (p.ex. "1+2+3" o "6*4+3"). Retorna un número, o null si l'entrada
+// no és una expressió vàlida (llavors l'input es deixa tal qual).
+export function evalQtyExpr(input) {
+  if (input == null) return null;
+  const str = String(input).trim().replace(/,/g, '.').replace(/x/gi, '*');
+  if (str === '') return null;
+  if (/^-?\d+(\.\d+)?$/.test(str)) return parseFloat(str);
+  if (!/^[\d+\-*/().\s]+$/.test(str)) return null;
+  try {
+    const result = _evalArithExpr(str);
+    return Number.isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+function _evalArithExpr(str) {
+  let i = 0;
+  const peek     = () => str[i];
+  const skipSpace = () => { while (str[i] === ' ') i++; };
+
+  function parseNumber() {
+    const start = i;
+    while (i < str.length && /[\d.]/.test(str[i])) i++;
+    if (start === i) throw new Error('bad number');
+    return parseFloat(str.slice(start, i));
+  }
+  function parseFactor() {
+    skipSpace();
+    if (peek() === '(') {
+      i++;
+      const v = parseExpr();
+      skipSpace();
+      if (peek() !== ')') throw new Error('missing )');
+      i++;
+      return v;
+    }
+    if (peek() === '-') { i++; return -parseFactor(); }
+    if (peek() === '+') { i++; return parseFactor(); }
+    return parseNumber();
+  }
+  function parseTerm() {
+    let v = parseFactor();
+    skipSpace();
+    while (peek() === '*' || peek() === '/') {
+      const op = str[i]; i++;
+      const rhs = parseFactor();
+      v = op === '*' ? v * rhs : v / rhs;
+      skipSpace();
+    }
+    return v;
+  }
+  function parseExpr() {
+    let v = parseTerm();
+    skipSpace();
+    while (peek() === '+' || peek() === '-') {
+      const op = str[i]; i++;
+      const rhs = parseTerm();
+      v = op === '+' ? v + rhs : v - rhs;
+      skipSpace();
+    }
+    return v;
+  }
+
+  const result = parseExpr();
+  skipSpace();
+  if (i !== str.length) throw new Error('trailing chars');
+  return result;
+}
+
 // URL del GAS configurada per l'usuari (Admin → Configuració), amb fallback a la de config.js.
 export function getGasUrl() {
   return localStorage.getItem(STORAGE_GAS_URL) || SHEET_APPEND_URL;

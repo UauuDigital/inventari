@@ -2,7 +2,7 @@ import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_CAT_DELETED, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
-import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategoryName } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategoryName, evalQtyExpr } from './helpers.js';
 import { ensureCategory } from './items.js';
 import { t, getLang } from './i18n.js';
 
@@ -586,6 +586,22 @@ document.addEventListener('input', e => {
   if (e.target.id === 'f-qty-boxes') _updateQtyLabels();
 });
 
+// Permet escriure una operació (p.ex. "1+2+3" o "6*4+3") a la quantitat; en
+// sortir del camp es resol i es mostra el resultat, com si fos una calculadora.
+function _resolveBoxesInput() {
+  const el = document.getElementById('f-qty-boxes');
+  if (!el || el.value.trim() === '') return;
+  const result = evalQtyExpr(el.value);
+  if (result != null) {
+    el.value = fmtNum(Math.round(result * 1000) / 1000);
+    _updateQtyLabels();
+  }
+}
+
+document.addEventListener('blur', e => {
+  if (e.target.id === 'f-qty-boxes') _resolveBoxesInput();
+}, true);
+
 let _qtyNavList = [];
 
 function _visibleCatalogIndices() {
@@ -664,7 +680,8 @@ function _persistQty() {
   const boxesVal = document.getElementById('f-qty-boxes').value;
   if (boxesVal === '') return;
 
-  const boxes = parseFloat(boxesVal) || 0;
+  const resolved = evalQtyExpr(boxesVal);
+  const boxes    = resolved != null ? resolved : (parseFloat(boxesVal) || 0);
 
   const catId     = ensureCategory(product.category);
   const existing  = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
