@@ -2,7 +2,7 @@ import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_CAT_DELETED, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
-import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategory } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategoryName } from './helpers.js';
 import { ensureCategory } from './items.js';
 import { t, getLang } from './i18n.js';
 
@@ -341,12 +341,14 @@ function _catColor(catName) {
 function _iconType(unit) {
   const u = (unit || '').toLowerCase();
   if (/botel|ampol|vi\b|cava|cerves|llaun|garraf/.test(u)) return 'bottle';
+  if (/sac/.test(u)) return 'sack';
   return 'box';
 }
 
 const _ICON_SVG = {
-  bottle: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10.5 3v3L7.5 9.5V19a1.5 1.5 0 001.5 1.5h6A1.5 1.5 0 0016.5 19V9.5L13.5 6V3"/><line x1="7.5" y1="14" x2="16.5" y2="14"/></svg>`,
+  bottle: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10.5 3v3L7.5 9.5V19a1.5 1.5 0 001.5 1.5h6A1.5 1.5 0 0016.5 19V9.5L13.5 6V3"/><line x1="7.5" y1="14" x2="16.5" y2="14"/></svg>`,
   box:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  sack:   `<svg width="18" height="22" viewBox="0 0 99.734 122.88" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round" aria-hidden="true"><path d="M78.899,83.047c0.926-0.1,1.752,0.563,1.861,1.489c0.227,1.997,0.481,5.065,0.463,7.808 c-0.009,2.033-0.182,3.912-0.626,5.12c-0.318,0.871-1.29,1.325-2.161,0.998c-0.871-0.317-1.325-1.289-0.999-2.16 c0.31-0.826,0.418-2.306,0.437-3.977c0-2.542-0.255-5.483-0.463-7.417C77.311,83.982,77.977,83.156,78.899,83.047L78.899,83.047z M71.225,12.88c1.562-0.172,3.032-0.218,4.403-0.108c1.316,0.1,2.533,0.345,3.622,0.754c0.872,0.317,1.843-0.128,2.161-0.999 s-0.127-1.843-0.999-2.161c-1.389-0.508-2.904-0.816-4.521-0.943c-1.58-0.137-3.269-0.092-5.039,0.108 C68.667,9.766,69.003,13.119,71.225,12.88L71.225,12.88z M28.938,12.88c-1.562-0.172-3.032-0.218-4.403-0.108 c-1.316,0.1-2.533,0.345-3.623,0.754c-0.872,0.317-1.843-0.128-2.161-0.999s0.127-1.843,0.999-2.161 c1.389-0.508,2.905-0.816,4.521-0.943c1.58-0.137,3.269-0.092,5.039,0.108C31.496,9.766,31.16,13.119,28.938,12.88L28.938,12.88z M12.031,55.268c-0.359-7.886-0.941-13.054-1.218-14.975C9.851,33.657,9.958,29.17,10.24,20.936 c0.036-1.063,0.136-1.87,0.217-2.479c0.418-3.295,0.454-3.567-3.722-4.693c-1.516-0.408-2.633-0.989-3.086-1.979 C3.194,10.786,3.24,9.279,3.975,7.019c1.525-0.109,3.241,0,4.984,0.117c2.36,0.155,4.767,0.31,7.09-0.018 c3.205-0.454,6.664-1.025,10.25-1.616c4.449-0.734,9.105-0.459,13.708-1.076c9.387-1.253,6.107-1.308,14.859-0.545 C63.69,4.652,72.688,5.212,82.928,7.3c0.118,0.027,0.236,0.036,0.345,0.036l12.755-0.172c0.382,1.725,0.445,3.031,0.146,4.021 c-0.317,1.044-1.153,1.815-2.578,2.46l-0.2,0.091c-2.56,1.171-3.586,1.634-4.131,2.933c-0.354,0.835-0.299,1.58-0.208,2.814 c0.063,0.881,0.163,2.088,0.118,3.722C89,29.978,88.817,34.71,87.628,41.482c-0.239,1.436-0.754,4.17-1.217,12.202 c-0.417,7.215-0.436,3.563-0.069,10.265c0.431,7.896,1.038,12.814,1.286,14.304c1.189,6.772,1.372,14.39,1.546,21.162 c0.045,1.634-0.055,2.842-0.118,3.722c-0.091,1.234-0.146,1.979,0.208,2.814c0.545,1.298,1.571,1.761,4.131,2.933l0.2,0.091 c1.425,0.644,2.261,1.416,2.578,2.46c0.3,0.989,0.236,2.297-0.146,4.021l-12.755-0.173c-0.108,0-0.227,0.01-0.345,0.036 c-10.24,2.089-19.237,2.908-28.062,3.68c-8.751,0.763-5.472,0.708-14.859-0.545c-4.603-0.617-9.26-0.602-13.708-1.336 c-3.586-0.591-7.045-1.162-10.25-1.616c-2.324-0.327-4.73-0.173-7.09-0.019c-1.743,0.118-3.458,0.227-4.984,0.118 c-0.735-2.261-0.781-3.768-0.327-4.767c0.454-0.989,1.571-1.57,3.086-1.979c4.176-1.126,4.14-1.398,3.722-4.693 c-0.082-0.608-0.181-1.417-0.217-2.479c-0.282-8.234-0.389-15.605,0.574-22.242c0.27-1.869,0.782-7.479,1.168-15.555 C12.271,57.856,12.289,60.912,12.031,55.268L12.031,55.268z M89.725,53.69c0.377-7.867,1.013-10.304,1.235-11.572 c1.097-7.437,1.404-11.305,1.591-18.85c0.045-1.88-0.046-3.132-0.118-4.049c-0.055-0.727-0.091-1.171-0.055-1.243 c0.045-0.101,0.727-0.409,2.433-1.19l0.2-0.09c2.352-1.071,3.768-2.497,4.394-4.549c0.572-1.879,0.382-4.167-0.436-7.145 c-0.2-0.717-0.862-1.243-1.643-1.234l-13.908,0.19c-10.341-2.098-19.41-2.675-28.252-3.446c-8.961-0.79-5.908-0.718-15.585,0.572 c-4.73,0.626-9.378,0.35-13.817,1.086c-3.541,0.59-6.954,1.152-10.177,1.606c-1.979,0.281-4.222,0.137-6.418-0.009 c-2.315-0.154-4.584-0.3-6.673,0.018l0,0c-0.59,0.092-1.107,0.481-1.334,1.081c-1.399,3.73-1.462,6.372-0.572,8.306 c0.944,2.079,2.832,3.187,5.266,3.841c1.343,0.363,1.334,0.408,1.252,1.017c-0.091,0.69-0.2,1.589-0.245,2.797 c-0.291,8.46-0.38,13.139,0.601,19.938c0.259,1.789,0.997,6.708,1.234,14.528c0.11,3.594,0.058,4.927-0.047,8.544 c-0.233,8-0.935,13.391-1.187,15.133c-0.98,6.8-0.892,14.362-0.601,22.823c0.045,1.207,0.154,2.105,0.245,2.796 c0.082,0.608,0.091,0.653-1.252,1.017c-2.434,0.653-4.322,1.761-5.266,3.84c-0.89,1.934-0.827,4.575,0.572,8.307 c0.227,0.6,0.744,0.99,1.334,1.08l0,0c2.088,0.318,4.358,0.173,6.673,0.019c2.197-0.146,4.439-0.291,6.418-0.009 c3.223,0.454,6.636,1.017,10.177,1.606c4.439,0.735,9.087,0.72,13.817,1.346c9.678,1.29,6.625,1.362,15.585,0.572 c8.842-0.771,17.911-1.609,28.252-3.706l13.908,0.19c0.78,0.009,1.442-0.518,1.643-1.234c0.817-2.979,1.008-5.266,0.436-7.146 c-0.626-2.052-2.042-3.477-4.394-4.548l-0.2-0.091c-1.706-0.78-2.388-1.089-2.433-1.189c-0.036-0.072,0-0.518,0.055-1.244 c0.072-0.916,0.163-2.169,0.118-4.048c-0.187-7.545-0.494-14.298-1.591-21.734c-0.232-1.322-0.966-6.08-1.317-13.789 C89.439,59.37,89.509,58.199,89.725,53.69L89.725,53.69z"/></svg>`,
   pkg:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
 };
 
@@ -374,7 +376,7 @@ export function renderCatalogView() {
 
   if (isEditor) {
     // ── Editor view: flat list grouped by category, in category order ──
-    const sorted = sortByCategory(
+    const sorted = sortByCategoryName(
       state.catalog.map((p, i) => ({ p, i })),
       ({ p }) => p.category,
       ({ p }) => p.name
@@ -421,7 +423,7 @@ export function renderCatalogView() {
         ${t('Escaneja codi de barres')}
       </button>`;
 
-    const catalogSorted = sortByCategory(
+    const catalogSorted = sortByCategoryName(
       state.catalog.map((p, i) => ({ p, i })),
       ({ p }) => p.category,
       ({ p }) => p.name
@@ -537,13 +539,23 @@ function _pluralCa(word, n) {
 
 function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
+// Nom (singular/plural) de la unitat de comptatge segons la unitat del producte.
+function _unitWord(unit) {
+  const type = _iconType(unit);
+  if (type === 'bottle') return { ca: 'ampolla', es: ['Botella', 'Botellas'] };
+  if (type === 'sack')   return { ca: 'sac',     es: ['Saco', 'Sacos'] };
+  return { ca: 'caixa', es: ['Caja', 'Cajas'] };
+}
+
 function _updateQtyLabels() {
   const boxesInput = document.getElementById('f-qty-boxes');
   const boxesLabel = document.getElementById('qty-boxes-label');
   const boxesVal   = boxesInput.value === '' ? 1 : boxesInput.value;
+  const product    = state.catalog[state.editingCatalogIdx];
+  const word       = _unitWord(product?.unit);
   const label = getLang() === 'es'
-    ? (Math.abs(parseFloat(boxesVal)) === 1 ? 'Caja' : 'Cajas')
-    : _cap(_pluralCa('caixa', boxesVal));
+    ? (Math.abs(parseFloat(boxesVal)) === 1 ? word.es[0] : word.es[1])
+    : _cap(_pluralCa(word.ca, boxesVal));
   boxesLabel.textContent = label;
 }
 
@@ -727,10 +739,12 @@ export function testGasUrl() {
 
 // ── NOU PRODUCTE (Comensal) ──────────────────────────────────────────
 
+const UNIT_OPTIONS = ['Ampolla', 'Caixa', 'Sac'];
+
 function _fillProductDataLists() {
   const categories = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
   const suppliers  = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort();
-  const units      = [...new Set(state.catalog.map(p => p.unit).filter(Boolean))].sort();
+  const units      = [...new Set([...UNIT_OPTIONS, ...state.catalog.map(p => p.unit).filter(Boolean)])].sort();
   document.getElementById('dl-np-categories').innerHTML = categories.map(c => `<option value="${esc(c)}">`).join('');
   document.getElementById('dl-np-suppliers').innerHTML  = suppliers.map(s => `<option value="${esc(s)}">`).join('');
   document.getElementById('dl-np-units').innerHTML      = units.map(u => `<option value="${esc(u)}">`).join('');

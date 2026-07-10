@@ -1,6 +1,6 @@
 import { state, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, CAT_COLORS, saveItems, saveOrders } from './config.js';
 import { t } from './i18n.js';
-import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet, sendComandaToSheet, getGasUrl, sortByCategory } from './helpers.js';
+import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet, sendComandaToSheet, getGasUrl, sortByCategoryName } from './helpers.js';
 import { loadCatalog } from './catalog.js';
 import { ensureCategory } from './items.js';
 import { ensureCasamentsLoaded, getCasamentsData } from './casaments.js';
@@ -197,7 +197,7 @@ export function renderStats() {
       el.innerHTML = `<div class="stats-cat-row" style="justify-content:center;opacity:.4"><span class="stats-cat-name" style="flex:none;font-size:13px">${t('Carregant catàleg…')}</span></div>`;
       return;
     }
-    const sortedCatalog = sortByCategory(state.catalog, p => p.category, p => p.name);
+    const sortedCatalog = sortByCategoryName(state.catalog, p => p.category, p => p.name);
     let html = `<div class="stats-total-row"><span class="stats-total-label">${t('Total comptat')}</span><span class="stats-total-val">${t('{n} productes', { n: state.items.length })}</span></div>`;
     let lastCat = undefined;
     sortedCatalog.forEach(product => {

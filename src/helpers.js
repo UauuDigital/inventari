@@ -37,6 +37,22 @@ export function sortByCategory(list, getCatName, getName) {
   });
 }
 
+// Ordena per nom de categoria (alfabètic), igual que les píndoles de filtre del
+// catàleg de productes. A diferència de sortByCategory (que usa l'ordre de
+// state.categories), aquest ordre és sempre estable: no depèn de quan es
+// "descobreix" cada categoria via ensureCategory (p.ex. en desar una quantitat
+// o crear un producte), cosa que feia que l'ordre del catàleg canviés entre
+// una visita i la següent.
+export function sortByCategoryName(list, getCatName, getName) {
+  return [...list].sort((a, b) => {
+    const catA = getCatName(a) || '';
+    const catB = getCatName(b) || '';
+    const diff = catA.localeCompare(catB, 'ca');
+    if (diff !== 0) return diff;
+    return (getName(a) || '').localeCompare(getName(b) || '', 'ca');
+  });
+}
+
 export function filteredItems() {
   let list = state.items;
   if (state.filter) list = list.filter(i => i.category === state.filter);
@@ -132,9 +148,17 @@ export function fmtNum(n) {
   return Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(2)).toString();
 }
 
+// Lletra abreujada segons la unitat del producte: ampolla/sac → 'a'/'s', per defecte caixa → 'c'.
+export function unitSuffix(unit) {
+  const u = (unit || '').toLowerCase();
+  if (/botel|ampol|vi\b|cava|cerves|llaun|garraf/.test(u)) return 'a';
+  if (/sac/.test(u)) return 's';
+  return 'c';
+}
+
 export function fmtQtyDisplay(item) {
   const boxes = item.boxes != null ? item.boxes : (item.quantity || 0);
-  return `${fmtNum(boxes)}c`;
+  return `${fmtNum(boxes)}${unitSuffix(item.unit)}`;
 }
 
 export function parseTotalQty(qtyStr) {
