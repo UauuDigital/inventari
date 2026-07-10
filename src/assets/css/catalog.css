@@ -185,6 +185,29 @@
   flex-shrink: 0;
 }
 
+.modal-qty-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200vmax;
+  height: 200vmax;
+  z-index: 0;
+  background-repeat: repeat;
+  background-size: 64px 64px;
+  transform: translate(-50%, -50%) rotate(-16deg);
+  opacity: 0.05;
+  pointer-events: none;
+}
+.modal-qty-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .catalog-card-cat {
   font-size: 8px;
   font-weight: 700;

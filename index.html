@@ -741,34 +741,37 @@
   <!-- ── MODAL: QUANTITAT (Comensal) ── -->
   <div class="modal-overlay" id="modal-qty" role="dialog" aria-modal="true" aria-labelledby="modal-qty-title">
     <div class="modal">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <div class="modal-qty-nav">
-          <button class="modal-nav-btn" id="btn-qty-prev" aria-label="Producte anterior" data-i18n-aria-label="Producte anterior">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </button>
-          <h2 class="modal-title modal-qty-title" id="modal-qty-title"></h2>
-          <button class="modal-nav-btn" id="btn-qty-next" aria-label="Producte següent" data-i18n-aria-label="Producte següent">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <span class="item-cat-badge modal-qty-cat-badge" id="modal-qty-cat" hidden></span>
-      <form class="modal-form" id="qty-form" autocomplete="off" novalidate>
-        <div class="qty-dual-row">
-          <div class="form-field" id="qty-boxes-field">
-            <label class="form-label" id="qty-boxes-label" for="f-qty-boxes" data-i18n="Caixes">Caixes</label>
-            <input class="form-input qty-big-input" id="f-qty-boxes" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+      <div class="modal-qty-bg" id="modal-qty-bg" aria-hidden="true"></div>
+      <div class="modal-qty-body">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <div class="modal-qty-nav">
+            <button class="modal-nav-btn" id="btn-qty-prev" aria-label="Producte anterior" data-i18n-aria-label="Producte anterior">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+            <h2 class="modal-title modal-qty-title" id="modal-qty-title"></h2>
+            <button class="modal-nav-btn" id="btn-qty-next" aria-label="Producte següent" data-i18n-aria-label="Producte següent">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
           </div>
         </div>
-      </form>
-      <div class="form-actions">
-        <button class="btn-primary" id="btn-save-qty" data-i18n="Desar">Desar</button>
-        <button class="btn-danger" id="btn-remove-qty" hidden data-i18n="Desmarcar">Desmarcar</button>
+        <span class="item-cat-badge modal-qty-cat-badge" id="modal-qty-cat" hidden></span>
+        <form class="modal-form" id="qty-form" autocomplete="off" novalidate>
+          <div class="qty-dual-row">
+            <div class="form-field" id="qty-boxes-field">
+              <label class="form-label" id="qty-boxes-label" for="f-qty-boxes" data-i18n="Caixes">Caixes</label>
+              <input class="form-input qty-big-input" id="f-qty-boxes" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+            </div>
+          </div>
+        </form>
+        <div class="form-actions">
+          <button class="btn-primary" id="btn-save-qty" data-i18n="Desar">Desar</button>
+          <button class="btn-danger" id="btn-remove-qty" hidden data-i18n="Desmarcar">Desmarcar</button>
+        </div>
       </div>
     </div>
   </div>

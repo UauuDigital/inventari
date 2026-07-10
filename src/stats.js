@@ -216,7 +216,7 @@ export function renderStats() {
               <input type="number" min="0" class="stats-qty-input"
                      data-product="${esc(product.name)}" data-field="boxes"
                      value="${boxesVal}" placeholder="—">
-              <span class="stats-qty-unit">c</span>
+              <span class="stats-qty-unit">u</span>
             </div>
             ${item ? `<button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(product.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -266,7 +266,7 @@ export function renderStats() {
         <div class="stats-cat-row">
           <span class="stats-cat-name">${esc(item.name)}</span>
           <span class="stats-cat-count" style="color:var(--low)">
-            ${fmtQtyDisplay(item)} / ${t('mín')} ${fmtNum(item.minStock)}
+            ${fmtQtyDisplay(item, 'u')} / ${t('mín')} ${fmtNum(item.minStock)}
           </span>
         </div>
       `).join('')}

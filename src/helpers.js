@@ -156,9 +156,9 @@ export function unitSuffix(unit) {
   return 'c';
 }
 
-export function fmtQtyDisplay(item) {
+export function fmtQtyDisplay(item, suffix) {
   const boxes = item.boxes != null ? item.boxes : (item.quantity || 0);
-  return `${fmtNum(boxes)}${unitSuffix(item.unit)}`;
+  return `${fmtNum(boxes)}${suffix != null ? suffix : unitSuffix(item.unit)}`;
 }
 
 export function parseTotalQty(qtyStr) {

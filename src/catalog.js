@@ -352,6 +352,29 @@ const _ICON_SVG = {
   pkg:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
 };
 
+// Patró de fons (repetit i inclinat) del modal de quantitat, generat a partir de
+// la mateixa icona (ampolla/caixa/sac) que es mostra a les targetes del catàleg.
+function _iconTileUrl(unit) {
+  const key    = _iconType(unit);
+  const svgStr = _ICON_SVG[key] || _ICON_SVG.pkg;
+  const vbM    = svgStr.match(/viewBox="([^"]+)"/);
+  const [, , vw, vh] = (vbM ? vbM[1] : '0 0 24 24').split(' ').map(Number);
+  const innerM = svgStr.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+  const inner  = innerM ? innerM[1] : '';
+
+  const tile   = 64;
+  const target = 30;
+  const scale  = target / Math.max(vw, vh);
+  const tx     = (tile - vw * scale) / 2;
+  const ty     = (tile - vh * scale) / 2;
+  const paint  = key === 'sack'
+    ? 'fill="#221F1E" stroke="none"'
+    : 'fill="none" stroke="#221F1E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${tile}" height="${tile}" viewBox="0 0 ${tile} ${tile}"><g transform="translate(${tx},${ty}) scale(${scale})" ${paint}>${inner}</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
 export function renderCatalogView() {
   const panel = document.getElementById('view-catalog');
   if (!panel) return;
@@ -585,6 +608,9 @@ function _loadQtyModal(idx) {
   const existing = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
 
   document.getElementById('modal-qty-title').textContent = product.name;
+
+  const bgEl = document.getElementById('modal-qty-bg');
+  if (bgEl) bgEl.style.backgroundImage = _iconTileUrl(product.unit);
 
   const catBadge = document.getElementById('modal-qty-cat');
   if (product.category) {
