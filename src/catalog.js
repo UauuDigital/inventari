@@ -794,6 +794,8 @@ export function saveEditProduct() {
     return;
   }
 
+  if (category) ensureCategory(category);
+
   const updated = { ...original, name, category, supplier, unit, minStock, code };
   state.catalog[idx] = updated;
 
@@ -851,6 +853,8 @@ export function saveNewProduct() {
       setTimeout(() => { el.style.borderColor = ''; }, 1200);
       return;
     }
+
+    if (category) ensureCategory(category);
 
     state.maxCatalogId++;
     const newId   = state.maxCatalogId;
