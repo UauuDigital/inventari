@@ -345,6 +345,8 @@
   border-radius: var(--r-card);
   cursor: pointer;
   text-align: left;
+  font: inherit;
+  color: inherit;
   -webkit-tap-highlight-color: transparent;
   transition: border-color .18s, background .18s, transform .12s;
 }

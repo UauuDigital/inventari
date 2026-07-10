@@ -1,5 +1,5 @@
 import {
-  CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_GAS_URL,
+  CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_CAT_DELETED, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
 import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategory } from './helpers.js';
@@ -67,6 +67,12 @@ export async function loadCatalog() {
         const e = catalogEdits[p.id];
         return e ? { ...p, ...e } : p;
       });
+    }
+
+    // Remove products deleted locally (from the main sheet, not re-added on reload)
+    const deletedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_CAT_DELETED) || '[]'));
+    if (deletedIds.size > 0) {
+      state.catalog = state.catalog.filter(p => !deletedIds.has(p.id));
     }
 
     state.catalogReady = true;
@@ -366,8 +372,6 @@ export function renderCatalogView() {
   const role     = document.body.dataset.role || 'comensal';
   const isEditor = role === 'admin' || role === 'coordinador';
 
-  const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-
   if (isEditor) {
     // ── Editor view: flat list grouped by category, in category order ──
     const sorted = sortByCategory(
@@ -386,13 +390,12 @@ export function renderCatalogView() {
       }
       const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
       html.push(`
-        <div class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}">
+        <button type="button" class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">
           <span class="catalog-btn-name">${esc(p.name)}</span>
           <div style="display:flex;align-items:center;gap:6px">
             ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
-            <button class="item-edit-btn" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">${editSvg}</button>
           </div>
-        </div>
+        </button>
       `);
     });
     html.push('</div>');
@@ -727,8 +730,10 @@ export function testGasUrl() {
 function _fillProductDataLists() {
   const categories = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
   const suppliers  = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort();
+  const units      = [...new Set(state.catalog.map(p => p.unit).filter(Boolean))].sort();
   document.getElementById('dl-np-categories').innerHTML = categories.map(c => `<option value="${esc(c)}">`).join('');
   document.getElementById('dl-np-suppliers').innerHTML  = suppliers.map(s => `<option value="${esc(s)}">`).join('');
+  document.getElementById('dl-np-units').innerHTML      = units.map(u => `<option value="${esc(u)}">`).join('');
 }
 
 export function openNewProductModal(prefill = {}) {
@@ -766,9 +771,8 @@ export function openEditProductModal(idx) {
   document.getElementById('f-np-minstock').value    = product.minStock    || '';
   document.getElementById('f-np-code').value        = product.code        || '';
 
-  const isExtra = state.catalogExtra.some(e => e.id === product.id);
   const delBtn = document.getElementById('btn-delete-product');
-  if (delBtn) delBtn.hidden = !isExtra;
+  if (delBtn) delBtn.hidden = false;
 
   document.getElementById('modal-new-product').classList.add('open');
   setTimeout(() => document.getElementById('f-np-name').focus(), 380);
@@ -818,14 +822,26 @@ export function deleteEditProduct() {
   const idx = state.editingCatalogProductIdx;
   if (idx === null) return;
   const product = state.catalog[idx];
-
-  const extraIdx = state.catalogExtra.findIndex(p => p.id === product.id);
-  if (extraIdx < 0) return;
+  if (!product) return;
 
   if (!confirm(t('Eliminar "{name}" del catàleg?', { name: product.name }))) return;
 
-  state.catalogExtra.splice(extraIdx, 1);
-  localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+  const extraIdx = state.catalogExtra.findIndex(p => p.id === product.id);
+  if (extraIdx >= 0) {
+    state.catalogExtra.splice(extraIdx, 1);
+    localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+  } else {
+    const deletedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_CAT_DELETED) || '[]'));
+    deletedIds.add(product.id);
+    localStorage.setItem(STORAGE_CAT_DELETED, JSON.stringify([...deletedIds]));
+  }
+
+  // Els productes "extra" també s'han enviat al full amb add-producte en crear-los,
+  // així que sempre cal demanar l'esborrat al Sheet, sigui o no "extra".
+  const gasUrl = getGasUrl();
+  if (gasUrl) {
+    sendToSheet(gasUrl, new URLSearchParams({ action: 'delete-producte', id: product.id }));
+  }
   state.catalog.splice(idx, 1);
 
   closeNewProductModal();

@@ -375,9 +375,10 @@ body[data-role="coordinador"] .role-coord-only.nav-tab   { display: flex !import
 body[data-role="admin"]       .role-admin-only.nav-tab   { display: flex !important; }
 body[data-role="admin"]       .role-admin-only.icon-btn  { display: flex !important; }
 
-/* El coordinador no gestiona articles ni el FAB, excepte a comandes */
-body[data-role="coordinador"]:not([data-view="orders"]) .fab { display: none !important; }
-body[data-role="coordinador"][data-view="orders"] .fab       { display: flex !important; }
+/* El coordinador no gestiona articles ni el FAB, excepte a comandes i catàleg */
+body[data-role="coordinador"]:not([data-view="orders"]):not([data-view="catalog"]) .fab { display: none !important; }
+body[data-role="coordinador"][data-view="orders"]  .fab      { display: flex !important; }
+body[data-role="coordinador"][data-view="catalog"] .fab      { display: flex !important; }
 body[data-role="coordinador"] #btn-search         { display: none !important; }
 body[data-role="coordinador"] .stats-strip        { display: none !important; }
 
