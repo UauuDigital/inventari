@@ -113,6 +113,8 @@
 
 .modal-qty-cat-badge {
   margin: 8px 22px 0;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 /* ── FORM ────────────────────────────────────────────────────────── */

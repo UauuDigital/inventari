@@ -786,7 +786,7 @@ function _renderCoordOrderItemsList() {
         : item.minStock > 0
           ? `${item.qtyStr || item.qty} / ${t('mín.')} ${item.minStock}`
           : `${item.qtyStr || item.qty}`;
-      const orderUnit = item.upb > 0 ? 'c' : 'u';
+      const orderUnit = 'c';
 
       return `
       <div class="coord-order-row${cls}" style="border-left:3px solid ${color}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}" data-notcounted="${item.notCounted ? '1' : '0'}" data-search="${esc(item.name.toLowerCase())}">

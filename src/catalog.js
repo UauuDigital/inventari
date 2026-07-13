@@ -632,8 +632,9 @@ function _loadQtyModal(idx) {
   if (product.category) {
     const color = _catColor(product.category);
     catBadge.textContent = product.category;
-    catBadge.style.color = color;
-    catBadge.style.borderColor = `${color}55`;
+    catBadge.style.background    = color;
+    catBadge.style.color         = 'rgba(34,31,30,0.8)';
+    catBadge.style.borderColor   = 'transparent';
     catBadge.hidden = false;
   } else {
     catBadge.hidden = true;
@@ -726,7 +727,11 @@ export function submitQtyModal() {
   if (pos !== -1 && pos < _qtyNavList.length - 1) {
     navQtyModal(1);
   } else {
-    saveQty();
+    // Últim producte: Enter ha de tancar el modal encara que el camp
+    // s'hagi deixat buit (a diferència del botó "Desar", que sí que ho exigeix).
+    _persistQty();
+    closeQtyModal();
+    renderCatalogView();
   }
 }
 
