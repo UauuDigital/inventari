@@ -1,4 +1,4 @@
-const CACHE = 'uauu-inv-v0.178';
+const CACHE = 'uauu-inv-v0.179';
 
 const ASSETS = [
   './',
@@ -35,8 +35,15 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
+  // fetch amb {cache:'reload'} per evitar que la memòria cau HTTP del
+  // navegador (no la del Service Worker) serveixi versions antigues dels
+  // fitxers durant la instal·lació — si no, al mòbil (on aquesta cau HTTP
+  // sol ser més agressiva que a l'ordinador) es podia quedar l'app amb
+  // codi vell tot i que el número de versió mostrat ja fos el nou.
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    caches.open(CACHE).then(c =>
+      Promise.all(ASSETS.map(url => fetch(url, { cache: 'reload' }).then(res => c.put(url, res))))
+    )
   );
   self.skipWaiting();
 });
