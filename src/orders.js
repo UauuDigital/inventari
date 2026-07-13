@@ -1,6 +1,6 @@
-import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, saveOrders } from './config.js';
+import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, MASIA_LABELS, CAT_COLORS, saveOrders } from './config.js';
 import { t } from './i18n.js';
-import { uid, esc, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet } from './helpers.js';
+import { uid, esc, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet, sortByCategoryName, unitSuffix, evalQtyExpr } from './helpers.js';
 import { revertOrderMitja } from './stats.js';
 
 // Si la comanda prové d'un inventari rebut, elimina també aquell registre del Sheets.
@@ -115,121 +115,164 @@ export function renderOrders() {
   }).join('');
 }
 
-// ── PRODUCT PICKER (nova comanda) ────────────────────────────────────
+// ── PRODUCT PICK, D'UN EN UN (nova comanda / comanda anterior) ────────
+// Enlloc de cercar i afegir productes un a un manualment, es recorren TOTS
+// els productes del catàleg d'un en un (com el modal de quantitat de
+// l'encarregat), i es deixa a 0 els que no es volen demanar.
 
-let _orderItems = [];
+let _orderItems   = [];
+let _orderPickIdx = 0;
+let _orderPickField = 'stock'; // 'stock' | 'qty' — camp actiu dins el producte actual
 
-function _updateOrderRowLow(row, item) {
-  row.classList.toggle('is-low', item.minStock > 0 && item.boxes < item.minStock);
+function _orderCatColor(catName) {
+  const cat = state.categories.find(c => c.name.toLowerCase() === (catName || '').toLowerCase());
+  if (cat) return cat.color;
+  let h = 0;
+  for (let i = 0; i < (catName || '').length; i++) h = (h * 31 + catName.charCodeAt(i)) & 0xFFFF;
+  return CAT_COLORS[h % CAT_COLORS.length];
 }
 
-function _renderOrderProductList() {
-  const el = document.getElementById('order-product-list');
-  if (!el) return;
-  if (!_orderItems.length) {
-    el.innerHTML = `<p class="order-product-empty">${t('Cap producte afegit')}</p>`;
-    return;
+function _initOrderPickItems() {
+  _orderItems = sortByCategoryName(state.catalog, p => p.category, p => p.name)
+    .map(p => ({ name: p.name, category: p.category || '', minStock: p.minStock || 0, unit: p.unit || '', stock: 0, boxes: 0 }));
+  _orderPickIdx = 0;
+  _orderPickField = 'stock';
+}
+
+function _updateOrderPickNavButtons() {
+  const atFirst = _orderPickIdx <= 0 && _orderPickField === 'stock';
+  const atLast  = _orderPickIdx >= _orderItems.length - 1 && _orderPickField === 'qty';
+  document.getElementById('btn-order-pick-prev').disabled = atFirst;
+  document.getElementById('btn-order-pick-next').disabled = atLast;
+}
+
+// idx/field: producte i camp que ha de quedar carregat i amb el focus.
+function _loadOrderPick(idx, field = 'stock') {
+  const item = _orderItems[idx];
+  if (!item) return;
+  _orderPickIdx   = idx;
+  _orderPickField = field;
+
+  document.getElementById('order-pick-name').textContent = item.name;
+
+  const catBadge = document.getElementById('order-pick-cat');
+  if (item.category) {
+    const color = _orderCatColor(item.category);
+    catBadge.textContent = item.category;
+    catBadge.style.background  = color;
+    catBadge.style.color       = 'rgba(34,31,30,0.8)';
+    catBadge.style.borderColor = 'transparent';
+    catBadge.hidden = false;
+  } else {
+    catBadge.hidden = true;
   }
-  el.innerHTML = _orderItems.map((item, i) => {
-    const isLow  = item.minStock > 0 && item.boxes < item.minStock;
-    const lowCls = isLow ? ' is-low' : '';
-    return `
-    <div class="order-product-row${lowCls}" data-idx="${i}">
-      <span class="order-product-name">${esc(item.name)}</span>
-      <div class="order-product-qty-group">
-        <label class="order-product-qty-wrap">
-          <input class="order-product-qty" type="number" min="0" step="1"
-                 value="${item.boxes}" data-idx="${i}" data-field="boxes" placeholder="0">
-          <span class="order-product-unit">c</span>
-        </label>
-      </div>
-      <button class="order-product-remove" data-remove="${i}" aria-label="${t('Treure')}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>`;
-  }).join('');
 
-  el.querySelectorAll('.order-product-qty').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const item = _orderItems[parseInt(inp.dataset.idx)];
-      item.boxes = Math.max(0, parseFloat(inp.value) || 0);
-      _updateOrderRowLow(inp.closest('.order-product-row'), item);
-    });
-  });
-  el.querySelectorAll('.order-product-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
-      _orderItems.splice(parseInt(btn.dataset.remove), 1);
-      _renderOrderProductList();
-    });
-  });
+  document.getElementById('f-order-pick-stock').value = item.stock || '';
+  document.getElementById('f-order-pick-qty').value   = item.boxes || '';
+  const unit = unitSuffix(item.unit);
+  document.getElementById('order-pick-stock-unit').textContent = unit;
+  document.getElementById('order-pick-qty-unit').textContent   = unit;
+  document.getElementById('order-pick-progress').textContent =
+    t('{n} de {total}', { n: idx + 1, total: _orderItems.length });
+
+  _updateOrderPickNavButtons();
+
+  const focusEl = document.getElementById(field === 'stock' ? 'f-order-pick-stock' : 'f-order-pick-qty');
+  focusEl.focus();
+  focusEl.select();
 }
 
-function _initProductSearch() {
-  const old = document.getElementById('f-order-product-search');
-  if (!old) return;
-  const input = old.cloneNode(true);
-  old.replaceWith(input);
-  const dropdown = document.getElementById('order-product-dropdown');
-  if (!dropdown) return;
-
-  input.value = '';
-  input.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-    if (!q) { dropdown.hidden = true; dropdown.innerHTML = ''; return; }
-    const matches = state.catalog
-      .filter(p => p.name.toLowerCase().includes(q))
-      .slice(0, 8);
-    if (!matches.length) { dropdown.hidden = true; return; }
-    dropdown.hidden = false;
-    dropdown.innerHTML = matches.map(p => {
-      const minStock = p.minStock || 0;
-      return `<div class="order-product-option"
-          data-name="${esc(p.name)}"
-          data-minstock="${minStock}">
-          ${esc(p.name)}
-        </div>`;
-    }).join('');
-    dropdown.querySelectorAll('.order-product-option').forEach(opt => {
-      opt.addEventListener('mousedown', e => {
-        e.preventDefault();
-        const name     = opt.dataset.name;
-        const minStock = parseFloat(opt.dataset.minstock) || 0;
-        if (!_orderItems.find(i => i.name === name)) {
-          _orderItems.push({ name, minStock, boxes: 1 });
-          _renderOrderProductList();
-        }
-        input.value     = '';
-        dropdown.hidden = true;
-      });
-    });
-  });
-
-  input.addEventListener('blur', () => {
-    setTimeout(() => { dropdown.hidden = true; }, 150);
-  });
+function _resolveQtyField(id) {
+  const el = document.getElementById(id);
+  if (el.value.trim() === '') return 0;
+  const result = evalQtyExpr(el.value);
+  const val    = result != null ? result : (parseFloat(el.value) || 0);
+  return Math.max(0, val);
 }
 
-export function openOrderModal(order = null) {
+function _persistOrderPick() {
+  const item = _orderItems[_orderPickIdx];
+  if (!item) return;
+  item.stock = _resolveQtyField('f-order-pick-stock');
+  item.boxes = _resolveQtyField('f-order-pick-qty');
+}
+
+// En sortir del camp (blur), mostra el resultat de l'operació, com una calculadora.
+export function resolveOrderPickDisplay(id) {
+  const el = document.getElementById(id);
+  if (!el || el.value.trim() === '') return;
+  el.value = _resolveQtyField(id);
+}
+
+// Avança/retrocedeix pel recorregut Estoc → Comanda → Estoc (producte següent) → …
+export function navOrderPick(delta) {
+  _persistOrderPick();
+  if (delta > 0) {
+    if (_orderPickField === 'stock') {
+      _loadOrderPick(_orderPickIdx, 'qty');
+    } else if (_orderPickIdx < _orderItems.length - 1) {
+      _loadOrderPick(_orderPickIdx + 1, 'stock');
+    }
+  } else {
+    if (_orderPickField === 'qty') {
+      _loadOrderPick(_orderPickIdx, 'stock');
+    } else if (_orderPickIdx > 0) {
+      _loadOrderPick(_orderPickIdx - 1, 'qty');
+    }
+  }
+}
+
+// Enter: avança Estoc → Comanda → Estoc del següent producte…; a la Comanda de
+// l'últim producte, desa directament la comanda (com el modal de l'encarregat).
+export function submitOrderPick() {
+  const atLast = _orderPickField === 'qty' && _orderPickIdx >= _orderItems.length - 1;
+  if (atLast) {
+    _persistOrderPick();
+    saveOrder();
+  } else {
+    navOrderPick(1);
+  }
+}
+
+let _pastOrderMode = false;
+
+export function openOrderModal(order = null, opts = {}) {
+  _pastOrderMode = !!opts.past;
   state.editingOrderId = order?.id || null;
-  document.getElementById('modal-order-title').textContent = order ? t('Editar comanda') : t('Nova comanda');
+  document.getElementById('modal-order-title').textContent = _pastOrderMode
+    ? t('Comanda anterior')
+    : (order ? t('Editar comanda') : t('Nova comanda'));
   document.getElementById('btn-delete-order').hidden = !order;
 
   document.getElementById('f-order-ref').value      = order?.ref      ?? '';
   document.getElementById('f-order-date').value     = order?.date     ?? new Date().toISOString().slice(0, 10);
   document.getElementById('f-order-supplier').value = order?.supplier ?? '';
-  document.getElementById('f-order-status').value   = order?.status   ?? 'pendent';
+  document.getElementById('f-order-status').value   = order?.status   ?? (_pastOrderMode ? 'rebuda' : 'pendent');
   document.getElementById('f-order-notes').value    = order?.notes    ?? '';
+
+  const pastFields   = document.getElementById('order-past-fields');
+  const refField      = document.getElementById('order-ref-field');
+  const supplierField = document.getElementById('order-supplier-field');
+  pastFields.hidden      = !_pastOrderMode;
+  refField.hidden         = _pastOrderMode;
+  supplierField.hidden    = _pastOrderMode;
+  if (_pastOrderMode) {
+    const masiaSel = document.getElementById('f-order-masia');
+    masiaSel.innerHTML = `<option value="">${t('Selecciona…')}</option>` +
+      Object.entries(MASIA_LABELS).map(([id, name]) => `<option value="${id}">${esc(name)}</option>`).join('');
+    masiaSel.value = '';
+    document.getElementById('f-order-adults').value = '';
+  }
 
   const picker   = document.getElementById('order-product-picker');
   const descField = document.getElementById('order-desc-field');
 
   if (!order) {
-    // Nova comanda — mostra el selector de productes
-    _orderItems = [];
+    // Nova comanda (o comanda anterior) — recorre tots els productes d'un en un
     picker.hidden   = false;
     descField.hidden = true;
-    _renderOrderProductList();
-    _initProductSearch();
+    _initOrderPickItems();
+    _loadOrderPick(0);
   } else {
     // Editar comanda existent — mostra el camp de descripció
     picker.hidden   = true;
@@ -255,21 +298,28 @@ export function openOrderModal(order = null) {
   }
 
   document.getElementById('modal-order').classList.add('open');
-  setTimeout(() => document.getElementById('f-order-supplier').focus(), 380);
+  const focusEl = document.getElementById(_pastOrderMode ? 'f-order-masia' : 'f-order-supplier');
+  setTimeout(() => focusEl.focus(), 380);
+}
+
+export function openPastOrderModal() {
+  openOrderModal(null, { past: true });
 }
 
 export function closeOrderModal() {
   document.getElementById('modal-order').classList.remove('open');
   state.editingOrderId = null;
+  _pastOrderMode = false;
 }
 
 export function saveOrder() {
   const pickerVisible = !document.getElementById('order-product-picker').hidden;
   let desc;
   if (pickerVisible) {
+    _persistOrderPick();
     const items = _orderItems.filter(i => (i.boxes || 0) > 0);
     if (!items.length) {
-      const inp = document.getElementById('f-order-product-search');
+      const inp = document.getElementById('f-order-pick-qty');
       inp.focus();
       inp.style.borderColor = 'rgba(176,32,32,0.5)';
       setTimeout(() => { inp.style.borderColor = ''; }, 1200);
@@ -290,14 +340,28 @@ export function saveOrder() {
       return;
     }
   }
+  let masiaVal = '', adults = 0;
+  if (_pastOrderMode) {
+    masiaVal = document.getElementById('f-order-masia').value;
+    adults   = parseInt(document.getElementById('f-order-adults').value) || 0;
+    if (!masiaVal) {
+      const sel = document.getElementById('f-order-masia');
+      sel.focus();
+      sel.style.borderColor = 'rgba(176,32,32,0.5)';
+      setTimeout(() => { sel.style.borderColor = ''; }, 1200);
+      return;
+    }
+  }
+
   const data = {
     ref:       document.getElementById('f-order-ref').value.trim(),
     date:      document.getElementById('f-order-date').value,
-    supplier:  document.getElementById('f-order-supplier').value.trim(),
+    supplier:  _pastOrderMode ? (MASIA_LABELS[masiaVal] || '') : document.getElementById('f-order-supplier').value.trim(),
     status:    document.getElementById('f-order-status').value,
     desc,
     notes:     document.getElementById('f-order-notes').value.trim(),
     updatedAt: new Date().toISOString(),
+    ...(_pastOrderMode ? { masia: masiaVal, adults } : {}),
   };
   if (state.editingOrderId) {
     const idx = state.orders.findIndex(o => o.id === state.editingOrderId);

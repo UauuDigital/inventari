@@ -116,6 +116,13 @@ const ES = {
   'Observacions…':                  'Observaciones…',
   'Desar comanda':                  'Guardar pedido',
   'Eliminar comanda':               'Eliminar pedido',
+  'Afegir comanda anterior':        'Añadir pedido anterior',
+  'Comanda anterior':               'Pedido anterior',
+  'Masia *':                        'Masía *',
+  'Adults *':                       'Adultos *',
+  'Selecciona…':                    'Selecciona…',
+  '{n} de {total}':                 '{n} de {total}',
+  'Estoc':                           'Stock',
 
   // ── Modal usuari ──
   'Email *':                        'Email *',
