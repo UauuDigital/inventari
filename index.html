@@ -716,8 +716,7 @@
     .getActiveSpreadsheet().getSheets()[0];
   const p = e.parameter;
   s.appendRow([p.id, p.producte, p.proveidor,
-               p.categoria, p.codi, p.min,
-               p.unitat, p.unitspercaixa]);
+               p.categoria, p.codi, p.min, p.unitat]);
   return ContentService.createTextOutput('ok');
 }</pre>
       </form>
@@ -848,7 +847,6 @@
     </div>
   </div>
 
-  <!-- ── MODAL: EDITAR INVENTARI HISTORIAL ── -->
   <!-- ── CANVIAR CONTRASENYA MODAL ──────────────────────────────── -->
   <div class="modal-overlay" id="modal-change-password" role="dialog" aria-modal="true" aria-labelledby="modal-chpw-title">
     <div class="modal">
@@ -896,6 +894,7 @@
     </div>
   </div>
 
+  <!-- ── MODAL: EDITAR INVENTARI HISTORIAL ── -->
   <div class="modal-overlay" id="modal-edit-historial" role="dialog" aria-modal="true" aria-labelledby="modal-edit-historial-title">
     <div class="modal">
       <div class="modal-handle"></div>

@@ -645,15 +645,14 @@ function _parseInventariItems(inventari) {
       const qtyStr   = seg.slice(sep + 2).trim();
       const catEntry = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
       const minStock = catEntry?.minStock    || 0;
-      const upb      = catEntry?.unitsPerBox || 0;
       const avgQty   = catEntry?.avgQty      || 0; // mitjana de caixes per adult (inventari + comanda)
       const numCom   = catEntry?.numCom      || 0;
       const category = catEntry?.category    || '';
       const notCounted = qtyStr === NOT_COUNTED;
-      const qty      = parseTotalQty(qtyStr, upb);
-      const currentBoxes = upb > 0 ? qty / upb : qty;
+      const qty      = parseTotalQty(qtyStr);
+      const currentBoxes = qty;
 
-      return { name, qty, qtyStr, minStock, upb, avgQty, numCom, category, currentBoxes, notCounted, orderQty: 0, orderSrc: '' };
+      return { name, qty, qtyStr, minStock, avgQty, numCom, category, currentBoxes, notCounted, orderQty: 0, orderSrc: '' };
     })
     .filter(Boolean);
 }
@@ -685,7 +684,7 @@ function _applyOrderRecommendations(items, adults) {
       const deficit = Math.max(0, item.minStock - item.qty);
       item.targetBoxes = null;
       item.rawDeficit  = null;
-      item.orderQty = item.upb > 0 ? Math.ceil(deficit / item.upb) : deficit;
+      item.orderQty = deficit;
       item.orderSrc = 'deficit';
     }
   });
@@ -775,8 +774,7 @@ function _renderCoordOrderItemsList() {
   document.getElementById('coord-order-list').innerHTML = categories.map(catName => {
     const color = _coordCatColor(catName);
     const rowsHtml = withIdx.filter(({ item }) => (item.category || '') === catName).map(({ item, i }) => {
-      const orderUnits = item.upb > 0 ? item.orderQty * item.upb : item.orderQty;
-      const isLow = !item.notCounted && item.minStock > 0 && item.qty + orderUnits < item.minStock;
+      const isLow = !item.notCounted && item.minStock > 0 && item.qty + item.orderQty < item.minStock;
       const isOk  = !isLow && item.orderQty === 0;
       const cls   = isOk ? ' is-ok' : isLow ? ' is-low' : '';
       const stock = item.notCounted
@@ -787,7 +785,7 @@ function _renderCoordOrderItemsList() {
       const orderUnit = 'c';
 
       return `
-      <div class="coord-order-row${cls}" style="border-left:3px solid ${color}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-upb="${item.upb}" data-notcounted="${item.notCounted ? '1' : '0'}" data-search="${esc(item.name.toLowerCase())}">
+      <div class="coord-order-row${cls}" style="border-left:3px solid ${color}" data-qty="${item.qty}" data-minstock="${item.minStock}" data-notcounted="${item.notCounted ? '1' : '0'}" data-search="${esc(item.name.toLowerCase())}">
         <span class="coord-order-name">${esc(item.name)}</span>
         <span class="coord-order-stock">${stock}</span>
         <label class="coord-order-qty-wrap" aria-label="${t('Quantitat a demanar')}">

@@ -42,7 +42,8 @@ src/
   orders.js      — CRUD de comandes; detecció de format estructurat per a taula editable
   import.js      — Importació d'Excel / CSV
   users.js       — Gestió d'usuaris (Admin), via Edge Function de Supabase
-  stats.js       — Estadístiques, historial, generació de comandes del coordinador
+  stats.js       — Historial, generació de comandes del coordinador
+  estadistiques.js — Gràfics (donut) de comandes per estat i adults per masia
   main.js        — Render principal, navegació, delegació d'events, init
   assets/
     css/
@@ -56,6 +57,7 @@ src/
       casaments.css  — Targetes de casaments, filtres, cerca
       screens.css    — Pantalles de login, selector de masia/usuari, gestió d'usuaris admin
       catalog.css    — Autocomplete, vista de catàleg, cerca, escàner, modal quantitat, GAS
+      estadistiques.css — Targetes de gràfics donut, llegendes, tooltips
 
 supabase/
   functions/
@@ -75,6 +77,7 @@ supabase/
 | `view-casaments` | Coord / Admin | Calendari de casaments |
 | `view-users` | Admin | Gestió d'usuaris |
 | `view-stats` | Admin | Estadístiques d'estoc |
+| `view-estadistiques` | Admin | Gràfics donut (comandes per estat, adults per masia) |
 
 ## Format de comandes generades per coordinador
 

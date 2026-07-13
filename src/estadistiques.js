@@ -110,23 +110,6 @@ function _card(title, svgHtml, legendHtml) {
   </div>`;
 }
 
-const CAT_PALETTE = [
-  '#B0B8C8','#CEB08C','#A8C4A0','#C8A8B8',
-  '#C0C080','#A0B8C8','#C8A090','#90B8A8',
-];
-
-function _chartCategories() {
-  const byCategory = new Map();
-  for (const p of state.catalog) {
-    const cat = p.category || t('Sense categoria');
-    byCategory.set(cat, (byCategory.get(cat) || 0) + 1);
-  }
-  const data = [...byCategory.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([label, value], i) => ({ label, value, color: CAT_PALETTE[i % CAT_PALETTE.length] }));
-  return _card(t('Productes per categoria'), _donutSvg(data), _legend(data, 4));
-}
-
 const STATUS_COLORS = {
   pendent:       '#f59e0b',
   en_curs:       '#3b82f6',
