@@ -1,6 +1,6 @@
 import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, MASIA_LABELS, CAT_COLORS, saveOrders } from './config.js';
 import { t } from './i18n.js';
-import { uid, esc, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet, sortByCategoryName, unitSuffix, evalQtyExpr } from './helpers.js';
+import { uid, esc, fmtNum, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet, sortByCategoryName, unitSuffix, evalQtyExpr } from './helpers.js';
 import { revertOrderMitja } from './stats.js';
 
 // Si la comanda prové d'un inventari rebut, elimina també aquell registre del Sheets.
@@ -134,7 +134,11 @@ function _orderCatColor(catName) {
 
 function _initOrderPickItems() {
   _orderItems = sortByCategoryName(state.catalog, p => p.category, p => p.name)
-    .map(p => ({ name: p.name, category: p.category || '', minStock: p.minStock || 0, unit: p.unit || '', stock: 0, boxes: 0 }));
+    .map(p => ({
+      name: p.name, category: p.category || '', minStock: p.minStock || 0, unit: p.unit || '',
+      avgQty: p.avgQty || 0, numCom: p.numCom || 0,
+      stock: 0, boxes: 0,
+    }));
   _orderPickIdx = 0;
   _orderPickField = 'stock';
 }
@@ -353,6 +357,59 @@ export function saveOrder() {
     }
   }
 
+  // Comanda anterior: envia també un registre real a la pestanya "Inventari"
+  // (com faria un encarregat) i actualitza la mitjana caixes/adult de cada
+  // producte demanat, exactament igual que quan es genera una comanda des
+  // d'un inventari rebut normal.
+  let sourceHistorialId = '';
+  let mitjaSnapshot = [];
+  if (_pastOrderMode) {
+    const dateVal = document.getElementById('f-order-date').value;
+    const gasUrl  = getGasUrl();
+    sourceHistorialId = String(Date.now());
+    const createdBy   = state.authProfile?.nom || state.user || '';
+
+    const inventariStr = _orderItems
+      .map(i => `${i.name}: ${fmtNum(i.stock || 0)}${unitSuffix(i.unit)}`)
+      .join(' | ');
+
+    if (gasUrl) {
+      sendToSheet(gasUrl, new URLSearchParams({
+        action:    'inventari',
+        id:        sourceHistorialId,
+        data:      dateVal,
+        hora:      '00:00',
+        comensal:  createdBy,
+        masia:     masiaVal,
+        inventari: inventariStr,
+        comentari: t('Comanda anterior afegida manualment'),
+      }).toString());
+    }
+
+    if (adults > 0) {
+      _orderItems.filter(i => (i.boxes || 0) > 0).forEach(item => {
+        const perAdult = (item.stock + item.boxes) / adults;
+        const oldNum   = item.numCom || 0;
+        const oldAvg   = item.avgQty || 0;
+        const newNum   = oldNum + 1;
+        const newAvg   = oldNum === 0
+          ? perAdult
+          : Math.round(((oldAvg * oldNum) + perAdult) / newNum * 1000) / 1000;
+        if (gasUrl) {
+          sendToSheet(gasUrl, new URLSearchParams({
+            action:      'update-mitja',
+            productName: item.name,
+            avgQty:      newAvg,
+            numCom:      newNum,
+          }).toString());
+        }
+        const cat = state.catalog.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+        if (cat) { cat.avgQty = newAvg; cat.numCom = newNum; }
+        mitjaSnapshot.push({ productName: item.name, prevAvg: oldAvg, prevNum: oldNum, newAvg, newNum });
+      });
+    }
+  }
+
   const data = {
     ref:       document.getElementById('f-order-ref').value.trim(),
     date:      document.getElementById('f-order-date').value,
@@ -361,7 +418,7 @@ export function saveOrder() {
     desc,
     notes:     document.getElementById('f-order-notes').value.trim(),
     updatedAt: new Date().toISOString(),
-    ...(_pastOrderMode ? { masia: masiaVal, adults } : {}),
+    ...(_pastOrderMode ? { masia: masiaVal, adults, sourceHistorialId, mitjaSnapshot } : {}),
   };
   if (state.editingOrderId) {
     const idx = state.orders.findIndex(o => o.id === state.editingOrderId);
