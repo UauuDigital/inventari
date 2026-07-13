@@ -43,12 +43,12 @@ export async function renderUsers() {
       const masiaTxt = u.masia ? (MASIA_LABELS[u.masia] || u.masia) : '';
       return `
         <button class="user-manage-card" data-edit-user="${esc(u.id)}">
+          <span class="user-manage-rol rol-${esc(u.rol)}">${esc(t(ROL_LABELS[u.rol]) || u.rol || '—')}</span>
           <div class="user-manage-main">
             <span class="user-manage-name">${esc(u.nom || t('(sense nom)'))}</span>
             <span class="user-manage-email">${esc(u.email || '')}</span>
             ${masiaTxt ? `<span class="user-manage-masia">${esc(masiaTxt)}</span>` : ''}
           </div>
-          <span class="user-manage-rol rol-${esc(u.rol)}">${esc(t(ROL_LABELS[u.rol]) || u.rol || '—')}</span>
         </button>`;
     }).join('');
 

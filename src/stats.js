@@ -441,12 +441,10 @@ function _cardHtml(r, role) {
         </div>
       </div>
       ${comentariHtml}
-      ${(role === 'comensal' || role === 'coordinador')
-        ? `<details class="report-items-details">
-             <summary class="report-items-summary">${t('{n} productes', { n: items.length })}</summary>
-             <div class="report-items-list">${itemsHtml}</div>
-           </details>`
-        : `<div class="report-items-list">${itemsHtml}</div>`}
+      <details class="report-items-details">
+        <summary class="report-items-summary">${t('{n} productes', { n: items.length })}</summary>
+        <div class="report-items-list">${itemsHtml}</div>
+      </details>
     </div>`;
 }
 

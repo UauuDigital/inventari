@@ -2,11 +2,10 @@ import {
   CATALOG_URL, OPEN_FOOD_FACTS_URL, STORAGE_CAT_EXTRA, STORAGE_CAT_EDITS, STORAGE_CAT_DELETED, STORAGE_GAS_URL,
   state, saveItems, CAT_COLORS,
 } from './config.js';
-import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, createTagSearch, matchesTags, sortByCategoryName, evalQtyExpr } from './helpers.js';
+import { uid, esc, fmtNum, fmtQtyDisplay, toast, parseCSV, findCol, sendToSheet, getGasUrl, sortByCategoryName, evalQtyExpr } from './helpers.js';
 import { ensureCategory } from './items.js';
 import { t, getLang } from './i18n.js';
 
-let _catalogTags    = [];
 let _catalogText    = '';
 let _activeCat      = null;
 let _scanFillTarget  = null;
@@ -397,159 +396,100 @@ export function renderCatalogView() {
   const role     = document.body.dataset.role || 'comensal';
   const isEditor = role === 'admin' || role === 'coordinador';
 
-  if (isEditor) {
-    // ── Editor view: flat list grouped by category, in category order ──
-    const sorted = sortByCategoryName(
-      state.catalog.map((p, i) => ({ p, i })),
-      ({ p }) => p.category,
-      ({ p }) => p.name
-    );
+  // ── Graella de targetes, idèntica per a tots els rols ──────────────
+  // Únic canvi segons el rol: en clicar una targeta, l'encarregat obre el
+  // modal de quantitat (data-catalog) i l'admin/coordinador el d'editar
+  // producte (data-catalog-edit) — vegeu el click handler a main.js.
+  const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
+  if (_activeCat && !cats.includes(_activeCat)) _activeCat = null;
 
-    const html = [`<div class="catalog-list"><div id="catalog-tag-search"></div>`];
-    let lastCat = undefined;
-    sorted.forEach(({ p, i }) => {
-      const catName = p.category || t('Sense categoria');
-      if (catName !== lastCat) {
-        html.push(`<div class="catalog-section-title" data-section="${esc(catName)}">${esc(catName)}</div>`);
-        lastCat = catName;
-      }
-      const searchVal = [p.name, p.category, p.supplier].filter(Boolean).join(' ').toLowerCase();
-      html.push(`
-        <button type="button" class="catalog-btn catalog-edit-row" data-search="${esc(searchVal)}" data-catalog-edit="${i}" aria-label="${t('Editar')} ${esc(p.name)}">
-          <span class="catalog-btn-name">${esc(p.name)}</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            ${p.supplier ? `<span class="catalog-btn-qty" style="font-size:11px">${esc(p.supplier)}</span>` : ''}
-          </div>
-        </button>
-      `);
-    });
-    html.push('</div>');
-    panel.innerHTML = html.join('');
-  } else {
-    // ── Comensal view: card grid ─────────────────────────────────────
-    const cats = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort();
-    if (_activeCat && !cats.includes(_activeCat)) _activeCat = null;
+  const catPills = cats.map(c => {
+    const color = _catColor(c);
+    const active = c === _activeCat ? ' active' : '';
+    return `<button class="catalog-cat-pill${active}" data-cat="${esc(c)}" style="background:${color};color:rgba(34,31,30,0.8)">${esc(c)}</button>`;
+  }).join('');
 
-    const catPills = cats.map(c => {
-      const color = _catColor(c);
-      const active = c === _activeCat ? ' active' : '';
-      return `<button class="catalog-cat-pill${active}" data-cat="${esc(c)}" style="background:${color};color:rgba(34,31,30,0.8)">${esc(c)}</button>`;
-    }).join('');
+  const scanBtn = `
+    <button class="catalog-scan-btn" id="btn-scan-barcode">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
+        <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="17" y1="12" x2="17" y2="12.01"/>
+      </svg>
+      ${t('Escaneja codi de barres')}
+    </button>`;
 
-    const scanBtn = `
-      <button class="catalog-scan-btn" id="btn-scan-barcode">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4"/>
-          <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="17" y1="12" x2="17" y2="12.01"/>
-        </svg>
-        ${t('Escaneja codi de barres')}
+  const catalogSorted = sortByCategoryName(
+    state.catalog.map((p, i) => ({ p, i })),
+    ({ p }) => p.category,
+    ({ p }) => p.name
+  );
+
+  const cards = catalogSorted.map(({ p, i }) => {
+    const existing  = state.items.find(it => it.name.toLowerCase() === p.name.toLowerCase());
+    const qty       = existing != null ? fmtQtyDisplay(existing) : '';
+    const hasQty    = !!qty;
+    const color     = _catColor(p.category);
+    const iconKey   = _iconType(p.unit);
+    const icon      = _ICON_SVG[iconKey] || _ICON_SVG.pkg;
+    const catLabel  = p.category || '';
+    const searchVal = [p.name, p.supplier].filter(Boolean).join(' ').toLowerCase();
+    const cls       = ['catalog-card', hasQty && 'has-qty'].filter(Boolean).join(' ');
+    const dataAttr  = isEditor ? `data-catalog-edit="${i}"` : `data-catalog="${i}"`;
+    const label     = isEditor ? `${t('Editar')} ${esc(p.name)}` : esc(p.name);
+    return `
+      <button class="${cls}" ${dataAttr} data-search="${esc(searchVal)}" data-cat="${esc(p.category || '')}" aria-label="${label}">
+        <div class="catalog-card-top">
+          <div class="catalog-card-icon">${icon}</div>
+          ${catLabel ? `<span class="catalog-card-cat" style="background:${color};color:rgba(34,31,30,0.8)">${esc(catLabel)}</span>` : ''}
+        </div>
+        <span class="catalog-card-name">${esc(p.name)}</span>
+        <span class="catalog-card-qty">${qty || '—'}</span>
       </button>`;
+  });
 
-    const catalogSorted = sortByCategoryName(
-      state.catalog.map((p, i) => ({ p, i })),
-      ({ p }) => p.category,
-      ({ p }) => p.name
-    );
+  panel.innerHTML = `
+    <div class="catalog-list">
+      <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${t('Cerca producte…')}" value="${esc(_catalogText)}">
+      ${scanBtn}
+    </div>
+    ${cats.length ? `<div class="catalog-cat-pills" id="catalog-cat-pills">${catPills}</div>` : ''}
+    <div class="catalog-grid">${cards.join('')}</div>`;
 
-    const cards = catalogSorted.map(({ p, i }) => {
-      const existing  = state.items.find(it => it.name.toLowerCase() === p.name.toLowerCase());
-      const qty       = existing != null ? fmtQtyDisplay(existing) : '';
-      const hasQty    = !!qty;
-      const color     = _catColor(p.category);
-      const iconKey   = _iconType(p.unit);
-      const icon      = _ICON_SVG[iconKey] || _ICON_SVG.pkg;
-      const catLabel  = p.category || '';
-      const searchVal = [p.name, p.supplier].filter(Boolean).join(' ').toLowerCase();
-      const cls       = ['catalog-card', hasQty && 'has-qty'].filter(Boolean).join(' ');
-      return `
-        <button class="${cls}" data-catalog="${i}" data-search="${esc(searchVal)}" data-cat="${esc(p.category || '')}">
-          <div class="catalog-card-top">
-            <div class="catalog-card-icon">${icon}</div>
-            ${catLabel ? `<span class="catalog-card-cat" style="background:${color};color:rgba(34,31,30,0.8)">${esc(catLabel)}</span>` : ''}
-          </div>
-          <span class="catalog-card-name">${esc(p.name)}</span>
-          <span class="catalog-card-qty">${qty || '—'}</span>
-        </button>`;
-    });
+  document.getElementById('catalog-simple-search').addEventListener('input', e => {
+    _catalogText = e.target.value.trim().toLowerCase();
+    _filterCatalogView(panel);
+  });
 
-    panel.innerHTML = `
-      <div class="catalog-list">
-        <input class="catalog-simple-search" id="catalog-simple-search" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="${t('Cerca producte…')}" value="${esc(_catalogText)}">
-        ${scanBtn}
-      </div>
-      ${cats.length ? `<div class="catalog-cat-pills" id="catalog-cat-pills">${catPills}</div>` : ''}
-      <div class="catalog-grid">${cards.join('')}</div>`;
-
-    document.getElementById('catalog-simple-search').addEventListener('input', e => {
-      _catalogText = e.target.value.trim().toLowerCase();
+  // Category pill click handler
+  const pillsEl = panel.querySelector('#catalog-cat-pills');
+  if (pillsEl) {
+    pillsEl.addEventListener('click', e => {
+      const pill = e.target.closest('.catalog-cat-pill');
+      if (!pill) return;
+      const cat = pill.dataset.cat;
+      if (_activeCat === cat) {
+        _activeCat = null;
+        pill.classList.remove('active');
+      } else {
+        pillsEl.querySelectorAll('.catalog-cat-pill').forEach(p => p.classList.remove('active'));
+        _activeCat = cat;
+        pill.classList.add('active');
+      }
       _filterCatalogView(panel);
     });
-
-    // Category pill click handler
-    const pillsEl = panel.querySelector('#catalog-cat-pills');
-    if (pillsEl) {
-      pillsEl.addEventListener('click', e => {
-        const pill = e.target.closest('.catalog-cat-pill');
-        if (!pill) return;
-        const cat = pill.dataset.cat;
-        if (_activeCat === cat) {
-          _activeCat = null;
-          pill.classList.remove('active');
-        } else {
-          pillsEl.querySelectorAll('.catalog-cat-pill').forEach(p => p.classList.remove('active'));
-          _activeCat = cat;
-          pill.classList.add('active');
-        }
-        _filterCatalogView(panel);
-      });
-    }
-    _filterCatalogView(panel);
-    return;
   }
-
-  createTagSearch(
-    document.getElementById('catalog-tag-search'),
-    tags => { _catalogTags = tags; _filterCatalogView(panel); },
-    t('Nom, categoria, proveïdor… (Enter per text)'),
-    () => {
-      const cats2 = [...new Set(state.catalog.map(p => p.category).filter(Boolean))].sort()
-        .map(c => ({ value: c.toLowerCase(), label: c, type: t('Categoria') }));
-      const supps = [...new Set(state.catalog.map(p => p.supplier).filter(Boolean))].sort()
-        .map(s => ({ value: s.toLowerCase(), label: s, type: t('Proveïdor') }));
-      return [...cats2, ...supps];
-    },
-    _catalogTags
-  );
+  _filterCatalogView(panel);
 }
 
 function _filterCatalogView(panel) {
-  const tags = _catalogTags;
   const grid = panel.querySelector('.catalog-grid');
-  if (grid) {
-    grid.querySelectorAll('.catalog-card').forEach(el => {
-      const textOk = !_catalogText || (el.dataset.search || '').includes(_catalogText);
-      const catOk  = !_activeCat || el.dataset.cat === _activeCat;
-      el.hidden = !(textOk && catOk);
-    });
-    return;
-  }
-
-  let lastSection = null;
-  let sectionVisible = false;
-  panel.querySelectorAll('.catalog-list > *').forEach(el => {
-    if (el.classList.contains('catalog-section-title')) {
-      if (lastSection) lastSection.hidden = !sectionVisible;
-      lastSection = el;
-      sectionVisible = false;
-    } else if (el.classList.contains('catalog-btn')) {
-      const haystack = el.dataset.search || el.querySelector('.catalog-btn-name').textContent.toLowerCase();
-      const show = matchesTags(haystack, tags);
-      el.hidden = !show;
-      if (show) sectionVisible = true;
-    }
+  if (!grid) return;
+  grid.querySelectorAll('.catalog-card').forEach(el => {
+    const textOk = !_catalogText || (el.dataset.search || '').includes(_catalogText);
+    const catOk  = !_activeCat || el.dataset.cat === _activeCat;
+    el.hidden = !(textOk && catOk);
   });
-  if (lastSection) lastSection.hidden = !sectionVisible;
 }
 
 // ── QTY MODAL ────────────────────────────────────────────────────────
