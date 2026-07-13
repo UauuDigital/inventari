@@ -16,7 +16,7 @@ import {
   openEditProductModal, saveEditProduct, deleteEditProduct,
   removeQtyItem,
 } from './catalog.js';
-import { renderOrders, openOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus } from './orders.js';
+import { renderOrders, openOrderModal, openPastOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus, navOrderPick, submitOrderPick, resolveOrderPickDisplay } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
 import {
   openUserModal, closeUserModal, saveUser, deleteUser,
@@ -380,7 +380,23 @@ function init() {
   document.getElementById('btn-order-modal-close').addEventListener('click', closeOrderModal);
   document.getElementById('btn-save-order').addEventListener('click', saveOrder);
   document.getElementById('btn-delete-order').addEventListener('click', deleteOrder);
-  document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); saveOrder(); });
+  document.getElementById('order-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!document.getElementById('order-product-picker').hidden) submitOrderPick();
+    else saveOrder();
+  });
+  document.getElementById('btn-past-order').addEventListener('click', openPastOrderModal);
+  document.getElementById('btn-order-pick-prev').addEventListener('click', () => navOrderPick(-1));
+  document.getElementById('btn-order-pick-next').addEventListener('click', () => navOrderPick(1));
+  ['f-order-pick-stock', 'f-order-pick-qty'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); navOrderPick(-1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); navOrderPick(1); }
+      if (e.key === 'Enter')      { e.preventDefault(); submitOrderPick(); }
+    });
+    el.addEventListener('blur', () => resolveOrderPickDisplay(id));
+  });
 
   // Modal usuari (Admin)
   document.getElementById('btn-user-modal-close').addEventListener('click', closeUserModal);
@@ -419,6 +435,11 @@ function init() {
   // Modal quantitat
   document.getElementById('btn-qty-prev').addEventListener('click', () => navQtyModal(-1));
   document.getElementById('btn-qty-next').addEventListener('click', () => navQtyModal(1));
+  document.getElementById('f-qty-boxes').addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); navQtyModal(-1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); navQtyModal(1); }
+    if (e.key === 'Enter')      { e.preventDefault(); submitQtyModal(); }
+  });
   document.getElementById('btn-save-qty').addEventListener('click', saveQty);
   document.getElementById('btn-remove-qty').addEventListener('click', removeQtyItem);
   document.getElementById('qty-form').addEventListener('submit', e => { e.preventDefault(); submitQtyModal(); });

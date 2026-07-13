@@ -302,6 +302,12 @@
         <button class="filter-pill" data-status="rebuda" data-i18n="Rebudes">Rebudes</button>
         <button class="filter-pill" data-status="cancel·lada" data-i18n="Cancel·lades">Cancel·lades</button>
       </div>
+      <button class="btn-past-order" id="btn-past-order">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+        </svg>
+        <span data-i18n="Afegir comanda anterior">Afegir comanda anterior</span>
+      </button>
       <div class="orders-list" id="orders-list"></div>
       <div class="empty-state" id="orders-empty" hidden>
         <svg class="empty-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="1.5" aria-hidden="true">
@@ -490,8 +496,22 @@
         </button>
       </div>
       <form class="modal-form" id="order-form" autocomplete="off" novalidate>
-        <div class="form-row">
+        <div class="form-row" id="order-past-fields" hidden>
           <div class="form-field">
+            <label class="form-label" for="f-order-masia" data-i18n="Masia *">Masia *</label>
+            <div class="form-select-wrap">
+              <select class="form-select" id="f-order-masia">
+                <option value="" data-i18n="Selecciona…">Selecciona…</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="f-order-adults" data-i18n="Adults *">Adults *</label>
+            <input class="form-input" id="f-order-adults" type="number" min="0" step="1" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field" id="order-ref-field">
             <label class="form-label" for="f-order-ref" data-i18n="Referència">Referència</label>
             <input class="form-input" id="f-order-ref" type="text" placeholder="CMD-001">
           </div>
@@ -500,7 +520,7 @@
             <input class="form-input" id="f-order-date" type="date">
           </div>
         </div>
-        <div class="form-field">
+        <div class="form-field" id="order-supplier-field">
           <label class="form-label" for="f-order-supplier" data-i18n="Proveïdor">Proveïdor</label>
           <input class="form-input" id="f-order-supplier" type="text" placeholder="Nom del proveïdor" data-i18n-placeholder="Nom del proveïdor">
         </div>
@@ -515,15 +535,42 @@
             </select>
           </div>
         </div>
-        <!-- Selector de productes (nova comanda) -->
-        <div class="form-field" id="order-product-picker" hidden>
+        <!-- Selector de productes, d'un en un (nova comanda / comanda anterior) -->
+        <div class="form-field order-pick" id="order-product-picker" hidden>
           <label class="form-label" data-i18n="Articles *">Articles *</label>
-          <div class="order-search-wrap">
-            <input class="form-input" id="f-order-product-search" type="text"
-                   placeholder="Cerca producte…" autocomplete="off" data-i18n-placeholder="Cerca producte…">
-            <div class="order-product-dropdown" id="order-product-dropdown" hidden></div>
+          <div class="order-pick-nav">
+            <button class="modal-nav-btn" type="button" id="btn-order-pick-prev" aria-label="Producte anterior" data-i18n-aria-label="Producte anterior">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+            <div class="order-pick-title">
+              <span class="order-pick-name" id="order-pick-name"></span>
+              <span class="item-cat-badge order-pick-cat" id="order-pick-cat" hidden></span>
+            </div>
+            <button class="modal-nav-btn" type="button" id="btn-order-pick-next" aria-label="Producte següent" data-i18n-aria-label="Producte següent">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
           </div>
-          <div class="order-product-list" id="order-product-list"></div>
+          <div class="order-pick-qty-row">
+            <div class="order-pick-qty-group">
+              <label class="form-label" for="f-order-pick-stock" data-i18n="Estoc">Estoc</label>
+              <div class="order-pick-qty-field">
+                <input class="form-input qty-big-input" id="f-order-pick-stock" type="text" inputmode="text" autocomplete="off" placeholder="0">
+                <span class="order-pick-qty-unit" id="order-pick-stock-unit">c</span>
+              </div>
+            </div>
+            <div class="order-pick-qty-group">
+              <label class="form-label" for="f-order-pick-qty" data-i18n="Comanda">Comanda</label>
+              <div class="order-pick-qty-field">
+                <input class="form-input qty-big-input" id="f-order-pick-qty" type="text" inputmode="text" autocomplete="off" placeholder="0">
+                <span class="order-pick-qty-unit" id="order-pick-qty-unit">c</span>
+              </div>
+            </div>
+          </div>
+          <span class="order-pick-progress" id="order-pick-progress"></span>
         </div>
         <!-- Descripció lliure / taula (editar comanda existent) -->
         <div class="form-field" id="order-desc-field">
