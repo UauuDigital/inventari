@@ -123,6 +123,8 @@ const ES = {
   'Selecciona…':                    'Selecciona…',
   '{n} de {total}':                 '{n} de {total}',
   'Estoc':                           'Stock',
+  'Afegeix un producte…':            'Añade un producto…',
+  'Afegeix almenys un producte':     'Añade al menos un producto',
 
   // ── Modal usuari ──
   'Email *':                        'Email *',

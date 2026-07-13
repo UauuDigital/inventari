@@ -9,30 +9,48 @@ function _deleteSourceHistorial(order) {
   sendToSheet(getGasUrl(), new URLSearchParams({ action: 'delete-historial', id: order.sourceHistorialId }).toString());
 }
 
+function _catalogUnit(name) {
+  const p = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
+  return p?.unit || '';
+}
+
 function _parseStructuredDesc(desc) {
   if (!desc || !desc.includes(': ')) return null;
   const parts = desc.split(' | ');
   const items = parts.map(p => {
-    // format "nom: 3 c"
-    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*c$/);
+    // format "nom: 3 c" / "nom: 3 a" / "nom: 3 s"
+    const m = p.match(/^(.+):\s*(\d+(?:\.\d+)?)\s*[acs]$/);
     if (m) return { name: m[1].trim(), qty: parseFloat(m[2]) };
     return null;
   });
   return items.every(Boolean) && items.length > 0 ? items : null;
 }
 
-function _buildDescTable(items) {
-  return items.map(item => `
-    <div class="order-desc-row">
-      <span class="order-desc-name">${esc(item.name)}</span>
+function _descRowHtml(name, qty) {
+  return `
+    <div class="order-desc-row" data-name="${esc(name)}">
+      <span class="order-desc-name">${esc(name)}</span>
       <div style="display:flex;gap:6px;align-items:center">
         <label class="order-desc-qty-wrap">
-          <input class="order-desc-qty order-desc-main" type="number" min="0" step="1"
-                 value="${item.qty}" data-name="${esc(item.name)}">
-          <span class="order-desc-qty-unit">c</span>
+          <input class="order-desc-qty order-desc-main" type="text" inputmode="text"
+                 value="${qty}" data-name="${esc(name)}">
+          <span class="order-desc-qty-unit">${unitSuffix(_catalogUnit(name))}</span>
         </label>
+        <button type="button" class="order-desc-remove" data-remove-desc-row aria-label="${t('Treure')}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
-    </div>`).join('');
+    </div>`;
+}
+
+function _buildDescTable(items) {
+  return items.map(item => _descRowHtml(item.name, item.qty)).join('');
+}
+
+function _wireDescTableRemoveButtons() {
+  document.querySelectorAll('#order-desc-table [data-remove-desc-row]').forEach(btn => {
+    btn.onclick = () => btn.closest('.order-desc-row').remove();
+  });
 }
 
 function _readDescFromTable() {
@@ -40,9 +58,47 @@ function _readDescFromTable() {
   return Array.from(rows).map(row => {
     const main = row.querySelector('.order-desc-main');
     const name = main.dataset.name;
-    const qty  = Math.max(0, parseFloat(main.value) || 0);
-    return `${name}: ${qty} c`;
+    const result = evalQtyExpr(main.value);
+    const qty = Math.max(0, result != null ? result : (parseFloat(main.value) || 0));
+    return `${name}: ${fmtNum(qty)} ${unitSuffix(_catalogUnit(name))}`;
   }).join(' | ');
+}
+
+function _initDescAddSearch() {
+  const old = document.getElementById('f-order-desc-add');
+  if (!old) return;
+  const input = old.cloneNode(true);
+  old.replaceWith(input);
+  const dropdown = document.getElementById('order-desc-add-dropdown');
+  if (!dropdown) return;
+
+  input.value = '';
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { dropdown.hidden = true; dropdown.innerHTML = ''; return; }
+    const existing = new Set(Array.from(document.querySelectorAll('#order-desc-table .order-desc-row'))
+      .map(r => r.dataset.name.toLowerCase()));
+    const matches = state.catalog
+      .filter(p => p.name.toLowerCase().includes(q) && !existing.has(p.name.toLowerCase()))
+      .slice(0, 8);
+    if (!matches.length) { dropdown.hidden = true; return; }
+    dropdown.hidden = false;
+    dropdown.innerHTML = matches.map(p => `<div class="order-product-option" data-name="${esc(p.name)}">${esc(p.name)}</div>`).join('');
+    dropdown.querySelectorAll('.order-product-option').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const table = document.getElementById('order-desc-table');
+        table.insertAdjacentHTML('beforeend', _descRowHtml(opt.dataset.name, 1));
+        _wireDescTableRemoveButtons();
+        input.value     = '';
+        dropdown.hidden = true;
+      });
+    });
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => { dropdown.hidden = true; }, 150);
+  });
 }
 
 export function filteredOrders() {
@@ -285,12 +341,16 @@ export function openOrderModal(order = null, opts = {}) {
     const textarea   = document.getElementById('f-order-desc');
     const table      = document.getElementById('order-desc-table');
     const label      = document.getElementById('label-order-desc');
+    const addWrap    = document.getElementById('order-desc-add-wrap');
     if (structured) {
       textarea.hidden   = true;
       table.hidden      = false;
       table.innerHTML   = _buildDescTable(structured);
       label.textContent = t('Articles');
       label.removeAttribute('for');
+      addWrap.hidden    = false;
+      _wireDescTableRemoveButtons();
+      _initDescAddSearch();
     } else {
       textarea.hidden   = false;
       textarea.value    = order?.desc ?? '';
@@ -298,6 +358,7 @@ export function openOrderModal(order = null, opts = {}) {
       table.innerHTML   = '';
       label.textContent = t('Articles / Descripció *');
       label.setAttribute('for', 'f-order-desc');
+      addWrap.hidden    = true;
     }
   }
 
@@ -329,18 +390,22 @@ export function saveOrder() {
       setTimeout(() => { inp.style.borderColor = ''; }, 1200);
       return;
     }
-    desc = items.map(i => `${i.name}: ${i.boxes} c`).join(' | ');
+    desc = items.map(i => `${i.name}: ${fmtNum(i.boxes)} ${unitSuffix(i.unit)}`).join(' | ');
   } else {
     const tableEl  = document.getElementById('order-desc-table');
     const useTable = !tableEl.hidden;
     desc = useTable
       ? _readDescFromTable()
       : document.getElementById('f-order-desc').value.trim();
-    if (!useTable && !desc) {
-      const el = document.getElementById('f-order-desc');
-      el.focus();
-      el.style.borderColor = 'rgba(176,32,32,0.5)';
-      setTimeout(() => { el.style.borderColor = ''; }, 1200);
+    if (!desc) {
+      if (useTable) {
+        toast(t('Afegeix almenys un producte'));
+      } else {
+        const el = document.getElementById('f-order-desc');
+        el.focus();
+        el.style.borderColor = 'rgba(176,32,32,0.5)';
+        setTimeout(() => { el.style.borderColor = ''; }, 1200);
+      }
       return;
     }
   }

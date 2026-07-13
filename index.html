@@ -575,6 +575,11 @@
         <!-- Descripció lliure / taula (editar comanda existent) -->
         <div class="form-field" id="order-desc-field">
           <label class="form-label" id="label-order-desc" for="f-order-desc" data-i18n="Articles / Descripció *">Articles / Descripció *</label>
+          <div class="order-search-wrap" id="order-desc-add-wrap" hidden>
+            <input class="form-input" id="f-order-desc-add" type="text"
+                   placeholder="Afegeix un producte…" autocomplete="off" data-i18n-placeholder="Afegeix un producte…">
+            <div class="order-product-dropdown" id="order-desc-add-dropdown" hidden></div>
+          </div>
           <textarea class="form-textarea" id="f-order-desc" placeholder="Detall dels articles demanats…" style="min-height:90px" data-i18n-placeholder="Detall dels articles demanats…"></textarea>
           <div id="order-desc-table" hidden></div>
         </div>

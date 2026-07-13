@@ -396,3 +396,45 @@
   color: rgba(34,31,30,.45);
 }
 
+.order-desc-remove {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: rgba(34,31,30,.35);
+  flex-shrink: 0;
+  line-height: 0;
+}
+.order-desc-remove:hover { color: var(--danger, #c00); }
+
+/* ── Cercador per afegir un producte a una comanda existent ─────────── */
+
+.order-search-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.order-product-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--cream);
+  border: 1px solid rgba(34,31,30,.14);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.order-product-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  gap: 8px;
+}
+.order-product-option:hover { background: rgba(34,31,30,.05); }
+
