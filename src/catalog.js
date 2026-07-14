@@ -249,6 +249,8 @@ export async function closeScanModal() {
   document.getElementById('modal-scan').classList.remove('open');
   document.getElementById('barcode-reader').hidden = false;
   document.getElementById('scan-result').hidden     = true;
+  document.getElementById('scan-result-actions').hidden = false;
+  document.getElementById('scan-connect-panel').hidden  = true;
   const statusEl = document.getElementById('scan-status-text');
   if (statusEl) statusEl.textContent = t('Apunta la càmera al codi');
   _pendingCreate  = null;
@@ -267,6 +269,66 @@ export function scanCreateProduct() {
   _pendingCreate = null;
   closeScanModal();
   if (data) openNewProductModal(data);
+}
+
+// ── CONNECTAR CODI ESCANEJAT A UN PRODUCTE EXISTENT ───────────────────
+
+function _renderConnectList(query) {
+  const listEl = document.getElementById('scan-connect-list');
+  if (!listEl) return;
+  const q = (query || '').trim().toLowerCase();
+  const results = (q
+    ? state.catalog.filter(p => p.name.toLowerCase().includes(q))
+    : state.catalog
+  ).slice(0, 40);
+
+  if (results.length === 0) {
+    listEl.innerHTML = `<p class="scan-connect-empty">${t('Sense coincidències')}</p>`;
+    return;
+  }
+
+  listEl.innerHTML = results.map(p => {
+    const idx = state.catalog.indexOf(p);
+    return `
+      <button class="scan-connect-item" type="button" data-connect-idx="${idx}">
+        <span>${esc(p.name)}</span>
+        ${p.category ? `<span class="scan-connect-item-cat">${esc(p.category)}</span>` : ''}
+      </button>`;
+  }).join('');
+}
+
+export function openConnectList() {
+  document.getElementById('scan-result-actions').hidden = true;
+  document.getElementById('scan-connect-panel').hidden  = false;
+  const search = document.getElementById('scan-connect-search');
+  search.value = '';
+  _renderConnectList('');
+  search.oninput = () => _renderConnectList(search.value);
+  setTimeout(() => search.focus(), 50);
+}
+
+export function connectScanToProduct(idx) {
+  const code    = _pendingCreate?.code;
+  const product = state.catalog[idx];
+  if (!code || !product) return;
+
+  const updated = { ...product, code };
+  state.catalog[idx] = updated;
+
+  const extraIdx = state.catalogExtra.findIndex(p => p.id === product.id);
+  if (extraIdx >= 0) {
+    state.catalogExtra[extraIdx] = updated;
+    localStorage.setItem(STORAGE_CAT_EXTRA, JSON.stringify(state.catalogExtra));
+  } else {
+    const edits = JSON.parse(localStorage.getItem(STORAGE_CAT_EDITS) || '{}');
+    edits[product.id] = { ...(edits[product.id] || {}), code };
+    localStorage.setItem(STORAGE_CAT_EDITS, JSON.stringify(edits));
+  }
+
+  _pendingCreate = null;
+  closeScanModal();
+  renderCatalogView();
+  toast(t('Codi connectat a "{name}"', { name: product.name }));
 }
 
 async function lookupOpenFoodFacts(code) {

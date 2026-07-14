@@ -31,6 +31,7 @@ const GENERAL_FLOWS = [
     steps: [
       'Amb el botó <strong>Escaneja codi de barres</strong> del Catàleg, si el codi ja correspon a un producte de la llista, l\'obre directament sense haver-lo de buscar',
       'Si el codi no existeix encara, l\'app el cerca en una base de dades de productes oberta a internet i n\'omple el nom i el proveïdor automàticament, per no haver-los d\'escriure a mà',
+      'En aquest cas, a més de <strong>Crear producte</strong> hi ha el botó <strong>Connectar a un producte</strong>: obre la llista del catàleg i, en triar-ne un, el codi escanejat queda enganxat a aquell producte en lloc de crear-ne un de nou',
     ],
   },
 ];
