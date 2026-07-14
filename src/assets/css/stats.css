@@ -601,6 +601,15 @@
   border: 1px solid rgba(var(--fg-rgb),.06);
 }
 .coord-order-row.is-ok  { opacity: .35; }
+.coord-order-row.has-qty {
+  background: rgba(80,160,100,0.1);
+  border-color: rgba(80,160,100,0.35);
+}
+.coord-order-row.has-qty .coord-order-qty-wrap {
+  border-color: rgba(80,160,100,0.4);
+  background: rgba(80,160,100,0.14);
+}
+.coord-order-row.has-qty .coord-order-qty { color: var(--success); }
 .coord-order-row.is-low { border-color: rgba(200,48,48,.45); background: rgba(200,48,48,.1); }
 .coord-order-row.is-low .coord-order-name  { color: var(--danger); }
 .coord-order-row.is-low .coord-order-stock { color: var(--danger); opacity: .8; }

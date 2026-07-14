@@ -199,24 +199,28 @@ export function renderStats() {
     }
     const sortedCatalog = sortByCategoryName(state.catalog, p => p.category, p => p.name);
     let html = `<div class="stats-total-row"><span class="stats-total-label">${t('Total comptat')}</span><span class="stats-total-val">${t('{n} productes', { n: state.items.length })}</span></div>`;
+    html += `<div class="coord-order-list">`;
     let lastCat = undefined;
     sortedCatalog.forEach(product => {
       const catName = product.category || t('Sense categoria');
       if (catName !== lastCat) {
-        html += `<div class="stats-section-title">${esc(catName)}</div>`;
+        const catColor = _coordCatColor(catName);
+        html += `<div class="coord-order-section-title"><span class="cat-dot" style="background:${catColor}"></span>${esc(catName)}</div>`;
         lastCat = catName;
       }
       {
         const item      = state.items.find(i => i.name.toLowerCase() === product.name.toLowerCase());
         const boxesVal  = item ? (item.boxes != null ? item.boxes : (item.quantity || '')) : '';
-        html += `<div class="stats-cat-row">
-          <span class="stats-cat-name">${esc(product.name)}</span>
+        const rowColor  = _coordCatColor(catName);
+        const hasQty    = !!item;
+        html += `<div class="coord-order-row${hasQty ? ' has-qty' : ''}" style="border-left:3px solid ${rowColor}">
+          <span class="coord-order-name">${esc(product.name)}</span>
           <div class="stats-qty-inputs">
-            <div class="stats-qty-field">
-              <input type="number" min="0" class="stats-qty-input"
+            <div class="coord-order-qty-wrap">
+              <input type="number" min="0" class="coord-order-qty"
                      data-product="${esc(product.name)}" data-field="boxes"
                      value="${boxesVal}" placeholder="—">
-              <span class="stats-qty-unit">u</span>
+              <span class="coord-order-qty-unit">u</span>
             </div>
             ${item ? `<button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(product.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -225,6 +229,7 @@ export function renderStats() {
         </div>`;
       }
     });
+    html += `</div>`;
     html += `<div id="pending-changes-banner" class="pending-changes-banner"${_pendingQtyChange ? '' : ' hidden'}>
       <span>${t("Canvis pendents d'enviar")}</span>
     </div>`;
