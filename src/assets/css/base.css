@@ -13,6 +13,7 @@
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
 
 :root {
   --dark:        #221F1E;
@@ -22,9 +23,11 @@
   --border:      rgba(255,255,255,0.09);
   --text:        #fff;
   --text-dim:    rgba(255,255,255,0.45);
-  --text-dimmer: rgba(255,255,255,0.2);
+  --text-dimmer: rgba(255,255,255,0.32);
   --low:         #D4956A;
   --danger:      #C83030;
+  --success:     #5DBE78;
+  --warning:     #D4A843;
   --font-serif:  'Ogg', Georgia, serif;
   --font-sans:   'Inter', sans-serif;
   --r-card:      18px;
