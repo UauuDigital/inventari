@@ -378,7 +378,8 @@ async function handleBarcode(code) {
 
   document.getElementById('barcode-reader').hidden = true;
   document.getElementById('scan-result').hidden     = false;
-  const msgEl = document.getElementById('scan-result-msg');
+  const msgEl  = document.getElementById('scan-result-msg');
+  const hintEl = document.getElementById('scan-result-hint');
 
   if (offProduct) {
     _pendingCreate = { ...offProduct, code };
@@ -387,6 +388,8 @@ async function handleBarcode(code) {
     _pendingCreate = { code };
     msgEl.textContent = t("El codi {code} no és al nostre catàleg. Vols crear un producte nou a partir d'aquest codi?", { code });
   }
+
+  hintEl.innerHTML = t('Assegura\'t que aquest codi (<strong>{code}</strong>) és igual que el que surt imprès sota el codi de barres del producte.', { code: esc(code) });
 }
 
 // ── CATALOG VIEW (Comensal) ──────────────────────────────────────────
