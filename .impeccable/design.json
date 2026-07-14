@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-14T00:00:00.000Z",
+  "title": "Design System: Inventari Uauu",
+  "extensions": {
+    "colorMeta": {
+      "ink-dark": { "role": "primary", "displayName": "Ink Dark", "canonical": "oklch(23% 0.004 60)" },
+      "cream-light": { "role": "neutral", "displayName": "Cream Light", "canonical": "oklch(95% 0.004 80)" },
+      "low-terracotta": { "role": "accent", "displayName": "Low Terracotta", "canonical": "oklch(72% 0.09 45)" },
+      "danger-red": { "role": "danger", "displayName": "Danger Red", "canonical": "oklch(48% 0.18 25)" },
+      "success-green": { "role": "success", "displayName": "Success Green", "canonical": "oklch(75% 0.14 145)" },
+      "warning-amber": { "role": "warning", "displayName": "Warning Amber", "canonical": "oklch(78% 0.11 85)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Títols de pantalla completa (login, selecció de masia)." },
+      "title": { "displayName": "Title", "purpose": "Títol de l'app, títols de modal, noms d'entitat." },
+      "body": { "displayName": "Body", "purpose": "Text funcional general." },
+      "label": { "displayName": "Label", "purpose": "Etiquetes curtes de navegació i badges, sempre uppercase." }
+    },
+    "shadows": [
+      { "name": "fab-float", "value": "0 3px 12px rgba(0,0,0,0.35)", "purpose": "Únic ús d'ombra fora de modals; botó d'acció flotant." },
+      { "name": "focus-ring", "value": "0 0 0 3px rgba(var(--fg-rgb),0.12)", "purpose": "Anell de focus per teclat en camps de formulari." }
+    ],
+    "motion": [
+      { "name": "ease-expo", "value": "cubic-bezier(.22,1,.36,1)", "purpose": "Easing per defecte per a totes les transicions d'estat." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-narrow", "value": "420px" },
+      { "name": "mobile", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "FAB (botó d'acció flotant)",
+      "kind": "button",
+      "refersTo": "button-fab",
+      "description": "Únic element amb ombra real del sistema; acció primària de cada pantalla.",
+      "html": "<button class=\"ds-fab\"><span class=\"ds-fab-icon\">+</span><span>Nou producte</span></button>",
+      "css": ".ds-fab { display: flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: #221F1E; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 100px; padding: 13px 22px 13px 18px; cursor: pointer; box-shadow: 0 3px 12px rgba(0,0,0,0.35); transition: border-color .3s, background .3s, gap .35s cubic-bezier(.22,1,.36,1); } .ds-fab:hover { border-color: rgba(255,255,255,0.7); gap: 14px; } .ds-fab-icon { font-size: 17px; font-weight: 300; }"
+    },
+    {
+      "name": "Targeta de selecció (rol/masia)",
+      "kind": "card",
+      "refersTo": "card-user",
+      "description": "Targeta plana amb entrada animada per opacitat; sense ombra.",
+      "html": "<button class=\"ds-card\"><div class=\"ds-card-icon\">◆</div><span class=\"ds-card-name\">Coordinador</span></button>",
+      "css": ".ds-card { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px 20px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; cursor: pointer; transition: border-color .32s ease, background .32s ease, transform .32s cubic-bezier(.22,1,.36,1); } .ds-card:hover { border-color: rgba(255,255,255,0.38); background: rgba(255,255,255,0.07); transform: translateY(-4px); } .ds-card-icon { width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; color: #fff; } .ds-card-name { font-family: 'Ogg', Georgia, serif; font-size: 20px; letter-spacing: -0.02em; color: #fff; }"
+    },
+    {
+      "name": "Camp de cerca",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Input pill amb anell de focus visible (afegit per accessibilitat).",
+      "html": "<input class=\"ds-search\" type=\"search\" placeholder=\"Cerca producte...\">",
+      "css": ".ds-search { width: 100%; height: 36px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.09); border-radius: 100px; padding: 0 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: #fff; transition: border-color .2s, background .2s; } .ds-search::placeholder { color: rgba(255,255,255,0.32); } .ds-search:focus { outline: none; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); box-shadow: 0 0 0 3px rgba(255,255,255,0.12); }"
+    },
+    {
+      "name": "Pestanya de navegació inferior",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Etiqueta curta uppercase; estat actiu només per color, sense fons ni indicador.",
+      "html": "<button class=\"ds-nav-tab ds-nav-tab--active\"><span>◆</span><span>Catàleg</span></button>",
+      "css": ".ds-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 0 10px; background: none; border: none; color: rgba(255,255,255,0.2); font-family: 'Inter', sans-serif; font-size: 8px; letter-spacing: 0.09em; text-transform: uppercase; transition: color .2s; } .ds-nav-tab--active { color: #fff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Quadern de Sala",
+    "overview": "El sistema visual funciona com el quadern discret d'un maître de sala: elegant perquè representa una marca de casaments de luxe, però pensat per usar-se ràpid i sense fricció entre tasques. No hi ha res que cridi l'atenció per si sol — ni gradients, ni ombres apilades, ni decoració. La jerarquia es transmet per tipografia (la serif Ogg reservada per a títols i noms d'entitat) i per contrast tonal (opacitats sobre un fons fosc o clar), mai per ornament afegit. El sistema rebutja explícitament qualsevol soroll visual que trenqui aquesta discreció: gradients decoratius, ombres múltiples apilades, glassmorphism com a norma, o qualsevol element que faci \"shouting\" en lloc de \"designing\".",
+    "keyCharacteristics": [
+      "Serif (Ogg) per a títols i noms d'entitat; sans (Inter) per a tot el text funcional/UI",
+      "Superfícies planes per defecte; l'ombra és l'excepció reservada a accions flotants",
+      "Tema fosc i clar simètrics via tokens que es capgiren, no es dupliquen",
+      "Un únic accent decoratiu (terracota, el rol \"low/pendent\") mai dominant"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "El terracota (#D4956A) és l'únic color càlid no-semàntic de tot el sistema.", "section": "colors" },
+      { "name": "The Sentence-Case Rule", "body": "Uppercase només per a etiquetes curtes d'una-dues paraules; mai per a frases senceres.", "section": "typography" },
+      { "name": "The Float-Only Rule", "body": "Cap ombra si l'element no floti (FAB, modal, toast); la resta és pla per defecte.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do reservar la serif Ogg per a títols i noms d'entitat, mai per a llistes denses",
+      "Do mantenir el FAB com a únic element amb ombra real fora de modals",
+      "Do fer servir els tokens semàntics d'estat en lloc de hex directes",
+      "Do incloure sempre un indicador de focus visible en camps editables nous"
+    ],
+    "donts": [
+      "Don't afegir gradients decoratius, glassmorphism com a norma, o ombres apilades",
+      "Don't posar text-transform uppercase a frases senceres",
+      "Don't introduir un segon accent càlid/saturat",
+      "Don't animar max-height/padding/width/height per a transicions; usar opacity/transform"
+    ]
+  }
+}

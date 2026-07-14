@@ -38,19 +38,19 @@
 .cas-update--ok {
   background: rgba(60,160,80,.12);
   border-color: rgba(60,160,80,.3);
-  color: #5dbe78;
+  color: var(--success);
 }
 
 .cas-update--warn {
   background: rgba(200,148,40,.12);
   border-color: rgba(200,148,40,.3);
-  color: #d4a843;
+  color: var(--warning);
 }
 
 .cas-update--old {
   background: rgba(200,48,48,.15);
   border-color: rgba(200,48,48,.4);
-  color: #e06060;
+  color: var(--danger);
   animation: cas-pulse 2s ease-in-out infinite;
 }
 
@@ -93,8 +93,9 @@
 }
 
 .cas-masia-name {
+  font-family: var(--font-serif);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--white, #fff);
   line-height: 1.2;
 }
@@ -282,7 +283,10 @@
   box-sizing: border-box;
 }
 .casaments-search-input::placeholder { color: rgba(var(--fg-rgb),.35); }
-.casaments-search-input:focus { border-color: rgba(var(--fg-rgb),.32); }
+.casaments-search-input:focus {
+  border-color: rgba(var(--fg-rgb),.5);
+  box-shadow: 0 0 0 3px rgba(var(--fg-rgb),.12);
+}
 
 .casaments-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 

@@ -350,7 +350,7 @@
   transition: background .15s, color .15s;
 }
 .order-icon-btn:hover { background: rgba(var(--fg-rgb),.1); color: var(--white); }
-.order-icon-btn--danger:hover { background: rgba(176,32,32,.15); border-color: rgba(176,32,32,.3); color: #e06060; }
+.order-icon-btn--danger:hover { background: rgba(176,32,32,.15); border-color: rgba(176,32,32,.3); color: var(--danger); }
 
 /* ── Taula articles de comanda (format estructurat) ──────────────────── */
 
@@ -380,6 +380,10 @@
   border: 1px solid rgba(34,31,30,.12);
   border-radius: 7px;
   padding: 3px 8px 3px 6px;
+}
+.order-desc-qty-wrap:focus-within {
+  border-color: rgba(34,31,30,.4);
+  background: rgba(34,31,30,.1);
 }
 .order-desc-qty {
   width: 50px;
