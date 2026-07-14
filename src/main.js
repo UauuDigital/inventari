@@ -10,6 +10,7 @@ import {
 import {
   loadCatalog, initCatalogSearch, renderCatalogView,
   openScanModal, closeScanModal, openScanModalForField, scanCreateProduct,
+  openConnectList, connectScanToProduct,
   openQtyModal,  closeQtyModal,  saveQty,  navQtyModal,  submitQtyModal,
   openGasModal,  closeGasModal,  saveGasUrl, testGasUrl,
   openNewProductModal, closeNewProductModal, saveNewProduct,
@@ -257,6 +258,10 @@ document.addEventListener('click', e => {
   if (e.target.closest('#btn-scan-barcode')) { openScanModal(); return; }
   if (e.target.closest('#btn-scan-np-code')) { openScanModalForField('f-np-code'); return; }
   if (e.target.closest('#btn-scan-create'))  { scanCreateProduct(); return; }
+  if (e.target.closest('#btn-scan-connect')) { openConnectList(); return; }
+
+  const connectItem = e.target.closest('[data-connect-idx]');
+  if (connectItem) { connectScanToProduct(parseInt(connectItem.dataset.connectIdx)); return; }
 
   const catalogEditBtn = e.target.closest('[data-catalog-edit]');
   if (catalogEditBtn) { openEditProductModal(parseInt(catalogEditBtn.dataset.catalogEdit)); return; }
@@ -495,7 +500,43 @@ function init() {
   initCatalogSearch();
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // updateViaCache: 'none' evita que el navegador serveixi sw.js des de la
+    // seva pròpia cache HTTP quan comprovem actualitzacions — si no, reg.update()
+    // podia rebre una còpia vella de sw.js i no detectar mai el canvi de versió.
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      console.log('[SW] registrat', reg);
+
+      // El navegador no torna a demanar sw.js pel seu compte mentre la pestanya
+      // resta oberta (només ho fa en navegar-hi). Forcem la comprovació nosaltres:
+      // en obrir/tornar a la pestanya i cada cert temps mentre estigui activa.
+      const checkForUpdate = () => {
+        console.log('[SW] comprovant actualització…');
+        reg.update().catch(err => console.log('[SW] error comprovant', err));
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      setInterval(checkForUpdate, 60000);
+      checkForUpdate();
+
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        console.log('[SW] updatefound', sw);
+        if (!sw) return;
+        sw.addEventListener('statechange', () => console.log('[SW] statechange:', sw.state));
+      });
+    }).catch(err => console.log('[SW] error registrant', err));
+
+    // Quan el Service Worker es reemplaça per una versió nova (skipWaiting +
+    // clients.claim al sw.js), això dispara aquest event de seguida. Recarreguem
+    // la pàgina sols perquè els usuaris no hagin de saber fer un hard refresh.
+    let _swRefreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      console.log('[SW] controllerchange — recarregant');
+      if (_swRefreshing) return;
+      _swRefreshing = true;
+      window.location.reload();
+    });
   }
 
   showAppVersion();
