@@ -508,7 +508,8 @@ function init() {
 
       // El navegador no torna a demanar sw.js pel seu compte mentre la pestanya
       // resta oberta (només ho fa en navegar-hi). Forcem la comprovació nosaltres:
-      // en obrir/tornar a la pestanya i cada cert temps mentre estigui activa.
+      // en obrir/tornar a la pestanya (cobreix la majoria de casos a l'instant)
+      // i cada hora com a xarxa de seguretat per a sessions llargues sense canviar de finestra.
       const checkForUpdate = () => {
         console.log('[SW] comprovant actualització…');
         reg.update().catch(err => console.log('[SW] error comprovant', err));
@@ -516,7 +517,7 @@ function init() {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') checkForUpdate();
       });
-      setInterval(checkForUpdate, 60000);
+      setInterval(checkForUpdate, 3600000);
       checkForUpdate();
 
       reg.addEventListener('updatefound', () => {
