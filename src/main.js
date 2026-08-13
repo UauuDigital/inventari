@@ -1,4 +1,4 @@
-import { state, loadData, STORAGE_THEME } from './config.js';
+import { state, loadData } from './config.js';
 import { t, getLang, setLang, applyI18n } from './i18n.js';
 import { getCat, filteredItems, fmtNum, esc, drainOfflineQueue, updateOfflineQueueBadge, createTagSearch, sortByCategory } from './helpers.js';
 import { initUserScreen, showUserScreen, handleLoginSubmit, openChangePasswordModal, closeChangePasswordModal, saveChangePassword } from './auth.js';
@@ -117,28 +117,6 @@ export function render() {
   renderItems();
   if (state.view === 'stats') renderStats();
   if (state.view === 'cats')  renderCats();
-}
-
-// ── TEMA CLAR / FOSC ─────────────────────────────────────────────────
-
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.setAttribute('color-scheme', theme);
-  document.querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'light' ? '#F2EFEE' : '#221F1E');
-  const setHidden = (el, hide) => hide ? el.setAttribute('hidden', '') : el.removeAttribute('hidden');
-  setHidden(document.querySelector('.theme-icon-dark'),  theme === 'light');
-  setHidden(document.querySelector('.theme-icon-light'), theme !== 'light');
-}
-
-function initTheme() {
-  applyTheme(localStorage.getItem(STORAGE_THEME) || 'light');
-}
-
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-  localStorage.setItem(STORAGE_THEME, next);
-  applyTheme(next);
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────────────
@@ -302,7 +280,6 @@ document.addEventListener('keydown', e => {
 // ── INIT ─────────────────────────────────────────────────────────────
 
 function init() {
-  initTheme();
   loadData();
   document.documentElement.lang = getLang();
   applyI18n();
@@ -347,7 +324,6 @@ function init() {
     closeConfigModal();
     openGasModal();
   });
-  document.getElementById('btn-theme-toggle').addEventListener('click', toggleTheme);
   document.getElementById('btn-help').addEventListener('click', openHelpModal);
   document.getElementById('btn-help-close').addEventListener('click', closeHelpModal);
   document.getElementById('modal-help').addEventListener('click', e => {

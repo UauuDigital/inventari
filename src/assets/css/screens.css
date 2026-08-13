@@ -29,7 +29,7 @@
   flex-shrink: 0;
   align-self: flex-start;
 }
-:root[data-theme="light"] .users-brand-logo { filter: brightness(0); }
+.users-brand-logo { filter: brightness(0); }
 
 .users-inner {
   flex: 1;
@@ -118,10 +118,9 @@
   width: 80%;
   height: 80%;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: brightness(0);
   opacity: 0.85;
 }
-:root[data-theme="light"] .masia-card-logo { filter: brightness(0); }
 .masia-card-logo[src*="can-macia"],
 .masia-card-logo[src*="castell-de-tous"],
 .masia-card-logo[src*="mas-vivencs"] {

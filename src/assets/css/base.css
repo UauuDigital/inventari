@@ -16,14 +16,14 @@
 button, input, select, textarea { font: inherit; color: inherit; }
 
 :root {
-  --dark:        #221F1E;
+  --dark:        #F2EFEE;
   --cream:       #F2EFEE;
-  --white:       #fff;
-  --surface:     rgba(255,255,255,0.05);
-  --border:      rgba(255,255,255,0.09);
-  --text:        #fff;
-  --text-dim:    rgba(255,255,255,0.45);
-  --text-dimmer: rgba(255,255,255,0.32);
+  --white:       #221F1E;
+  --surface:     rgba(34,31,30,0.045);
+  --border:      rgba(34,31,30,0.1);
+  --text:        #221F1E;
+  --text-dim:    rgba(34,31,30,0.55);
+  --text-dimmer: rgba(34,31,30,0.32);
   --low:         #D4956A;
   --danger:      #C83030;
   --success:     #5DBE78;
@@ -39,21 +39,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
   /* Fixos: no canvien amb el tema (targetes/botons "paper" sobre fons fixos com modals) */
   --ink:         #221F1E;
   --paper:       #fff;
-  /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) i que segueixi el tema */
-  --fg-rgb:      255,255,255;
-  /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
-  --bg-rgb:      34,31,30;
-}
-
-:root[data-theme="light"] {
-  --dark:        #F2EFEE;
-  --white:       #221F1E;
-  --surface:     rgba(34,31,30,0.045);
-  --border:      rgba(34,31,30,0.1);
-  --text:        #221F1E;
-  --text-dim:    rgba(34,31,30,0.55);
-  --text-dimmer: rgba(34,31,30,0.32);
+  /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) */
   --fg-rgb:      34,31,30;
+  /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
   --bg-rgb:      242,239,238;
 }
 

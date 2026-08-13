@@ -36,10 +36,9 @@
   width: auto;
   flex-shrink: 0;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: brightness(0);
   opacity: 0.9;
 }
-:root[data-theme="light"] .app-logo-img { filter: brightness(0); }
 
 .app-title {
   font-family: var(--font-serif);

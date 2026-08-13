@@ -17,7 +17,6 @@ export const STORAGE_TOKEN_EXPIRES  = 'uauu_inv_token_expires';
 export const STORAGE_USER_PROFILE   = 'uauu_inv_user_profile';
 export const STORAGE_PENDING_INV    = 'uauu_inv_pending_inventari';
 export const STORAGE_MASIA_ADULTS   = 'uauu_inv_masia_adults';
-export const STORAGE_THEME          = 'uauu_inv_theme';
 export const STORAGE_GAS_URL        = 'uauu_inv_gas_url';
 
 export const SUPABASE_URL     = 'https://oeriszeicvdnagohnqvq.supabase.co';
