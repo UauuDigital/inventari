@@ -176,6 +176,7 @@ const ES = {
 
   // ── Ajuda ──
   'Com funciona':                   'Cómo funciona',
+  "Detalls que no són evidents a primer cop d'ull.": 'Detalles que no son evidentes a primera vista.',
 
   // ── Editar historial ──
   'Editar inventari':               'Editar inventario',
@@ -252,6 +253,16 @@ const ES = {
     '¿Eliminar el usuario "{name}"?\nEsta acción no se puede deshacer.',
   'Usuari eliminat':                'Usuario eliminado',
   'Cercar nom, email…':             'Buscar nombre, email…',
+  'Anar a dalt':                    'Ir arriba',
+  'Anar al final':                  'Ir al final',
+  'Cerca un producte…':             'Buscar un producto…',
+  'Connectar a un producte':        'Conectar a un producto',
+  'Codi connectat a "{name}"':      'Código conectado a "{name}"',
+  'Sense proveïdor assignat':       'Sin proveedor asignado',
+  'Proveïdor:':                     'Proveedor:',
+  'Puja un fitxer .xlsx o .csv amb les columnes:': 'Sube un archivo .xlsx o .csv con las columnas:',
+  "Assegura't que aquest codi (<strong>{code}</strong>) és igual que el que surt imprès sota el codi de barres del producte.":
+    'Asegúrate de que este código (<strong>{code}</strong>) es igual que el que aparece impreso bajo el código de barras del producto.',
 
   // ── Auth (dinàmic) ──
   'Credencials incorrectes':        'Credenciales incorrectas',
