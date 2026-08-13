@@ -251,6 +251,7 @@ const ES = {
   'Eliminar l\'usuari "{name}"?\nAquesta acció no es pot desfer.':
     '¿Eliminar el usuario "{name}"?\nEsta acción no se puede deshacer.',
   'Usuari eliminat':                'Usuario eliminado',
+  'Cercar nom, email…':             'Buscar nombre, email…',
 
   // ── Auth (dinàmic) ──
   'Credencials incorrectes':        'Credenciales incorrectas',

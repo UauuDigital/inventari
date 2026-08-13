@@ -4,6 +4,9 @@ import { esc, toast } from './helpers.js';
 
 export const ROL_LABELS = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
 
+let _usersSearch = '';
+let _usersRol    = 'tots';
+
 async function callManageUsers(action, payload = {}) {
   const token = state.accessToken || localStorage.getItem(STORAGE_ACCESS_TOKEN);
   if (!token) throw new Error(t('Sessió no iniciada'));
@@ -21,6 +24,69 @@ async function callManageUsers(action, payload = {}) {
   return data;
 }
 
+const _ROL_ORDER = { admin: 0, coordinador: 1, comensal: 2 };
+
+function _filteredUsers() {
+  const users = state.usersCache || [];
+  const q = _usersSearch.trim().toLowerCase();
+  return users.filter(u => {
+    if (_usersRol !== 'tots' && u.rol !== _usersRol) return false;
+    if (q && !(u.nom || '').toLowerCase().includes(q) && !(u.email || '').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) =>
+    (_ROL_ORDER[a.rol] ?? 9) - (_ROL_ORDER[b.rol] ?? 9) || (a.nom || '').localeCompare(b.nom || ''));
+}
+
+function _buildUsersList() {
+  const filtered = _filteredUsers();
+  if (!filtered.length) return `<p class="users-empty">${t('Sense resultats')}</p>`;
+
+  let html = '';
+  let lastRol = null;
+  filtered.forEach(u => {
+    if (u.rol !== lastRol) {
+      lastRol = u.rol;
+      const count = filtered.filter(x => x.rol === u.rol).length;
+      html += `<div class="users-group-header">${esc(t(ROL_LABELS[u.rol]) || u.rol || '—')} · ${count}</div>`;
+    }
+    const masiaTxt = u.masia ? (MASIA_LABELS[u.masia] || u.masia) : '';
+    html += `
+      <button class="user-manage-row" data-edit-user="${esc(u.id)}">
+        <div class="user-manage-main">
+          <span class="user-manage-name">${esc(u.nom || t('(sense nom)'))}</span>
+          <span class="user-manage-email">${esc(u.email || '')}</span>
+        </div>
+        <div class="user-manage-side">
+          ${masiaTxt ? `<span class="user-manage-masia">${esc(masiaTxt)}</span>` : ''}
+          <span class="user-manage-rol rol-${esc(u.rol)}">${esc(t(ROL_LABELS[u.rol]) || u.rol || '—')}</span>
+        </div>
+      </button>`;
+  });
+  return html;
+}
+
+function _rolPillsHtml() {
+  const rols = ['tots', 'admin', 'coordinador', 'comensal'];
+  return rols.map(r => `
+    <button class="filter-pill${_usersRol === r ? ' active' : ''}" data-users-rol="${r}">
+      ${r === 'tots' ? esc(t('Tots')) : esc(t(ROL_LABELS[r]))}
+    </button>`).join('');
+}
+
+function _wireUsersToolbar() {
+  document.getElementById('users-search').addEventListener('input', e => {
+    _usersSearch = e.target.value;
+    document.getElementById('users-list').innerHTML = _buildUsersList();
+  });
+  document.getElementById('users-rol-pills').addEventListener('click', e => {
+    const btn = e.target.closest('[data-users-rol]');
+    if (!btn) return;
+    _usersRol = btn.dataset.usersRol;
+    document.getElementById('users-rol-pills').innerHTML = _rolPillsHtml();
+    document.getElementById('users-list').innerHTML = _buildUsersList();
+  });
+}
+
 export async function renderUsers() {
   const el = document.getElementById('users-content');
   if (!el) return;
@@ -35,22 +101,14 @@ export async function renderUsers() {
       return;
     }
 
-    const order  = { admin: 0, coordinador: 1, comensal: 2 };
-    const sorted = [...users].sort((a, b) =>
-      (order[a.rol] ?? 9) - (order[b.rol] ?? 9) || (a.nom || '').localeCompare(b.nom || ''));
-
-    el.innerHTML = sorted.map(u => {
-      const masiaTxt = u.masia ? (MASIA_LABELS[u.masia] || u.masia) : '';
-      return `
-        <button class="user-manage-card" data-edit-user="${esc(u.id)}">
-          <span class="user-manage-rol rol-${esc(u.rol)}">${esc(t(ROL_LABELS[u.rol]) || u.rol || '—')}</span>
-          <div class="user-manage-main">
-            <span class="user-manage-name">${esc(u.nom || t('(sense nom)'))}</span>
-            <span class="user-manage-email">${esc(u.email || '')}</span>
-            ${masiaTxt ? `<span class="user-manage-masia">${esc(masiaTxt)}</span>` : ''}
-          </div>
-        </button>`;
-    }).join('');
+    el.innerHTML = `
+      <div class="users-toolbar">
+        <input class="users-search-input" id="users-search" placeholder="${t('Cercar nom, email…')}"
+               value="${esc(_usersSearch)}" autocomplete="off">
+        <div class="filter-pills" id="users-rol-pills">${_rolPillsHtml()}</div>
+      </div>
+      <div class="users-manage-list" id="users-list">${_buildUsersList()}</div>`;
+    _wireUsersToolbar();
 
   } catch (err) {
     el.innerHTML = `<div class="reports-loading" style="color:var(--low)">${esc(err.message)}</div>`;
