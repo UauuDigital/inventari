@@ -131,23 +131,23 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 5px 12px;
-  border-radius: 99px;
+  border-radius: var(--r-pill);
 }
 
 .help-intro-text {
   font-size: 13px;
   font-weight: 300;
-  color: rgba(34,31,30,.62);
+  color: rgba(27,26,31,.62);
   line-height: 1.5;
 }
 
 .help-flow {
-  border: 1px solid rgba(34,31,30,.08);
+  border: 1px solid rgba(27,26,31,.08);
   border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
   background: rgba(255,255,255,.5);
-  box-shadow: 0 1px 2px rgba(34,31,30,.04);
+  box-shadow: 0 1px 2px rgba(27,26,31,.04);
   transition: box-shadow .2s, transform .2s;
 }
 
@@ -156,8 +156,8 @@
   align-items: center;
   gap: 12px;
   padding: 13px 14px;
-  background: rgba(34,31,30,.035);
-  border-bottom: 1px solid rgba(34,31,30,.07);
+  background: rgba(27,26,31,.035);
+  border-bottom: 1px solid rgba(27,26,31,.07);
 }
 
 .help-flow-icon {
@@ -189,7 +189,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 7px 0;
-  border-bottom: 1px solid rgba(34,31,30,.05);
+  border-bottom: 1px solid rgba(27,26,31,.05);
 }
 .help-step:last-child { border-bottom: none; }
 
@@ -210,10 +210,10 @@
 .help-step-text {
   font-size: 13px;
   font-weight: 300;
-  color: rgba(34,31,30,.78);
+  color: rgba(27,26,31,.78);
   line-height: 1.5;
 }
-.help-step-text strong { font-weight: 600; color: rgba(34,31,30,.92); }
+.help-step-text strong { font-weight: 600; color: rgba(27,26,31,.92); }
 
 /* Search bar */
 .search-bar {
@@ -298,11 +298,13 @@
   color: var(--white);
   background: var(--dark);
   border: 1.5px solid rgba(var(--fg-rgb),0.4);
-  border-radius: var(--r-pill);
-  padding: 13px 22px 13px 18px;
+  padding: 13px 22px 13px 20px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  /* Signatura del sistema: cantonada tallada en diagonal, com el tros
+     que s'arrenca d'un tiquet de comanda. Reservada al FAB. */
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
   transition: border-color .3s, background .3s, gap .35s var(--ease-expo), transform .2s;
 }
 .fab:hover {
@@ -359,7 +361,7 @@
   bottom: calc(66px + var(--safe-bot) + 12px);
   left: 50%;
   transform: translateX(-50%) translateY(8px);
-  background: rgba(34,31,30,0.94);
+  background: rgba(27,26,31,0.94);
   border: 1px solid rgba(255,255,255,0.12);
   color: var(--paper);
   font-family: var(--font-sans);

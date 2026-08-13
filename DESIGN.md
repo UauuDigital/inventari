@@ -1,22 +1,23 @@
 ---
 name: Inventari Uauu
-description: PWA d'inventari discreta i elegant per a les masies d'Uauu Weddings & Events
+description: PWA d'inventari — el full de pull d'un estilista d'esdeveniments, no una llibreta de casaments
 colors:
-  ink-dark: "#221F1E"
-  cream-light: "#F2EFEE"
-  low-terracotta: "#D4956A"
-  danger-red: "#C83030"
-  success-green: "#5DBE78"
-  warning-amber: "#D4A843"
+  ink: "#1B1A1F"
+  paper: "#E3E6E7"
+  low-brass: "#A6763A"
+  danger-brick: "#A6392C"
+  success-forest: "#4B8A5E"
+  warning-ochre: "#C2A542"
 typography:
   display:
-    fontFamily: "'Ogg', Georgia, serif"
-    fontSize: "clamp(36px, 7vw, 64px)"
-    fontWeight: 500
-    lineHeight: 1
-    letterSpacing: "-0.035em"
+    fontFamily: "'Inter', sans-serif"
+    fontSize: "clamp(34px, 6.4vw, 58px)"
+    fontWeight: 800
+    lineHeight: 0.96
+    letterSpacing: "-0.02em"
+    textTransform: uppercase
   title:
-    fontFamily: "'Ogg', Georgia, serif"
+    fontFamily: "'Inter', sans-serif"
     fontSize: "21px"
     fontWeight: 500
     letterSpacing: "-0.02em"
@@ -24,33 +25,36 @@ typography:
     fontFamily: "'Inter', sans-serif"
     fontSize: "14px"
     fontWeight: 400
+  numeric:
+    fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace"
+    fontWeight: 600
+    fontVariantNumeric: tabular-nums
   label:
     fontFamily: "'Inter', sans-serif"
     fontSize: "9px"
     fontWeight: 400
     letterSpacing: "0.09em"
 rounded:
-  sm: "10px"
-  md: "18px"
-  lg: "24px"
-  pill: "100px"
+  sm: "3px"
+  md: "6px"
+  lg: "6px"
 spacing:
   sm: "8px"
   md: "16px"
   lg: "24px"
 components:
   button-fab:
-    backgroundColor: "{colors.ink-dark}"
+    backgroundColor: "{colors.ink}"
     textColor: "#fff"
-    rounded: "{rounded.pill}"
-    padding: "13px 22px 13px 18px"
+    clipPath: "cut-corner-12"
+    padding: "13px 22px 13px 20px"
   card-user:
-    backgroundColor: "rgba(255,255,255,0.04)"
+    backgroundColor: "rgba(27,26,31,0.04)"
     rounded: "{rounded.lg}"
     padding: "24px"
   input-search:
-    backgroundColor: "rgba(255,255,255,0.07)"
-    rounded: "{rounded.pill}"
+    backgroundColor: "rgba(27,26,31,0.07)"
+    rounded: "{rounded.sm}"
     padding: "0 16px"
 ---
 
@@ -58,62 +62,66 @@ components:
 
 ## 1. Overview
 
-**Creative North Star: "El Quadern de Sala"**
+**Creative North Star: "El Full de Pull"**
 
-El sistema visual funciona com el quadern discret d'un maître de sala: elegant perquè representa una marca de casaments de luxe, però pensat per usar-se ràpid i sense fricció entre tasques. No hi ha res que cridi l'atenció per si sol — ni gradients, ni ombres apilades, ni decoració. La jerarquia es transmet per tipografia (la serif Ogg reservada per a títols i noms d'entitat) i per contrast tonal (opacitats sobre un fons fosc o clar), mai per ornament afegit.
-
-El sistema rebutja explícitament qualsevol soroll visual que trenqui aquesta discreció: gradients decoratius, ombres múltiples apilades, glassmorphism com a norma, o qualsevol element que faci "shouting" en lloc de "designing".
+Substitueix l'anterior "Quadern de Sala" (crema + serif + terracota, massa a prop del clúster genèric d'interfícies fetes per IA). El nou sistema funciona com el full de pull que un estilista d'esdeveniments porta el matí de la càrrega: un tiquet de treball per comptar i moure estoc, no una pàgina de record. Continua sense soroll visual — sense gradients, sense ombres apilades, sense decoració — però ara ho diu amb un altre vocabulari: fons paper-carbó fred (no crema càlida), un únic accent de llautó/coure (no terracota), xifres en monospace tabular com un tiquet imprès, i cantonades gairebé rectes (no pastilles).
 
 **Key Characteristics:**
-- Serif (Ogg) per a títols i noms d'entitat; sans (Inter) per a tot el text funcional/UI
-- Superfícies planes per defecte; l'ombra és l'excepció reservada a accions flotants
-- Tema fosc i clar simètrics via tokens (`--dark`, `--white`, `--text-dim`... es capgiren, no es dupliquen)
-- Un únic accent decoratiu (terracota `#D4956A`, el rol "low/pendent") mai dominant
+- Inter com a única família tipogràfica: pes 800 i majúscules per als títols de pantalla completa, pes normal per a la resta — la jerarquia ve del pes i el tracking, no d'una serif afegida.
+- Xifres (quantitats, totals) sempre en monospace tabular — l'única desviació respecte a Inter, i deliberada: fa que els números es llegeixin com un tiquet, no com a prosa.
+- Radi de cantonada gairebé nul (3-6px) a tot arreu; cap element "pastilla". El FAB porta el motiu signatura: una cantonada tallada en diagonal, com el tros arrencat d'un tiquet.
+- Superfícies planes per defecte; l'ombra és l'excepció reservada a accions flotants.
+- Un únic accent decoratiu (llautó `#A6763A`, el rol "low/pendent") mai dominant.
 
 ## 2. Colors
 
-Paleta contenta: neutres foscos/clars que es capgiren per tema, més un únic accent càlid i tres colors semàntics d'estat (èxit/avís/error) reservats exclusivament per a indicar estoc i estat de comandes, mai decoratius.
+Paleta contenta: neutres freds que es capgiren per tema, més un únic accent de metall càlid i tres colors semàntics d'estat (èxit/avís/error), reservats exclusivament per indicar estoc i estat de comandes, mai decoratius.
 
 ### Primary
-- **Ink Dark** (`#221F1E`): fons de l'app en tema fosc (per defecte); text principal en tema clar. És el color "de marca" de facto — no hi ha cap accent saturat que el substitueixi.
+- **Ink** (`#1B1A1F`): text principal; fons de qualsevol superfície "paper" fixa (modals). És el color "de marca" de facto — no hi ha cap accent saturat que el substitueixi.
 
 ### Neutral
-- **Cream Light** (`#F2EFEE`): fons de l'app en tema clar; text principal en tema fosc.
-- **Text Dim** (`rgba(fg,0.45)`): text secundari (metadades, subtítols curts).
-- **Text Dimmer** (`rgba(fg,0.32)`): text terciari (placeholders, labels molt discretes) — pujat des de 0.2 aquesta sessió per complir contrast AA.
+- **Paper** (`#E3E6E7`): fons de l'app — gris-blau pàl·lid de paper carbó, explícitament no crema.
+- **Text Dim** (`rgba(ink,0.55)`): text secundari (metadades, subtítols curts).
+- **Text Dimmer** (`rgba(ink,0.34)`): text terciari (placeholders, labels molt discretes).
 
 ### Semantic (estat, no decoratiu)
-- **Low/Pendent Terracotta** (`#D4956A`): únic accent càlid del sistema; estoc baix pendent i indicadors "encara no enviat".
-- **Success Green** (`#5DBE78`): estoc ok, inventari rebut recentment.
-- **Warning Amber** (`#D4A843`): inventari una mica desactualitzat.
-- **Danger Red** (`#C83030`): estoc crític, eliminació, error.
+- **Low/Pendent Brass** (`#A6763A`): únic accent del sistema; estoc baix pendent i indicadors "encara no enviat". Llautó/coure, no terracota-rosat.
+- **Success Forest** (`#4B8A5E`): estoc ok, inventari rebut recentment.
+- **Warning Ochre** (`#C2A542`): inventari una mica desactualitzat.
+- **Danger Brick** (`#A6392C`): estoc crític, eliminació, error.
 
 ### Named Rules
-**The One Accent Rule.** El terracota (`#D4956A`) és l'únic color "càlid" no-semàntic de tot el sistema. Cap altre accent decoratiu s'hi afegeix; si cal cridar l'atenció sobre alguna cosa que no és un estat d'estoc, es fa amb pes tipogràfic o contrast, no amb color nou.
+**The One Accent Rule.** El llautó (`#A6763A`) és l'únic color "càlid" no-semàntic de tot el sistema. Cap altre accent decoratiu s'hi afegeix; si cal cridar l'atenció sobre alguna cosa que no és un estat d'estoc, es fa amb pes tipogràfic o contrast, no amb color nou.
+
+**The No-Cream Rule.** El fons de l'app és fred (gris-blau paper-carbó), mai crema/marfil. Si un component nou necessita un fons "paper", parteix de `--paper` (`#E3E6E7`), no d'un blanc/crema afegit.
 
 ## 3. Typography
 
-**Display/Title Font:** 'Ogg' (weight 500), amb Georgia i serif com a fallback
-**Body Font:** 'Inter' (variable, 100–900), amb sans-serif com a fallback
+**Font:** 'Inter' (variable, 100–900) arreu — display, títols i cos. Cap segona família per a text.
+**Numeric font:** pila monospace del sistema (`ui-monospace, SF Mono, Cascadia Mono, Roboto Mono, monospace`) — reservada exclusivament a xifres de quantitat/total.
 
-**Character:** Un aparellament clàssic serif+sans: la Ogg aporta el toc editorial/casaments a títols i noms de producte; la Inter porta tot el pes funcional (formularis, xifres, botons) sense competir per atenció.
+**Character:** Una sola família portant tot el pes, diferenciada per pes i tracking en lloc d'un aparellament serif+sans; les xifres es desmarquen amb monospace tabular, evocant un tiquet imprès més que una llibreta.
 
 ### Hierarchy
-- **Display** (500, `clamp(36px, 7vw, 64px)`, line-height 1): títols de pantalla completa ("Qui ets?", "Quina masia?").
+- **Display** (800, `clamp(34px, 6.4vw, 58px)`, majúscules, line-height 0.96): títols de pantalla completa ("Qui ets?", "Quina masia?").
 - **Title** (500, 21px, letter-spacing -0.02em): títol de l'app al header, títols de modal.
 - **Body** (400, 14px): text funcional general, noms de producte a llistes denses.
+- **Numeric** (600, monospace, tabular-nums): qualsevol xifra de quantitat, total o comptador (`.stat-value`, `.qty-value`, `.coord-order-qty`, `.stats-total-val`).
 - **Label** (400, 9-11px, letter-spacing 0.06-0.1em, uppercase): etiquetes curtes de navegació i badges — mai frases senceres.
 
 ### Named Rules
-**The Sentence-Case Rule.** `text-transform: uppercase` només s'aplica a etiquetes d'una o dues paraules (nav, badges, pills). Qualsevol subtítol que sigui una frase completa va en minúscules/frase normal — mai majúscules com a bloc de text llarg.
+**The Sentence-Case Rule.** `text-transform: uppercase` només s'aplica a etiquetes d'una o dues paraules (nav, badges, pills) i al Display. Qualsevol subtítol que sigui una frase completa va en minúscules/frase normal — mai majúscules com a bloc de text llarg.
+
+**The Tabular-Numerals Rule.** Qualsevol xifra que representi una quantitat comptada (no un preu de catàleg en prosa) porta `font-family: var(--font-mono)` i `font-variant-numeric: tabular-nums`.
 
 ## 4. Elevation
 
-Sistema pla per defecte: targetes, botons i inputs no tenen `box-shadow` en repòs — la separació visual ve de vores (`border: 1px solid rgba(fg,X)`) i lleugers canvis d'opacitat de fons. L'ombra és l'excepció reservada a elements que realment "floten" per sobre del contingut: el FAB i els modals.
+Sistema pla per defecte: targetes, botons i inputs no tenen `box-shadow` en repòs — la separació visual ve de vores (`border: 1px solid rgba(ink,X)`) i lleugers canvis d'opacitat de fons. L'ombra és l'excepció reservada a elements que realment "floten" per sobre del contingut: el FAB i els modals.
 
 ### Shadow Vocabulary
-- **fab-float** (`box-shadow: 0 3px 12px rgba(0,0,0,0.35)`): únic ús d'ombra fora de modals; el botó d'acció flotant. Ajustat aquesta sessió (abans `0 4px 28px rgba(0,0,0,0.55)`, massa ample per a la vora fina que l'acompanya).
-- **focus-ring** (`box-shadow: 0 0 0 3px rgba(fg,0.12)`): anell de focus per teclat en tots els camps de formulari, afegit aquesta sessió per complir WCAG 2.4.7.
+- **fab-float** (`box-shadow: 0 3px 12px rgba(0,0,0,0.35)`): únic ús d'ombra fora de modals; el botó d'acció flotant.
+- **focus-ring** (`box-shadow: 0 0 0 3px rgba(ink,0.12)`): anell de focus per teclat en tots els camps de formulari.
 
 ### Named Rules
 **The Float-Only Rule.** Si un element no es mou (scroll, drag) ni interromp el flux (FAB, modal, toast), no porta `box-shadow`. La resta de jerarquia visual és tipogràfica o d'opacitat.
@@ -121,37 +129,39 @@ Sistema pla per defecte: targetes, botons i inputs no tenen `box-shadow` en rep�
 ## 5. Components
 
 ### Buttons
-- **Shape:** pill (`border-radius: 100px`) per al FAB i botons d'acció primària; `10-13px` per a botons de formulari secundaris.
-- **Primary (FAB):** fons `--dark`, vora `1.5px solid rgba(fg,0.4)`, ombra `fab-float`. Al hover, la vora s'enfosqueix i el gap intern creix (`transition: gap .35s`).
+- **Shape:** gairebé recta arreu (`--r-pill: 3px`); el FAB porta el motiu signatura de cantonada tallada (`clip-path`, vegeu més avall) en lloc d'un radi.
+- **Primary (FAB):** fons `--dark`, vora `1.5px solid rgba(fg,0.4)`, ombra `fab-float`, cantonada superior-esquerra tallada en diagonal 12px. Al hover, la vora s'enfosqueix i el gap intern creix (`transition: gap .35s`).
 - **Secondary/Ghost:** transparent amb vora `rgba(fg,0.1-0.14)`, fons que guanya opacitat al hover.
 
 ### Cards
-- **Corner Style:** 18-24px segons context (targetes de catàleg vs. targetes de selecció de rol/masia).
+- **Corner Style:** `--r-card: 6px` arreu — cantonada de "cartolina tallada", no de targeta de software genèrica.
 - **Background:** `rgba(fg,0.04-0.07)`, mai blanc/negre sòlid.
 - **Shadow Strategy:** cap (regla Float-Only).
 - **Border:** `1px solid rgba(fg,0.1-0.14)`.
 
 ### Inputs / Fields
-- **Style:** fons `rgba(fg,0.06-0.1)`, vora `1-1.5px solid rgba(fg,0.1-0.14)`, forma pill o `10-13px` de radi.
-- **Focus:** vora que puja a `rgba(fg,0.5)` + `focus-ring` (afegit aquesta sessió; abans només canviava la vora lleugerament, insuficient per a WCAG).
-- **Error:** vora i text en Danger Red, mai només color (sempre acompanyat de missatge o icona).
+- **Style:** fons `rgba(fg,0.06-0.1)`, vora `1-1.5px solid rgba(fg,0.1-0.14)`, radi `--r-pill` (3px) — mai forma de pastilla.
+- **Focus:** vora que puja a `rgba(fg,0.5)` + `focus-ring`.
+- **Error:** vora i text en Danger Brick, mai només color (sempre acompanyat de missatge o icona).
 
 ### Navigation (bottom nav)
 - **Style:** barra inferior amb `backdrop-filter: blur(16px)`, pestanyes en Label typography (9px, uppercase), estat actiu marcat només amb `color: var(--white)` (sense fons ni indicador extra).
 
 ### FAB (Signature Component)
-Element flotant `position: fixed` a baix a la dreta, pill-shaped, amb icona `+` i etiqueta curta ("Nou producte", "Nova comanda"...). És l'únic element amb ombra real del sistema fora de modals — la seva singularitat visual reforça que és l'acció primària de cada pantalla.
+Element flotant `position: fixed` a baix a la dreta, amb icona `+` i etiqueta curta ("Nou producte", "Nova comanda"...). Porta el motiu signatura de tot el sistema: `clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)`, una cantonada tallada en diagonal que evoca el tros que s'arrenca d'un tiquet de comanda. És l'únic element amb ombra real del sistema fora de modals i l'únic amb la cantonada tallada — la doble singularitat reforça que és l'acció primària de cada pantalla.
 
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** reservar la serif Ogg per a títols i noms d'entitat (producte, article, usuari, masia); mai per a llistes denses de dades on cal escaneig ràpid.
-- **Do** mantenir el FAB com a únic element amb ombra real fora de modals (regla Float-Only).
+- **Do** fer servir monospace tabular per a qualsevol xifra de quantitat/total nova; mai Inter per a números que l'usuari ha de comptar ràpid.
+- **Do** mantenir el FAB com a únic element amb ombra real i amb la cantonada tallada (regles Float-Only + signatura).
 - **Do** fer servir els tokens semàntics (`--success`/`--warning`/`--danger`/`--low`) per a qualsevol color d'estat nou; mai hex directes.
 - **Do** incloure sempre un `:focus-within`/`:focus` visible (vora + `focus-ring`) en qualsevol camp editable nou.
 
 ### Don't:
 - **Don't** afegir gradients decoratius, glassmorphism com a norma, o ombres múltiples apilades — trenca la discreció que defineix el sistema.
-- **Don't** posar `text-transform: uppercase` a frases senceres (subtítols, descripcions); només a etiquetes curtes d'una-dues paraules.
-- **Don't** introduir un segon accent càlid/saturat; el terracota (`#D4956A`) és l'únic.
-- **Don't** animar `max-height`, `padding`, `width` o `height` per a transicions d'entrada/sortida; usar `opacity`/`transform` (regla apresa d'un bug real d'aquesta sessió al cercador del header).
+- **Don't** tornar a introduir una segona família tipogràfica (serif o altra) ni un fons crema/marfil — és exactament el que aquest redisseny substitueix.
+- **Don't** fer servir `border-radius` per sobre de 6px en cap component nou; si cal distingir un element, fes-ho amb el motiu de cantonada tallada (només al FAB) o amb pes tipogràfic/color, no amb més radi.
+- **Don't** introduir un segon accent càlid/saturat; el llautó (`#A6763A`) és l'únic.
+- **Don't** posar `text-transform: uppercase` a frases senceres (subtítols, descripcions); només a etiquetes curtes d'una-dues paraules i al Display.
+- **Don't** animar `max-height`, `padding`, `width` o `height` per a transicions d'entrada/sortida; usar `opacity`/`transform`.

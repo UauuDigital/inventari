@@ -1,9 +1,5 @@
 # Product
 
-## Register
-
-product
-
 ## Platform
 
 web
@@ -18,10 +14,10 @@ Substituir els processos manuals/en paper de gestió d'estoc entre les quatre ma
 Una única eina compartida que substitueix el paper i les fulles soltes per portar l'inventari i les comandes de totes les masies, perquè ningú hagi de refer feina ni endevinar l'estat real de l'estoc.
 
 ## Brand Personality
-Elegant, discreta i professional — coherent amb el sector dels casaments de luxe que representa Uauu Weddings & Events. Es tradueix en un disseny fosc/clar minimalista, sense soroll visual, amb la serif Ogg reservada per a títols i noms d'entitat i la sans Inter per a la resta del text funcional.
+Continguda però amb personalitat pròpia: no és una eina de marca de cara al públic, és el full de treball intern d'un equip d'operacions d'esdeveniments de luxe. Es tradueix en un disseny minimalista sense soroll visual, però allunyat deliberadament del "look genèric d'IA" (fons crema, serif elegant, accent terracota): fons paper-carbó fred, Inter com a única família tipogràfica (pes i tracking en lloc d'una segona serif), xifres en monospace tabular com un tiquet, i cantonades gairebé rectes en lloc de pastilles arrodonides.
 
 ## Anti-references
-Cap referència externa concreta; el disseny actual (fons foscos, tipografia Ogg+Inter, sense decoració excessiva) és la pròpia referència a mantenir. Evitar qualsevol soroll visual que trenqui aquesta discreció (gradients, ombres apilades, decoració purament ornamental).
+L'antiga identitat d'aquesta mateixa app (fons crema `#F2EFEE`, serif Ogg per a títols, accent terracota `#D4956A`, formes en pastilla `border-radius: 100px`) és ara l'anti-referència explícita: encaixava massa amb el clúster típic d'interfícies generades per IA. Evitar tornar-hi. Seguir evitant qualsevol soroll visual afegit (gradients, ombres apilades, decoració purament ornamental).
 
 ## Design Principles
 - Llegibilitat i velocitat mòbil primer: un Encarregat ha de poder completar un inventari ràpid, amb poc temps i possiblement poca cobertura, sense fricció.

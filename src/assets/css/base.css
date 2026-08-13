@@ -1,11 +1,4 @@
 @font-face {
-  font-family: 'Ogg';
-  src: url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.otf') format('opentype'),
-       url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-display: swap;
-}
-@font-face {
   font-family: 'Inter';
   src: url('../../../../catalegs-web/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 900;
@@ -15,34 +8,42 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
+/*
+ * "El full de pull" — la llibreta de comptes d'un estilista d'esdeveniments
+ * el matí de la càrrega: un tiquet de treball per comptar i moure estoc,
+ * no una pàgina de record. Fons paper-carbó (no crema), un únic accent
+ * de llautó/coure (no terracota), xifres en monospace com un tiquet de
+ * cuina, cantonades gairebé rectes (no pastilles).
+ */
 :root {
-  --dark:        #F2EFEE;
-  --cream:       #F2EFEE;
-  --white:       #221F1E;
-  --surface:     rgba(34,31,30,0.045);
-  --border:      rgba(34,31,30,0.1);
-  --text:        #221F1E;
-  --text-dim:    rgba(34,31,30,0.55);
-  --text-dimmer: rgba(34,31,30,0.32);
-  --low:         #D4956A;
-  --danger:      #C83030;
-  --success:     #5DBE78;
-  --warning:     #D4A843;
-  --font-serif:  'Ogg', Georgia, serif;
+  --dark:        #E3E6E7;
+  --cream:       #E3E6E7;
+  --white:       #1B1A1F;
+  --surface:     rgba(27,26,31,0.045);
+  --border:      rgba(27,26,31,0.14);
+  --text:        #1B1A1F;
+  --text-dim:    rgba(27,26,31,0.55);
+  --text-dimmer: rgba(27,26,31,0.34);
+  --low:         #A6763A;
+  --danger:      #A6392C;
+  --success:     #4B8A5E;
+  --warning:     #C2A542;
+  --font-serif:  'Inter', sans-serif;
   --font-sans:   'Inter', sans-serif;
-  --r-card:      18px;
-  --r-pill:      100px;
+  --font-mono:   ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+  --r-card:      6px;
+  --r-pill:      3px;
   --ease-expo:   cubic-bezier(.22,1,.36,1);
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bot:    env(safe-area-inset-bottom, 0px);
 
   /* Fixos: no canvien amb el tema (targetes/botons "paper" sobre fons fixos com modals) */
-  --ink:         #221F1E;
+  --ink:         #1B1A1F;
   --paper:       #fff;
   /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) */
-  --fg-rgb:      34,31,30;
+  --fg-rgb:      27,26,31;
   /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
-  --bg-rgb:      242,239,238;
+  --bg-rgb:      227,230,231;
 }
 
 html { height: 100%; overflow-x: hidden; }

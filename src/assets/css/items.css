@@ -19,14 +19,16 @@
 }
 
 .stat-value {
-  font-family: var(--font-serif);
-  font-size: 26px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: -0.02em;
   color: var(--white);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
@@ -102,8 +104,8 @@
 }
 
 .item-card.is-low {
-  border-color: rgba(212,149,106,0.38);
-  background: rgba(212,149,106,0.05);
+  border-color: rgba(166,118,58,0.38);
+  background: rgba(166,118,58,0.05);
 }
 
 .item-card.is-zero { opacity: 0.45; }
@@ -205,11 +207,13 @@
 }
 
 .qty-value {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
   color: var(--white);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .item-card.is-low .qty-value { color: var(--low); }
 
