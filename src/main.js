@@ -316,6 +316,10 @@ function init() {
       if (state.view === 'users')     renderUsers();
     }
   });
+  document.getElementById('btn-config-articles').addEventListener('click', () => {
+    closeConfigModal();
+    setView('catalog');
+  });
   document.getElementById('btn-config-change-password').addEventListener('click', () => {
     closeConfigModal();
     openChangePasswordModal();
@@ -472,7 +476,9 @@ function init() {
     }
   });
 
-  loadCatalog();
+  loadCatalog().then(() => {
+    if (state.view === 'stats') renderStats();
+  });
   initCatalogSearch();
 
   if ('serviceWorker' in navigator) {

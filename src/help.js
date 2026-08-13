@@ -45,10 +45,10 @@ const FLOWS = {
   comensal: [
     {
       icon: 'uncheck',
-      title: 'Es pot desmarcar un producte des del Resum',
+      title: 'Es pot desmarcar un producte des de l\'Inventari',
       color: '#c87d4a',
       steps: [
-        'A <strong>Resum</strong> cada producte marcat té una <strong>×</strong> al costat',
+        'A <strong>Inventari</strong> cada producte marcat té una <strong>×</strong> al costat',
         'Prement-la es treu de l\'inventari a l\'instant, sense haver de tornar-lo a buscar al Catàleg',
       ],
     },
@@ -80,10 +80,10 @@ const FLOWS = {
     },
     {
       icon: 'status',
-      title: 'Editar quantitats des de Resum no ho envia sol',
+      title: 'Editar quantitats des de l\'Inventari no ho envia sol',
       color: '#5b8fc9',
       steps: [
-        'A <strong>Resum</strong> pots canviar directament el número de cada producte sense passar pel Catàleg',
+        'A <strong>Inventari</strong> pots canviar directament el número de cada producte sense passar pel Catàleg',
         'Mentre no premis <strong>Enviar inventari al coordinador</strong>, aquests canvis només es guarden al mòbil i apareix l\'avís <strong>"Canvis pendents d\'enviar"</strong>',
       ],
     },

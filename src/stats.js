@@ -1,5 +1,5 @@
 import { state, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, CAT_COLORS, saveItems, saveOrders } from './config.js';
-import { t } from './i18n.js';
+import { t, getLang } from './i18n.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet, sendComandaToSheet, getGasUrl, sortByCategoryName } from './helpers.js';
 import { loadCatalog } from './catalog.js';
 import { ensureCategory } from './items.js';
@@ -108,13 +108,17 @@ document.addEventListener('click', e => {
 // ── STATS QTY INPUTS (document-level, attached once) ─────────────────
 let _pendingQtyChange = false;
 
+// Unitat triada per a un producte abans que tingui quantitat (encara sense
+// item a state.items). Es consumeix en crear l'item i es guarda a item.qtyUnit.
+const _pendingQtyUnit = {};
+
 function _updatePendingBanner() {
   const banner = document.getElementById('pending-changes-banner');
   if (banner) banner.hidden = !_pendingQtyChange;
 }
 
 document.addEventListener('change', e => {
-  const input = e.target.closest('.stats-qty-input');
+  const input = e.target.closest('.coord-order-qty');
   if (!input) return;
   const name = input.dataset.product;
   if (!name) return;
@@ -132,17 +136,110 @@ document.addEventListener('change', e => {
       const product = state.catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
       if (!product) return;
       const catId = ensureCategory(product.category);
-      state.items.unshift({
+      const pendingUnit = _pendingQtyUnit[name.toLowerCase()];
+      delete _pendingQtyUnit[name.toLowerCase()];
+      const newItem = {
         id: uid(), createdAt: new Date().toISOString(),
         name: product.name, category: catId,
         minStock: product.minStock || 0, notes: '',
-        quantity: val, boxes: val, unit: product.unit || '',
+        quantity: val, boxes: val, unit: product.unit || '', qtyUnit: pendingUnit || 'u',
         updatedAt: new Date().toISOString(),
-      });
-      renderStats();
+      };
+      state.items.unshift(newItem);
+
+      // Actualitza només la fila (en lloc de renderStats() sencer): un re-render
+      // complet just aquí eliminaria el botó d'unitat en ple gest de toc al mòbil
+      // si l'usuari el prem justos després d'escriure la quantitat, i el clic es perdia.
+      const row = input.closest('.coord-order-row');
+      if (row) {
+        row.classList.add('has-qty');
+        const inputsWrap = row.querySelector('.stats-qty-inputs');
+        const qtyWrap    = row.querySelector('.coord-order-qty-wrap');
+        if (inputsWrap && qtyWrap) {
+          if (!inputsWrap.querySelector('[data-qty-step="-1"]')) {
+            const minusBtn = document.createElement('button');
+            minusBtn.type = 'button';
+            minusBtn.className = 'stats-qty-step';
+            minusBtn.dataset.qtyStep = '-1';
+            minusBtn.dataset.product = product.name;
+            minusBtn.setAttribute('aria-label', t('Reduir quantitat'));
+            minusBtn.textContent = '−';
+            inputsWrap.insertBefore(minusBtn, qtyWrap);
+          }
+          if (!inputsWrap.querySelector('[data-qty-step="1"]')) {
+            const plusBtn = document.createElement('button');
+            plusBtn.type = 'button';
+            plusBtn.className = 'stats-qty-step';
+            plusBtn.dataset.qtyStep = '1';
+            plusBtn.dataset.product = product.name;
+            plusBtn.setAttribute('aria-label', t('Augmentar quantitat'));
+            plusBtn.textContent = '+';
+            qtyWrap.insertAdjacentElement('afterend', plusBtn);
+          }
+        }
+        if (inputsWrap && !inputsWrap.querySelector('.stats-remove-btn')) {
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'stats-remove-btn';
+          removeBtn.dataset.removeItem = newItem.id;
+          removeBtn.setAttribute('aria-label', `${t('Desmarcar')} ${product.name}`);
+          removeBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+          inputsWrap.appendChild(removeBtn);
+        }
+      }
     }
     saveItems();
   }
+
+  renderStatsStrip();
+  _pendingQtyChange = true;
+  _updatePendingBanner();
+});
+
+// Etiqueta mostrada per a la unitat de comptatge (c=caixes, a/b=ampolles, u=unitats).
+function _qtyUnitLabel(code) {
+  if (code === 'c') return 'c';
+  if (code === 'a') return getLang() === 'es' ? 'b' : 'a';
+  return 'u';
+}
+
+const QTY_UNIT_CYCLE = ['u', 'c', 'a'];
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-qty-unit-toggle]');
+  if (!btn) return;
+  const name    = btn.dataset.qtyUnitToggle;
+  const nameKey = name.toLowerCase();
+  const item    = state.items.find(i => i.name.toLowerCase() === nameKey);
+  const cur     = item ? (item.qtyUnit || 'u') : (_pendingQtyUnit[nameKey] || 'u');
+  const next    = QTY_UNIT_CYCLE[(QTY_UNIT_CYCLE.indexOf(cur) + 1) % QTY_UNIT_CYCLE.length];
+
+  if (item) {
+    item.qtyUnit   = next;
+    item.updatedAt = new Date().toISOString();
+    saveItems();
+  } else {
+    // Encara no hi ha quantitat: guarda la tria fins que es creï l'item.
+    _pendingQtyUnit[nameKey] = next;
+  }
+  btn.textContent = _qtyUnitLabel(next);
+});
+
+document.addEventListener('click', e => {
+  const stepBtn = e.target.closest('[data-qty-step]');
+  if (!stepBtn) return;
+  const name = stepBtn.dataset.product;
+  const item = state.items.find(i => i.name.toLowerCase() === name.toLowerCase());
+  if (!item) return;
+  const delta = parseFloat(stepBtn.dataset.qtyStep);
+  const next  = Math.max(0, (item.boxes ?? item.quantity ?? 0) + delta);
+  item.boxes     = next;
+  item.quantity  = next;
+  item.updatedAt = new Date().toISOString();
+  saveItems();
+
+  const row   = stepBtn.closest('.coord-order-row');
+  const input = row?.querySelector('.coord-order-qty');
+  if (input) input.value = next;
 
   renderStatsStrip();
   _pendingQtyChange = true;
@@ -213,15 +310,19 @@ export function renderStats() {
         const boxesVal  = item ? (item.boxes != null ? item.boxes : (item.quantity || '')) : '';
         const rowColor  = _coordCatColor(catName);
         const hasQty    = !!item;
+        const qtyUnit   = item ? (item.qtyUnit || 'u') : (_pendingQtyUnit[product.name.toLowerCase()] || 'u');
         html += `<div class="coord-order-row${hasQty ? ' has-qty' : ''}" style="border-left:3px solid ${rowColor}">
           <span class="coord-order-name">${esc(product.name)}</span>
           <div class="stats-qty-inputs">
+            ${hasQty ? `<button type="button" class="stats-qty-step" data-qty-step="-1" data-product="${esc(product.name)}" aria-label="${t('Reduir quantitat')}">−</button>` : ''}
             <div class="coord-order-qty-wrap">
               <input type="number" min="0" class="coord-order-qty"
                      data-product="${esc(product.name)}" data-field="boxes"
                      value="${boxesVal}" placeholder="—">
-              <span class="coord-order-qty-unit">u</span>
+              <button type="button" class="coord-order-qty-unit qty-unit-toggle"
+                      data-qty-unit-toggle="${esc(product.name)}" aria-label="${t('Unitat')}">${esc(_qtyUnitLabel(qtyUnit))}</button>
             </div>
+            ${hasQty ? `<button type="button" class="stats-qty-step" data-qty-step="1" data-product="${esc(product.name)}" aria-label="${t('Augmentar quantitat')}">+</button>` : ''}
             ${item ? `<button class="stats-remove-btn" data-remove-item="${esc(item.id)}" aria-label="${t('Desmarcar')} ${esc(product.name)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>` : ''}

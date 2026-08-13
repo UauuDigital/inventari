@@ -303,7 +303,7 @@ export function applyRole(name) {
   if (reportsTab)     reportsTab.hidden     = false;
   if (catalogMgmtTab) catalogMgmtTab.hidden = (role === 'comensal');
 
-  if (role === 'comensal')         setView('catalog');
+  if (role === 'comensal')         setView('stats');
   else if (role === 'coordinador') setView('reports');
   else if (role === 'admin')       setView('reports');
   else                             setView('orders');

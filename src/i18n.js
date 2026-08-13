@@ -51,6 +51,7 @@ const ES = {
   'Articles':                       'Artículos',
   'Categories':                     'Categorías',
   'Resum':                          'Resumen',
+  'Inventari':                      'Inventario',
   'Catàleg':                        'Catálogo',
   'Historial':                      'Historial',
   'Comandes':                       'Pedidos',

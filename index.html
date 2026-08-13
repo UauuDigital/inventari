@@ -321,13 +321,6 @@
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav" aria-label="Navegació principal">
     <!-- Tabs Comensal -->
-    <button class="nav-tab active role-comensal-only" data-view="catalog" aria-label="Articles" data-i18n-aria-label="Articles">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
-        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
-      </svg>
-      <span data-i18n="Articles">Articles</span>
-    </button>
     <button class="nav-tab" data-view="cats" aria-label="Categories" data-i18n-aria-label="Categories" hidden>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/>
@@ -337,11 +330,11 @@
       </svg>
       <span data-i18n="Categories">Categories</span>
     </button>
-    <button class="nav-tab role-comensal-only" data-view="stats" aria-label="Resum" data-i18n-aria-label="Resum">
+    <button class="nav-tab active role-comensal-only" data-view="stats" aria-label="Inventari" data-i18n-aria-label="Inventari">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 20V10M12 20V4M6 20v-6"/>
       </svg>
-      <span data-i18n="Resum">Resum</span>
+      <span data-i18n="Inventari">Inventari</span>
     </button>
     <!-- Tabs Coordinador / Admin -->
     <button class="nav-tab" data-view="catalog" id="catalog-mgmt-tab" aria-label="Catàleg" data-i18n-aria-label="Catàleg" hidden>
@@ -936,6 +929,7 @@
             <button type="button" class="lang-btn" data-lang="es">Castellano</button>
           </div>
         </div>
+        <button type="button" class="btn-secondary config-row-btn role-comensal-only" id="btn-config-articles" hidden data-i18n="Articles">Articles</button>
         <button type="button" class="btn-secondary config-row-btn" id="btn-config-change-password" data-i18n="Canviar contrasenya">Canviar contrasenya</button>
         <button type="button" class="btn-secondary config-row-btn role-admin-only" id="btn-config-gas" hidden data-i18n="Sincronització full">Sincronització full</button>
       </div>

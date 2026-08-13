@@ -190,6 +190,28 @@
   flex-shrink: 0;
 }
 .stats-remove-btn:hover { color: rgba(var(--fg-rgb),.8); }
+
+.stats-qty-step {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--fg-rgb),0.06);
+  border: 1px solid rgba(var(--fg-rgb),0.11);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.stats-qty-step:hover  { background: rgba(var(--fg-rgb),0.11); }
+.stats-qty-step:active { background: rgba(var(--fg-rgb),0.18); }
 .stats-qty-field {
   display: flex;
   align-items: center;
@@ -645,6 +667,20 @@
   outline: none;
 }
 .coord-order-qty-unit { font-size: 11px; color: var(--text-dim); }
+.qty-unit-toggle {
+  background: rgba(var(--fg-rgb),.1);
+  border: 1px solid rgba(var(--fg-rgb),.18);
+  padding: 5px 7px;
+  border-radius: 7px;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  text-transform: lowercase;
+  -webkit-tap-highlight-color: transparent;
+}
+.qty-unit-toggle:hover  { background: rgba(var(--fg-rgb),.18); border-color: rgba(var(--fg-rgb),.3); }
+.qty-unit-toggle:active { background: rgba(var(--fg-rgb),.26); }
 
 /* ── EDIT HISTORIAL MODAL ────────────────────────────────────────── */
 
