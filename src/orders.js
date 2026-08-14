@@ -101,6 +101,37 @@ function _initDescAddSearch() {
   });
 }
 
+function _orderDescHtml(o) {
+  if (!o.desc) return '';
+  const items = _parseStructuredDesc(o.desc);
+  if (!items) return `<div class="order-desc">${esc(o.desc)}</div>`;
+  const received = new Set(o.receivedItems || []);
+  return `
+    <div class="order-received-list">
+      ${items.map(item => {
+        const checked = received.has(item.name);
+        return `
+        <label class="order-received-row${checked ? ' is-received' : ''}">
+          <input type="checkbox" class="order-received-check" data-toggle-received="${o.id}" data-name="${esc(item.name)}" ${checked ? 'checked' : ''}>
+          <span class="order-received-name">${esc(item.name)}</span>
+          <span class="order-received-qty">${fmtNum(item.qty)} ${unitSuffix(_catalogUnit(item.name))}</span>
+        </label>`;
+      }).join('')}
+    </div>`;
+}
+
+export function toggleOrderItemReceived(orderId, name) {
+  const o = state.orders.find(x => x.id === orderId);
+  if (!o) return;
+  const received = new Set(o.receivedItems || []);
+  if (received.has(name)) received.delete(name);
+  else received.add(name);
+  o.receivedItems = [...received];
+  saveOrders();
+  sendComandaToSheet(o, 'update-comanda');
+  renderOrders();
+}
+
 export function filteredOrders() {
   if (!state.orderFilter) return state.orders;
   return state.orders.filter(o => o.status === state.orderFilter);
@@ -140,7 +171,7 @@ export function renderOrders() {
         </button>
       </div>
       ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
-      ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
+      ${_orderDescHtml(o)}
       <div class="order-card-footer">
         <div class="order-card-actions">
           <button class="order-icon-btn" data-print-order="${o.id}" aria-label="${t('Imprimir comanda')}">

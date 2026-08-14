@@ -1,4 +1,4 @@
-import { state, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, CAT_COLORS, saveItems, saveOrders } from './config.js';
+import { state, INVENTARI_URL, MASIA_LABELS, MASIA_COLORS, STORAGE_PENDING_INV, STORAGE_MASIA_ADULTS, STORAGE_HIST_RECEIVED, STORAGE_HIST_INCIDENCE, CAT_COLORS, saveItems, saveOrders } from './config.js';
 import { t, getLang } from './i18n.js';
 import { esc, fmtNum, fmtQtyDisplay, parseTotalQty, uid, toast, parseCSV, findCol, sendToSheet, sendComandaToSheet, getGasUrl, sortByCategoryName } from './helpers.js';
 import { loadCatalog } from './catalog.js';
@@ -44,6 +44,90 @@ function _resendPendingHistorial(id) {
   _historialRows = _historialRows.filter(r => r[0] !== id);
   _renderHistorialCards();
   toast(t('Inventari enviat.'));
+}
+
+// ── HISTORIAL — PRODUCTES REBUTS (check per producte, local al dispositiu) ──
+function _loadHistReceived() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_HIST_RECEIVED)) || {}; }
+  catch { return {}; }
+}
+
+function _isHistItemReceived(rowId, name) {
+  const map = _loadHistReceived();
+  return (map[rowId] || []).includes(name);
+}
+
+function _toggleHistItemReceived(rowId, name) {
+  const map = _loadHistReceived();
+  const list = new Set(map[rowId] || []);
+  if (list.has(name)) {
+    list.delete(name);
+  } else {
+    list.add(name);
+    _clearHistItemIncidence(rowId, name); // rebut i incidència són excloents
+  }
+  map[rowId] = [...list];
+  localStorage.setItem(STORAGE_HIST_RECEIVED, JSON.stringify(map));
+}
+
+function _clearHistItemReceived(rowId, name) {
+  const map = _loadHistReceived();
+  const list = new Set(map[rowId] || []);
+  if (!list.has(name)) return;
+  list.delete(name);
+  map[rowId] = [...list];
+  localStorage.setItem(STORAGE_HIST_RECEIVED, JSON.stringify(map));
+}
+
+function _loadHistIncidence() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_HIST_INCIDENCE)) || {}; }
+  catch { return {}; }
+}
+
+function _isHistItemIncidence(rowId, name) {
+  const map = _loadHistIncidence();
+  return (map[rowId] || []).includes(name);
+}
+
+function _toggleHistItemIncidence(rowId, name) {
+  const map = _loadHistIncidence();
+  const list = new Set(map[rowId] || []);
+  if (list.has(name)) {
+    list.delete(name);
+  } else {
+    list.add(name);
+    _clearHistItemReceived(rowId, name); // rebut i incidència són excloents
+  }
+  map[rowId] = [...list];
+  localStorage.setItem(STORAGE_HIST_INCIDENCE, JSON.stringify(map));
+}
+
+function _clearHistItemIncidence(rowId, name) {
+  const map = _loadHistIncidence();
+  const list = new Set(map[rowId] || []);
+  if (!list.has(name)) return;
+  list.delete(name);
+  map[rowId] = [...list];
+  localStorage.setItem(STORAGE_HIST_INCIDENCE, JSON.stringify(map));
+}
+
+// Icona del botó d'estat: incidència (prioritat visual) > rebut > pendent.
+function _histStatusIcon(checked, incidence) {
+  if (incidence) {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+  }
+  if (checked) {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+  }
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>`;
+}
+
+function _closeAllHistMenus(exceptWrap) {
+  document.querySelectorAll('.hist-status-wrap.open').forEach(wrap => {
+    if (wrap === exceptWrap) return;
+    wrap.classList.remove('open');
+    wrap.querySelector('.hist-status-menu').hidden = true;
+  });
 }
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
@@ -103,6 +187,44 @@ document.addEventListener('click', e => {
     renderStats();
     renderStatsStrip();
   }
+
+  const histMenuToggle = e.target.closest('[data-hist-menu-toggle]');
+  if (histMenuToggle) {
+    const wrap = histMenuToggle.closest('.hist-status-wrap');
+    const menu = wrap.querySelector('.hist-status-menu');
+    const willOpen = menu.hidden;
+    _closeAllHistMenus(wrap);
+    menu.hidden = !willOpen;
+    wrap.classList.toggle('open', willOpen);
+    return;
+  }
+
+  const histMenuItem = e.target.closest('.hist-status-menu-item');
+  if (histMenuItem) {
+    const row  = histMenuItem.closest('.order-received-row');
+    const wrap = histMenuItem.closest('.hist-status-wrap');
+    if (histMenuItem.dataset.histToggleReceived != null) {
+      _toggleHistItemReceived(histMenuItem.dataset.histToggleReceived, histMenuItem.dataset.name);
+    } else if (histMenuItem.dataset.histToggleIncidence != null) {
+      _toggleHistItemIncidence(histMenuItem.dataset.histToggleIncidence, histMenuItem.dataset.name);
+    }
+    const rowId    = histMenuItem.dataset.histToggleReceived ?? histMenuItem.dataset.histToggleIncidence;
+    const name     = histMenuItem.dataset.name;
+    const checked   = _isHistItemReceived(rowId, name);
+    const incidence = _isHistItemIncidence(rowId, name);
+    row.classList.remove('is-received', 'has-incidence');
+    if (incidence) row.classList.add('has-incidence');
+    else if (checked) row.classList.add('is-received');
+    row.querySelectorAll('.hist-status-menu-item').forEach(btn => btn.classList.remove('active'));
+    row.querySelector('[data-hist-toggle-received]')?.classList.toggle('active', checked);
+    row.querySelector('[data-hist-toggle-incidence]')?.classList.toggle('active', incidence);
+    row.querySelector('.hist-status-trigger').innerHTML = _histStatusIcon(checked, incidence);
+    wrap.querySelector('.hist-status-menu').hidden = true;
+    wrap.classList.remove('open');
+    return;
+  }
+
+  if (!e.target.closest('.hist-status-wrap')) _closeAllHistMenus();
 });
 
 // ── STATS QTY INPUTS (document-level, attached once) ─────────────────
@@ -520,6 +642,7 @@ function _cardHtml(r, role) {
     const qty = sep > -1 ? item.slice(sep + 2) : '';
     return qty !== NOT_COUNTED;
   });
+  const canCheck = (role === 'coordinador' || role === 'admin') && !isPending;
   const itemsHtml = items.map(item => {
     const sep      = item.indexOf(': ');
     const name     = sep > -1 ? item.slice(0, sep) : item;
@@ -528,6 +651,33 @@ function _cardHtml(r, role) {
     const minStock = catEntry?.minStock || 0;
     const isLow    = qty !== NOT_COUNTED && minStock > 0 && parseTotalQty(qty) < minStock;
     const lowStyle = isLow ? ` style="color:var(--danger)"` : '';
+    if (canCheck) {
+      const hasQty     = qty !== NOT_COUNTED;
+      const checked    = hasQty && _isHistItemReceived(id, name);
+      const incidence  = hasQty && _isHistItemIncidence(id, name);
+      const rowState   = incidence ? ' has-incidence' : (checked ? ' is-received' : '');
+      const menuHtml = hasQty ? `
+        <div class="hist-status-wrap">
+          <button type="button" class="hist-status-trigger" data-hist-menu-toggle aria-label="${t('Opcions')}" aria-haspopup="true">
+            ${_histStatusIcon(checked, incidence)}
+          </button>
+          <div class="hist-status-menu" hidden>
+            <button type="button" class="hist-status-menu-item${checked ? ' active' : ''}" data-hist-toggle-received="${esc(id)}" data-name="${esc(name)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              ${t('Rebut')}
+            </button>
+            <button type="button" class="hist-status-menu-item hist-status-menu-item--danger${incidence ? ' active' : ''}" data-hist-toggle-incidence="${esc(id)}" data-name="${esc(name)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              ${t('Incidència')}
+            </button>
+          </div>
+        </div>` : '';
+      return `<div class="order-received-row${rowState}">
+        <span class="order-received-name"${lowStyle}>${esc(name)}</span>
+        <span class="order-received-qty"${lowStyle}>${esc(qty)}</span>
+        ${menuHtml}
+      </div>`;
+    }
     return `<div class="stats-cat-row">
       <span class="stats-cat-name"${lowStyle}>${esc(name)}</span>
       <span class="stats-cat-count"${lowStyle}>${esc(qty)}</span>
