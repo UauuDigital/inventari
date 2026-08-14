@@ -512,7 +512,14 @@ function _cardHtml(r, role) {
 
   const editBtn   = canEdit ? _editBtn(id) : '';
   const cardStyle = masiaColor ? `border-left:3px solid ${masiaColor};` : '';
-  const items     = (inventari || '').split(' | ').filter(Boolean);
+  const items       = (inventari || '').split(' | ').filter(Boolean);
+  // L'inventari desat inclou tot el catàleg (els no comptats es marquen amb
+  // NOT_COUNTED); el recompte mostrat només ha de sumar els que sí es van comptar.
+  const countedItems = items.filter(item => {
+    const sep = item.indexOf(': ');
+    const qty = sep > -1 ? item.slice(sep + 2) : '';
+    return qty !== NOT_COUNTED;
+  });
   const itemsHtml = items.map(item => {
     const sep      = item.indexOf(': ');
     const name     = sep > -1 ? item.slice(0, sep) : item;
@@ -529,7 +536,7 @@ function _cardHtml(r, role) {
   const comentariHtml = comentari ? `<div class="report-comment">${esc(comentari)}</div>` : '';
   const statusBadge = isPending
     ? `<span class="report-pending-badge">${t('No enviat')}</span>`
-    : (role === 'comensal' ? `<span class="report-received-badge">${t('Rebut')}</span>` : `<span class="report-count-badge">${t('{n} productes', { n: items.length })}</span>`);
+    : (role === 'comensal' ? `<span class="report-received-badge">${t('Rebut')}</span>` : `<span class="report-count-badge">${t('{n} productes', { n: countedItems.length })}</span>`);
   return `
     <div class="report-card${isPending ? ' report-card--pending' : ''}" style="${cardStyle}">
       <div class="report-card-header">
@@ -548,7 +555,7 @@ function _cardHtml(r, role) {
       </div>
       ${comentariHtml}
       <details class="report-items-details">
-        <summary class="report-items-summary">${t('{n} productes', { n: items.length })}</summary>
+        <summary class="report-items-summary">${t('{n} productes', { n: countedItems.length })}</summary>
         <div class="report-items-list">${itemsHtml}</div>
       </details>
     </div>`;
