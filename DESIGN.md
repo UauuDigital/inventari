@@ -2,9 +2,9 @@
 name: Inventari Uauu
 description: PWA d'inventari — el manifest de càrrega d'una sala de material, no una llibreta de casaments
 colors:
-  kraft-bg: "#E7DFCB"
-  paper: "#F5F1E4"
-  ink: "#201E1A"
+  paper-carbo: "#E3E6E7"
+  paper: "#ffffff"
+  ink: "#1B1A1F"
   danger-red: "#C23B33"
   success-green: "#3C8F5E"
   warning-amber: "#A9790A"
@@ -22,7 +22,7 @@ typography:
     fontWeight: 500
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Ogg', 'Inter', sans-serif"
     fontSize: "14px"
     fontWeight: 400
   numeric:
@@ -30,7 +30,7 @@ typography:
     fontWeight: 600
     fontVariantNumeric: tabular-nums
   label:
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Ogg', 'Inter', sans-serif"
     fontSize: "9px"
     fontWeight: 400
     letterSpacing: "0.09em"
@@ -49,11 +49,11 @@ components:
     clipPath: "cut-corner-12"
     padding: "13px 22px 13px 20px"
   card-user:
-    backgroundColor: "rgba(32,30,26,0.05)"
+    backgroundColor: "rgba(27,26,31,0.05)"
     rounded: "{rounded.lg}"
     padding: "24px"
   input-search:
-    backgroundColor: "rgba(32,30,26,0.07)"
+    backgroundColor: "rgba(27,26,31,0.07)"
     rounded: "{rounded.sm}"
     padding: "0 16px"
 ---
@@ -64,10 +64,10 @@ components:
 
 **Creative North Star: "El Manifest de Càrrega"**
 
-Substitueix l'anterior "Full de Pull". El sistema evoca el taulell d'una sala de material a plena llum, abans que arribi l'equip a carregar la furgoneta: cartó/kraft pàl·lid (`#E7DFCB`, no crema càlid) com a fons constant, etiquetes de paper una mica més clares (`#F5F1E4`) per a modals i targetes, títols grans en Oswald condensat majúscul —com el text estergit d'una caixa de transport— i xifres en monospace tabular com un tiquet imprès. Cap accent de color decoratiu: l'acció primària (FAB) es marca en negre/ink sòlid, amb pes i contrast, no amb un color cridaner. Sense gradients, sense ombres apilades, sense decoració gratuïta.
+Substitueix l'anterior "Full de Pull" només en el motiu (sala de material en lloc de full d'estilista); manté el mateix fons paper-carbó fred original (`#E3E6E7`, mai crema càlid). Títols grans en Oswald condensat majúscul —com el text estergit d'una caixa de transport— i xifres en monospace tabular com un tiquet imprès. Cap accent de color decoratiu: l'acció primària (FAB) es marca en negre/ink sòlid, amb pes i contrast, no amb un color cridaner. Sense gradients, sense ombres apilades, sense decoració gratuïta.
 
 **Key Characteristics:**
-- Dues famílies tipogràfiques amb rols estrictes: **Oswald** (condensat, majúscules) només per a títols de pantalla i de modal; **Inter** per a tota la resta del text.
+- Dues famílies tipogràfiques amb rols estrictes: **Oswald** (condensat, majúscules) només per a títols de pantalla i de modal; **Ogg** (font corporativa de l'empresa) per a tota la resta del text.
 - Xifres (quantitats, totals) sempre en monospace tabular.
 - Radi de cantonada gairebé nul (3-6px) a tot arreu. El motiu signatura —cantonada tallada en diagonal, com el tros arrencat d'una etiqueta de magatzem— apareix al FAB i, en miniatura, com a marca d'estoc pendent a les targetes.
 - Superfícies planes per defecte; l'ombra és l'excepció reservada a accions flotants.
@@ -78,12 +78,11 @@ Substitueix l'anterior "Full de Pull". El sistema evoca el taulell d'una sala de
 Kraft clar constant + etiquetes de paper una mica més clares, negre/ink com a únic "accent" (per pes i contrast, no per color), més tres colors semàntics d'estat (èxit/avís/error), reservats exclusivament per indicar estoc i estat de comandes, mai decoratius.
 
 ### Primary
-- **Kraft** (`#E7DFCB`, token `--dark`): fons de l'app — cartó pàl·lid, deliberadament grisós, no crema càlid.
-- **Paper** (`#F5F1E4`, token `--paper`/`--cream`): superfícies "etiqueta" —modals, targetes de catàleg— un to més clar que el fons. Text sobre paper és `--ink` (`#201E1A`).
-- **Ink** (`#201E1A`, token `--ink`/`--white`): text principal i únic "accent" del sistema — el FAB és ink sòlid, no un color saturat.
+- **Paper-carbó** (`#E3E6E7`, token `--dark`/`--cream`): fons de l'app i de les superfícies "paper" (modals) — gris-blau pàl·lid, explícitament no crema.
+- **Ink** (`#1B1A1F`, token `--ink`/`--white`): text principal i únic "accent" del sistema — el FAB és ink sòlid, no un color saturat.
 
 ### Neutral
-- **Text** (`#201E1A`): text principal, l'ink de tot el sistema.
+- **Text** (`#1B1A1F`): text principal, l'ink de tot el sistema.
 - **Text Dim** (`rgba(ink,0.58)`): text secundari (metadades, subtítols curts).
 - **Text Dimmer** (`rgba(ink,0.36)`): text terciari (placeholders, labels molt discretes).
 
@@ -96,23 +95,23 @@ Kraft clar constant + etiquetes de paper una mica més clares, negre/ink com a �
 ### Named Rules
 **The No-Accent Rule.** El sistema no té cap color d'accent decoratiu. El FAB i qualsevol èmfasi d'acció primària es marquen en negre/ink sòlid (pes i contrast), no amb un color saturat nou. Els únics colors fora de l'escala neutra són els tres semàntics d'estat.
 
-**The Kraft-Not-Cream Rule.** El fons és un kraft grisós (`#E7DFCB`), mai un crema/marfil càlid — la diferència és subtil però deliberada, per no caure en el clúster genèric d'interfícies fetes per IA.
+**The No-Cream Rule.** El fons de l'app és fred (gris-blau paper-carbó, `#E3E6E7`), mai crema/marfil càlid.
 
 ## 3. Typography
 
-**Display/Title font:** 'Oswald' (condensat, variable, 200–700) — reservada exclusivament a títols de pantalla completa i capçaleres de modal. És l'única desviació respecte a Inter en tot el sistema, i deliberada: dona a les capçaleres un aire d'etiqueta de magatzem estergida.
-**Body font:** 'Inter' — tota la resta de text (cos, labels, botons, navegació).
+**Display/Title font:** 'Oswald' (condensat, variable, 200–700) — reservada exclusivament a títols de pantalla completa i capçaleres de modal. És l'única desviació respecte a Ogg en tot el sistema, i deliberada: dona a les capçaleres un aire d'etiqueta de magatzem estergida.
+**Body font:** 'Ogg' (Medium, 500) — font corporativa d'UAUU, per a tota la resta de text (cos, labels, botons, navegació).
 **Numeric font:** pila monospace del sistema — reservada exclusivament a xifres de quantitat/total.
 
 ### Hierarchy
 - **Display** (Oswald 700, `clamp(38px, 7.2vw, 64px)`, majúscules, line-height 0.92): títols de pantalla completa ("Qui ets?", "Quina masia?").
 - **Title** (Oswald 500, 21px): títol de l'app al header, títols de modal.
-- **Body** (Inter 400, 14px): text funcional general, noms de producte a llistes denses.
+- **Body** (Ogg 400, 14px): text funcional general, noms de producte a llistes denses.
 - **Numeric** (600, monospace, tabular-nums): qualsevol xifra de quantitat, total o comptador.
-- **Label** (Inter 400, 9-11px, letter-spacing 0.06-0.1em, uppercase): etiquetes curtes de navegació i badges — mai frases senceres.
+- **Label** (Ogg 400, 9-11px, letter-spacing 0.06-0.1em, uppercase): etiquetes curtes de navegació i badges — mai frases senceres.
 
 ### Named Rules
-**The Two-Font Rule.** Oswald només s'usa allà on la CSS ja fa servir `var(--font-serif)` (títols de pantalla i de modal). Cap altre lloc del sistema hi recorre; tot el text funcional és Inter.
+**The Two-Font Rule.** Oswald només s'usa allà on la CSS ja fa servir `var(--font-serif)` (títols de pantalla i de modal). Cap altre lloc del sistema hi recorre; tot el text funcional és Ogg.
 
 **The Sentence-Case Rule.** `text-transform: uppercase` només s'aplica a etiquetes d'una o dues paraules (nav, badges, pills) i al Display. Qualsevol subtítol que sigui una frase completa va en minúscules/frase normal.
 
@@ -152,7 +151,7 @@ Element flotant `position: fixed` a baix a la dreta. Porta el motiu signatura de
 
 ### Do:
 - **Do** fer servir monospace tabular per a qualsevol xifra de quantitat/total nova.
-- **Do** reservar Oswald exclusivament a `var(--font-serif)` (títols de pantalla/modal); Inter a tota la resta.
+- **Do** reservar Oswald exclusivament a `var(--font-serif)` (títols de pantalla/modal); Ogg a tota la resta.
 - **Do** fer servir els tokens semàntics (`--success`/`--warning`/`--danger`/`--low`) per a qualsevol color d'estat nou; mai hex directes.
 - **Do** incloure sempre un `:focus-within`/`:focus` visible en qualsevol camp editable nou.
 

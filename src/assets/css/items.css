@@ -167,11 +167,14 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border-radius: var(--r-pill);
-  padding: 3px 8px;
+  border-radius: 0;
+  padding: 3px 9px;
   display: inline-block;
   align-self: flex-start;
   border: 1px solid;
+  /* Mateix motiu signatura que el FAB: cantonada tallada en diagonal,
+     en miniatura, en lloc d'una caixa de vora arrodonida. */
+  clip-path: polygon(5px 0, 100% 0, 100% 100%, 0 100%, 0 5px);
   /* color and border-color set inline via JS */
 }
 

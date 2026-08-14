@@ -127,13 +127,15 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  padding: 5px 11px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 0;
   border: none;
   cursor: pointer;
   opacity: 0.45;
   transition: opacity .18s, transform .1s;
   -webkit-tap-highlight-color: transparent;
+  /* Mateix motiu signatura que el FAB: cantonada tallada en diagonal. */
+  clip-path: polygon(5px 0, 100% 0, 100% 100%, 0 100%, 0 5px);
 }
 .catalog-cat-pill:active { transform: scale(0.95); }
 .catalog-cat-pill.active { opacity: 1; }
@@ -214,14 +216,16 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border-radius: 0;
   max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 0;
   margin-top: 2px;
+  /* Mateix motiu signatura que el FAB: cantonada tallada en diagonal. */
+  clip-path: polygon(4px 0, 100% 0, 100% 100%, 0 100%, 0 4px);
 }
 
 .catalog-card-name {

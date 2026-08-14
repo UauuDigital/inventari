@@ -14,7 +14,7 @@ Substituir els processos manuals/en paper de gestió d'estoc entre les quatre ma
 Una única eina compartida que substitueix el paper i les fulles soltes per portar l'inventari i les comandes de totes les masies, perquè ningú hagi de refer feina ni endevinar l'estat real de l'estoc.
 
 ## Brand Personality
-Continguda però amb personalitat pròpia: no és una eina de marca de cara al públic, és el full de treball intern d'un equip d'operacions d'esdeveniments de luxe. Es tradueix en un disseny industrial de sala de material — fons kraft grisós, Oswald condensat majúscul per a títols (Inter per a la resta), xifres en monospace tabular com un tiquet, cantonades gairebé rectes amb un motiu de cantonada tallada com a signatura, i cap accent de color decoratiu: l'èmfasi ve del negre/ink sòlid, no d'un color saturat.
+Continguda però amb personalitat pròpia: no és una eina de marca de cara al públic, és el full de treball intern d'un equip d'operacions d'esdeveniments de luxe. Es tradueix en un disseny industrial de sala de material — fons paper-carbó fred (mai crema), Oswald condensat majúscul per a títols (Inter per a la resta), xifres en monospace tabular com un tiquet, cantonades gairebé rectes amb un motiu de cantonada tallada com a signatura, i cap accent de color decoratiu: l'èmfasi ve del negre/ink sòlid, no d'un color saturat.
 
 ## Anti-references
 Dues anti-referències explícites a evitar:

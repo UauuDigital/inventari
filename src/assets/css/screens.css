@@ -303,7 +303,7 @@
 
 .crumb {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   color: rgba(var(--fg-rgb),0.4);
 }
@@ -314,7 +314,7 @@
   padding: 0;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   color: rgba(var(--fg-rgb),0.6);
   text-decoration: underline;
   text-underline-offset: 2px;
