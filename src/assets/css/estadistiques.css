@@ -8,7 +8,7 @@
 .est-card {
   background: rgba(var(--fg-rgb),.05);
   border: 1px solid rgba(var(--fg-rgb),.08);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 20px 16px 16px;
 }
 
@@ -132,12 +132,12 @@
 .est-tooltip {
   position: fixed;
   z-index: 9999;
-  background: rgba(22, 20, 18, 0.95);
-  color: #fff;
+  background: rgba(19, 18, 20, 0.95);
+  color: var(--paper);
   font-size: 12px;
   font-weight: 500;
   padding: 6px 10px;
-  border-radius: 7px;
+  border-radius: 6px;
   border: 1px solid rgba(255,255,255,.12);
   pointer-events: none;
   white-space: nowrap;

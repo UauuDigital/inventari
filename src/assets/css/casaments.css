@@ -8,7 +8,7 @@
   gap: 10px;
   margin: 12px 16px 0;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid transparent;
 }
 
@@ -74,7 +74,7 @@
   padding: 20px 18px;
   background: var(--surface, rgba(var(--fg-rgb),.06));
   border: 1px solid var(--border, rgba(var(--fg-rgb),.1));
-  border-radius: 16px;
+  border-radius: 6px;
   cursor: pointer;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -135,7 +135,7 @@
   font-size: 13px;
   cursor: pointer;
   padding: 6px 10px 6px 6px;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: color .15s, background .15s;
   flex-shrink: 0;
 }
@@ -180,7 +180,7 @@
 .cas-item {
   background: var(--surface, rgba(var(--fg-rgb),.06));
   border: 1px solid var(--border, rgba(var(--fg-rgb),.1));
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 14px 16px;
   transition: opacity .2s;
 }
@@ -236,7 +236,7 @@
   user-select: none;
   list-style: none;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(var(--fg-rgb),.05);
   border: 1px solid rgba(var(--fg-rgb),.08);
   transition: background .15s, color .15s;
@@ -259,7 +259,7 @@
   font-size: 12px;
   color: var(--text, rgba(var(--fg-rgb),.85));
   background: rgba(0,0,0,.2);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px 14px;
   margin-top: 6px;
   line-height: 1.65;
@@ -275,7 +275,7 @@
   width: 100%;
   background: rgba(var(--fg-rgb),.06);
   border: 1px solid rgba(var(--fg-rgb),.12);
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--text);
   font-size: 14px;
   padding: 9px 14px;

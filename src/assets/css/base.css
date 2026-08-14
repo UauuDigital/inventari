@@ -5,30 +5,41 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Oswald';
+  src: url('../fonts/Oswald-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 700;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 /*
- * "El full de pull" — la llibreta de comptes d'un estilista d'esdeveniments
- * el matí de la càrrega: un tiquet de treball per comptar i moure estoc,
- * no una pàgina de record. Fons paper-carbó (no crema), un únic accent
- * de llautó/coure (no terracota), xifres en monospace com un tiquet de
- * cuina, cantonades gairebé rectes (no pastilles).
+ * "El manifest de càrrega" — el taulell de la sala de material d'una masia,
+ * a plena llum: cartó/kraft pàl·lid en lloc de crema càlid, etiquetes de
+ * magatzem en Oswald condensat majúscul per als títols grans (com el
+ * text estergit d'una caixa de transport), Inter per a tota la resta,
+ * xifres en monospace com un tiquet imprès. Cap accent de color: l'acció
+ * primària (FAB) i l'estoc pendent es marquen en negre/ink sòlid, amb pes
+ * tipogràfic i contrast — no amb un color cridaner.
+ * Cap pastilla, cap gradient, cap ombra fora de l'excepció del FAB.
  */
 :root {
-  --dark:        #E3E6E7;
-  --cream:       #E3E6E7;
-  --white:       #1B1A1F;
-  --surface:     rgba(27,26,31,0.045);
-  --border:      rgba(27,26,31,0.14);
-  --text:        #1B1A1F;
-  --text-dim:    rgba(27,26,31,0.55);
-  --text-dimmer: rgba(27,26,31,0.34);
-  --low:         #A6763A;
-  --danger:      #A6392C;
-  --success:     #4B8A5E;
-  --warning:     #C2A542;
-  --font-serif:  'Inter', sans-serif;
+  --dark:        #E7DFCB;
+  --cream:       #F5F1E4;
+  --white:       #201E1A;
+  --surface:     rgba(32,30,26,0.05);
+  --border:      rgba(32,30,26,0.15);
+  --text:        #201E1A;
+  --text-dim:    rgba(32,30,26,0.58);
+  --text-dimmer: rgba(32,30,26,0.36);
+  --low:         #A9790A;
+  --danger:      #C23B33;
+  --success:     #3C8F5E;
+  --warning:     #A9790A;
+  --font-serif:  'Oswald', 'Inter', sans-serif;
   --font-sans:   'Inter', sans-serif;
   --font-mono:   ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
   --r-card:      6px;
@@ -37,13 +48,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bot:    env(safe-area-inset-bottom, 0px);
 
-  /* Fixos: no canvien amb el tema (targetes/botons "paper" sobre fons fixos com modals) */
-  --ink:         #1B1A1F;
-  --paper:       #fff;
-  /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) */
-  --fg-rgb:      27,26,31;
-  /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
-  --bg-rgb:      227,230,231;
+  /* Fixos: superfícies "tiquet de paper" (modals, targetes de catàleg) —
+     un kraft una mica més clar que el fons de l'app, text ink fosc. */
+  --ink:         #201E1A;
+  --paper:       #F5F1E4;
+  /* Component RGB de --white/--text (fosc), per compondre rgba(var(--fg-rgb),X) */
+  --fg-rgb:      32,30,26;
+  /* Component RGB de --dark (fons kraft de l'app), per compondre rgba(var(--bg-rgb),X) */
+  --bg-rgb:      231,223,203;
 }
 
 html { height: 100%; overflow-x: hidden; }

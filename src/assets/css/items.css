@@ -11,7 +11,7 @@
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 6px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -104,8 +104,21 @@
 }
 
 .item-card.is-low {
-  border-color: rgba(166,118,58,0.38);
-  background: rgba(166,118,58,0.05);
+  border-color: rgba(169,121,10,0.4);
+  background: rgba(169,121,10,0.06);
+}
+
+/* Etiqueta tallada: mateix motiu del FAB, en miniatura, per marcar
+   l'estoc pendent directament sobre la targeta. */
+.item-card.is-low::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: var(--low);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 
 .item-card.is-zero { opacity: 0.45; }
@@ -139,7 +152,7 @@
   border: none;
   color: var(--text-dimmer);
   cursor: pointer;
-  border-radius: 7px;
+  border-radius: 6px;
   transition: color .2s, background .2s;
   margin: -2px -2px 0 0;
   -webkit-tap-highlight-color: transparent;
@@ -177,7 +190,7 @@
   justify-content: center;
   background: rgba(var(--fg-rgb),0.06);
   border: 1px solid rgba(var(--fg-rgb),0.11);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--white);
   cursor: pointer;
   font-size: 16px;
