@@ -597,7 +597,7 @@ function _renderHistorialCards() {
   cardsEl.innerHTML = visible.map(r => _cardHtml(r, role)).join('') +
     (hasMore
       ? `<button class="load-more-btn" data-load-more>${t('Carregar més ({n} restants)', { n: data.length - visible.length })}</button>`
-      : '');
+      : `<div class="reports-end-marker">${t('Fi de l\'historial')}</div>`);
 }
 
 export async function renderReports() {

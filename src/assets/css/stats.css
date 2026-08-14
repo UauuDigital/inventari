@@ -431,6 +431,17 @@
   padding: 10px 14px;
 }
 
+/* Dins l'historial, la xifra és la dada clau de cada línia: l'aïllem del
+   gris apagat genèric de .stats-cat-count perquè es distingeixi d'un cop
+   d'ull del nom del producte. */
+.report-items-list .stats-cat-count {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 /* ── Botó "Genera comanda" a la targeta d'historial ─────────────────── */
 
 .btn-gen-comanda {
@@ -797,6 +808,25 @@
   transition: background .15s, color .15s;
 }
 .load-more-btn:hover { background: rgba(var(--fg-rgb),.05); color: var(--white); }
+
+/* Tanca la llista com un tiquet imprès en lloc de deixar buit mort sota
+   l'última targeta quan hi ha pocs registres. */
+.reports-end-marker {
+  margin-top: 4px;
+  padding: 6px 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+}
+.reports-end-marker::before,
+.reports-end-marker::after { content: '— · —'; }
 
 /* ── Offline sync badge ──────────────────────────────────────────────── */
 
