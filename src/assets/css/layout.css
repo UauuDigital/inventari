@@ -68,11 +68,17 @@
   .app-header-actions .icon-btn { width: 38px; height: 38px; }
 }
 
-.app-version {
+.app-version-bar {
   position: fixed;
   top: calc(var(--safe-top) + 8px);
   right: 14px;
   z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-version {
   font-size: 11px;
   color: var(--text-dim);
   opacity: 0.55;
@@ -80,9 +86,23 @@
   pointer-events: none;
 }
 
+.app-support-link {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.55;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+
+.app-support-link:hover,
+.app-support-link:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .icon-btn {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -284,8 +304,8 @@
 
 .fab {
   position: fixed;
-  bottom: calc(66px + var(--safe-bot) + 14px);
-  right: 16px;
+  bottom: calc(57px + var(--safe-bot));
+  right: 0;
   z-index: 20;
   display: flex;
   align-items: center;
