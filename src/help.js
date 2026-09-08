@@ -206,7 +206,13 @@ const FLOWS = {
 const ROL_LABEL = { comensal: 'Encarregat', coordinador: 'Coordinador', admin: 'Admin' };
 const ROL_COLOR = { comensal: '#4e9d7a',   coordinador: '#5b8fc9',      admin: '#c87d4a' };
 
-function _flowHtml(f) {
+function _flowMatches(f, query) {
+  if (!query) return true;
+  const haystack = [t(f.title), ...f.steps.map(s => t(s))].join(' ').toLowerCase();
+  return haystack.includes(query);
+}
+
+function _flowHtml(f, idx) {
   const icon = ICONS[f.icon] || '';
   const single = f.steps.length === 1;
   const steps = f.steps.map((s, i) => `
@@ -215,14 +221,17 @@ function _flowHtml(f) {
       <span class="help-step-text">${t(s)}</span>
     </div>`).join('');
   return `
-    <div class="help-flow">
-      <div class="help-flow-head" style="color:${f.color}">
+    <div class="help-flow" data-flow-idx="${idx}">
+      <button type="button" class="help-flow-head" style="color:${f.color}">
         <span class="help-flow-icon" style="background:${f.color}18">${icon}</span>
         <span class="help-flow-title">${esc(t(f.title))}</span>
-      </div>
+        <svg class="help-flow-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
       <div class="help-flow-steps">${steps}</div>
     </div>`;
 }
+
+let _helpFlows = [];
 
 export function openHelpModal() {
   const rol    = (state.authProfile?.rol || '').toLowerCase() || 'comensal';
@@ -231,7 +240,7 @@ export function openHelpModal() {
   const roleFlows = rol === 'admin'
     ? [...(FLOWS.admin || []), ...(FLOWS.coordinador || [])]
     : FLOWS[rol] || [];
-  const flows = [...GENERAL_FLOWS, ...roleFlows];
+  _helpFlows = [...GENERAL_FLOWS, ...roleFlows];
 
   document.getElementById('help-modal-body').innerHTML = `
     <div class="help-intro">
@@ -240,7 +249,33 @@ export function openHelpModal() {
       </div>
       <p class="help-intro-text">${esc(t('Detalls que no són evidents a primer cop d\'ull.'))}</p>
     </div>
-    ${flows.map(_flowHtml).join('')}`;
+    <input type="text" class="help-search-input" id="help-search-input" placeholder="${esc(t('Cercar…'))}" data-i18n-placeholder="Cercar…">
+    <div id="help-flows-list">${_helpFlows.map(_flowHtml).join('')}</div>
+    <p class="help-empty" id="help-empty" hidden>${esc(t('Cap resultat.'))}</p>
+    <p class="help-contact">${esc(t('Si tens més dubtes, escriu a'))} <a href="mailto:digital@uauu.cat">digital@uauu.cat</a></p>`;
+
+  const list = document.getElementById('help-flows-list');
+  list.addEventListener('click', (e) => {
+    const head = e.target.closest('.help-flow-head');
+    if (!head) return;
+    head.closest('.help-flow').classList.toggle('open');
+  });
+
+  document.getElementById('help-search-input').addEventListener('input', (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    let visible = 0;
+    list.querySelectorAll('.help-flow').forEach(el => {
+      const flow = _helpFlows[Number(el.dataset.flowIdx)];
+      const match = _flowMatches(flow, query);
+      el.hidden = !match;
+      if (match) {
+        visible++;
+        el.classList.toggle('open', !!query);
+      }
+    });
+    document.getElementById('help-empty').hidden = visible > 0;
+  });
+
   document.getElementById('modal-help').classList.add('open');
 }
 

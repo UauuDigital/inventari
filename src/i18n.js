@@ -178,6 +178,9 @@ const ES = {
   // ── Ajuda ──
   'Com funciona':                   'Cómo funciona',
   "Detalls que no són evidents a primer cop d'ull.": 'Detalles que no son evidentes a primera vista.',
+  'Cercar…':                        'Buscar…',
+  'Cap resultat.':                  'Sin resultados.',
+  'Si tens més dubtes, escriu a':   'Si tienes más dudas, escribe a',
 
   // ── Editar historial ──
   'Editar inventari':               'Editar inventario',
