@@ -17,7 +17,7 @@ import {
   openEditProductModal, saveEditProduct, deleteEditProduct,
   removeQtyItem,
 } from './catalog.js';
-import { renderOrders, openOrderModal, openPastOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus, navOrderPick, submitOrderPick, resolveOrderPickDisplay, toggleOrderItemReceived } from './orders.js';
+import { renderOrders, openOrderModal, openPastOrderModal, closeOrderModal, saveOrder, deleteOrder, deleteOrderDirect, printOrder, cycleOrderStatus, navOrderPick, submitOrderPick, resolveOrderPickDisplay } from './orders.js';
 import { processImportFile, confirmImport, openImportModal, closeImportModal } from './import.js';
 import {
   openUserModal, closeUserModal, saveUser, deleteUser,
@@ -190,9 +190,6 @@ document.addEventListener('click', e => {
 
   const cycleBtn = e.target.closest('[data-cycle-status]');
   if (cycleBtn) { cycleOrderStatus(cycleBtn.dataset.cycleStatus); return; }
-
-  const receivedCheck = e.target.closest('[data-toggle-received]');
-  if (receivedCheck) { toggleOrderItemReceived(receivedCheck.dataset.toggleReceived, receivedCheck.dataset.name); return; }
 
   const delOrderBtn = e.target.closest('[data-delete-order-direct]');
   if (delOrderBtn) { deleteOrderDirect(delOrderBtn.dataset.deleteOrderDirect); return; }

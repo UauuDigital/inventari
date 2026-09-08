@@ -52,7 +52,7 @@ function _loadHistReceived() {
   catch { return {}; }
 }
 
-function _isHistItemReceived(rowId, name) {
+export function _isHistItemReceived(rowId, name) {
   const map = _loadHistReceived();
   return (map[rowId] || []).includes(name);
 }
@@ -84,7 +84,7 @@ function _loadHistIncidence() {
   catch { return {}; }
 }
 
-function _isHistItemIncidence(rowId, name) {
+export function _isHistItemIncidence(rowId, name) {
   const map = _loadHistIncidence();
   return (map[rowId] || []).includes(name);
 }
@@ -111,8 +111,13 @@ function _clearHistItemIncidence(rowId, name) {
   localStorage.setItem(STORAGE_HIST_INCIDENCE, JSON.stringify(map));
 }
 
+export function _clearHistItemStatus(rowId, name) {
+  _clearHistItemReceived(rowId, name);
+  _clearHistItemIncidence(rowId, name);
+}
+
 // Icona del botó d'estat: incidència (prioritat visual) > rebut > pendent.
-function _histStatusIcon(checked, incidence) {
+export function _histStatusIcon(checked, incidence) {
   if (incidence) {
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
   }
@@ -128,6 +133,23 @@ function _closeAllHistMenus(exceptWrap) {
     wrap.classList.remove('open');
     wrap.querySelector('.hist-status-menu').hidden = true;
   });
+}
+
+// Posiciona el menú amb position:fixed (escapa qualsevol ancestor amb overflow:hidden,
+// com les targetes de l'historial/comandes) i sempre s'obre cap a l'esquerra del botó,
+// sense sortir mai de la pantalla.
+function _positionHistMenu(trigger, menu) {
+  const rect = trigger.getBoundingClientRect();
+  menu.hidden = false;
+  const menuWidth  = menu.offsetWidth  || 150;
+  const menuHeight = menu.offsetHeight || 90;
+  menu.hidden = true;
+  const left = Math.max(8, rect.right - menuWidth);
+  // Si no hi ha prou espai a sota fins al final de la pantalla, obre'l cap amunt.
+  const opensUp = rect.bottom + 4 + menuHeight > window.innerHeight - 8;
+  const top = opensUp ? rect.top - 4 - menuHeight : rect.bottom + 4;
+  menu.style.left = `${left}px`;
+  menu.style.top  = `${Math.max(8, top)}px`;
 }
 
 // ── HISTORIAL EDIT STATE ─────────────────────────────────────────────
@@ -194,6 +216,7 @@ document.addEventListener('click', e => {
     const menu = wrap.querySelector('.hist-status-menu');
     const willOpen = menu.hidden;
     _closeAllHistMenus(wrap);
+    if (willOpen) _positionHistMenu(histMenuToggle, menu);
     menu.hidden = !willOpen;
     wrap.classList.toggle('open', willOpen);
     return;
@@ -207,8 +230,10 @@ document.addEventListener('click', e => {
       _toggleHistItemReceived(histMenuItem.dataset.histToggleReceived, histMenuItem.dataset.name);
     } else if (histMenuItem.dataset.histToggleIncidence != null) {
       _toggleHistItemIncidence(histMenuItem.dataset.histToggleIncidence, histMenuItem.dataset.name);
+    } else if (histMenuItem.dataset.histClearStatus != null) {
+      _clearHistItemStatus(histMenuItem.dataset.histClearStatus, histMenuItem.dataset.name);
     }
-    const rowId    = histMenuItem.dataset.histToggleReceived ?? histMenuItem.dataset.histToggleIncidence;
+    const rowId    = histMenuItem.dataset.histToggleReceived ?? histMenuItem.dataset.histToggleIncidence ?? histMenuItem.dataset.histClearStatus;
     const name     = histMenuItem.dataset.name;
     const checked   = _isHistItemReceived(rowId, name);
     const incidence = _isHistItemIncidence(rowId, name);
@@ -218,6 +243,7 @@ document.addEventListener('click', e => {
     row.querySelectorAll('.hist-status-menu-item').forEach(btn => btn.classList.remove('active'));
     row.querySelector('[data-hist-toggle-received]')?.classList.toggle('active', checked);
     row.querySelector('[data-hist-toggle-incidence]')?.classList.toggle('active', incidence);
+    row.querySelector('[data-hist-clear-status]')?.classList.toggle('active', !checked && !incidence);
     row.querySelector('.hist-status-trigger').innerHTML = _histStatusIcon(checked, incidence);
     wrap.querySelector('.hist-status-menu').hidden = true;
     wrap.classList.remove('open');
@@ -226,6 +252,10 @@ document.addEventListener('click', e => {
 
   if (!e.target.closest('.hist-status-wrap')) _closeAllHistMenus();
 });
+
+// Els menús són position:fixed (per escapar l'overflow:hidden de les targetes), així que
+// cal tancar-los en fer scroll perquè no quedin "flotant" desalineats del seu botó.
+document.addEventListener('scroll', () => _closeAllHistMenus(), true);
 
 // ── STATS QTY INPUTS (document-level, attached once) ─────────────────
 let _pendingQtyChange = false;
@@ -606,7 +636,12 @@ function _cardHtml(r, role) {
     ? `<span class="report-order-badge" title="${t("Ja s'ha generat una comanda a partir d'aquest inventari")}">${t('Comanda generada')}</span>`
     : '';
   const genComandaBtn = (role === 'coordinador' || role === 'admin') && !isProducte
-    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button">${hasOrder ? t('Torna a generar') : t('Genera comanda')}</button>`
+    ? `<button class="btn-gen-comanda" data-gencomanda="${esc(id)}" type="button" aria-label="${hasOrder ? t('Torna a generar') : t('Genera comanda')}" title="${hasOrder ? t('Torna a generar') : t('Genera comanda')}">
+        <svg class="btn-gen-comanda-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/>
+        </svg>
+        <span class="btn-gen-comanda-label">${hasOrder ? t('Torna a generar') : t('Genera comanda')}</span>
+      </button>`
     : '';
   const canEdit = (role === 'admin' || role === 'coordinador') && !isPending;
   const resendBtn = isPending
@@ -670,12 +705,16 @@ function _cardHtml(r, role) {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               ${t('Incidència')}
             </button>
+            <button type="button" class="hist-status-menu-item${(!checked && !incidence) ? ' active' : ''}" data-hist-clear-status="${esc(id)}" data-name="${esc(name)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>
+              ${t('Pendent')}
+            </button>
           </div>
         </div>` : '';
       return `<div class="order-received-row${rowState}">
+        ${menuHtml}
         <span class="order-received-name"${lowStyle}>${esc(name)}</span>
         <span class="order-received-qty"${lowStyle}>${esc(qty)}</span>
-        ${menuHtml}
       </div>`;
     }
     return `<div class="stats-cat-row">
@@ -811,7 +850,7 @@ export async function renderReports() {
     } else {
       el.innerHTML = `
         <div class="empty-state">
-          <svg class="empty-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="1.5" aria-hidden="true">
+          <svg class="empty-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <rect x="10" y="8" width="44" height="50" rx="4"/>
             <path d="M10 22h44"/><path d="M20 36h24M20 44h16"/>
           </svg>
@@ -982,9 +1021,13 @@ function _initScrollFab(btnTopId, btnBottomId) {
   const btnTop   = document.getElementById(btnTopId);
   const btnBottom = document.getElementById(btnBottomId);
   if (!scrollEl || !btnTop || !btnBottom) return;
+  // Els dos botons ocupen el mateix lloc i mai es mostren alhora: prop de dalt
+  // s'ofereix anar cap avall; en qualsevol altre punt, anar cap a dalt.
   const update = () => {
-    btnBottom.hidden = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < 40;
-    btnTop.hidden    = scrollEl.scrollTop < 40;
+    const scrollable = scrollEl.scrollHeight > scrollEl.clientHeight + 40;
+    const atTop       = scrollEl.scrollTop < 40;
+    btnBottom.hidden = !scrollable || !atTop;
+    btnTop.hidden    = !scrollable || atTop;
   };
   scrollEl.onscroll  = update;
   btnBottom.onclick  = () => scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });

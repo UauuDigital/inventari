@@ -345,9 +345,9 @@
 .report-order-badge {
   font-size: 11px;
   font-weight: 500;
-  color: #f2b544;
-  background: rgba(242,181,68,.12);
-  border: 1px solid rgba(242,181,68,.28);
+  color: var(--low);
+  background: rgba(169,121,10,.12);
+  border: 1px solid rgba(169,121,10,.3);
   border-radius: 6px;
   padding: 2px 8px;
   white-space: nowrap;
@@ -445,6 +445,9 @@
 /* ── Botó "Genera comanda" a la targeta d'historial ─────────────────── */
 
 .btn-gen-comanda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 500;
   padding: 4px 10px;
@@ -454,9 +457,19 @@
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
   transition: background .15s, border-color .15s;
 }
 .btn-gen-comanda:hover { background: rgba(var(--fg-rgb),.08); border-color: rgba(var(--fg-rgb),.38); }
+.btn-gen-comanda-icon { flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .btn-gen-comanda {
+    gap: 0;
+    padding: 6px;
+  }
+  .btn-gen-comanda-label { display: none; }
+}
 
 /* ── Vista editar comanda (tema fosc, vista nativa) ──────────────────── */
 
@@ -486,8 +499,8 @@
   z-index: 5;
   transition: opacity .15s, transform .15s;
 }
-.scroll-fab-bottom { bottom: calc(20px + var(--safe-bot)); }
-.scroll-fab-top    { bottom: calc(68px + var(--safe-bot)); }
+.scroll-fab-bottom,
+.scroll-fab-top { bottom: calc(20px + var(--safe-bot)); }
 .scroll-fab-bottom:hover,
 .scroll-fab-top:hover { transform: translateY(-2px); }
 .scroll-fab-bottom[hidden],

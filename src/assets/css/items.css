@@ -257,7 +257,7 @@
   gap: 14px;
 }
 
-.empty-icon { opacity: 0.18; }
+.empty-icon { color: var(--text); opacity: 0.18; }
 
 .empty-title {
   font-family: var(--font-serif);

@@ -221,8 +221,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   background: rgba(var(--fg-rgb),0.05);
   border: 1px solid rgba(var(--fg-rgb),0.1);
@@ -246,9 +246,7 @@
 }
 
 .hist-status-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  position: fixed;
   min-width: 150px;
   background: var(--cream);
   border: 1px solid rgba(27,26,31,.14);
@@ -327,8 +325,8 @@
 .order-amount:empty { display: none; }
 
 .order-edit-btn {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,8 +451,8 @@
   gap: 4px;
 }
 .order-icon-btn {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
