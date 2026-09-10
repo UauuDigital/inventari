@@ -24,12 +24,11 @@
 .users-brand-logo {
   height: 100px;
   width: auto;
-  filter: brightness(0) invert(1);
+  filter: brightness(0);
   opacity: 0.9;
   flex-shrink: 0;
   align-self: flex-start;
 }
-.users-brand-logo { filter: brightness(0); }
 
 .users-inner {
   flex: 1;
@@ -62,10 +61,12 @@
 
 .users-title {
   font-family: var(--font-serif);
-  font-size: clamp(36px, 7vw, 64px);
-  letter-spacing: -0.035em;
+  font-weight: 700;
+  font-size: clamp(38px, 7.2vw, 64px);
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
   color: var(--white);
-  line-height: 1;
+  line-height: 0.92;
 }
 
 .users-sub {
@@ -100,7 +101,7 @@
   padding: clamp(20px, 4vw, 36px) clamp(12px, 3vw, 24px) clamp(18px, 3.5vw, 30px);
   background: rgba(var(--fg-rgb),0.04);
   border: 1px solid rgba(var(--fg-rgb),0.1);
-  border-radius: 24px;
+  border-radius: var(--r-card);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -182,7 +183,7 @@
     width: 100%;
     gap: 16px;
     padding: 18px 20px;
-    border-radius: 18px;
+    border-radius: var(--r-card);
   }
   .user-card-icon {
     width: 52px;
@@ -213,7 +214,7 @@
     width: 100%;
     gap: 16px;
     padding: 18px 20px;
-    border-radius: 18px;
+    border-radius: var(--r-card);
   }
   #screen-masia .user-card-icon {
     width: 52px;
@@ -302,7 +303,7 @@
 
 .crumb {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   color: rgba(var(--fg-rgb),0.4);
 }
@@ -313,7 +314,7 @@
   padding: 0;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   color: rgba(var(--fg-rgb),0.6);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -340,7 +341,7 @@
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: var(--r-pill);
   padding: 16px;
   color: var(--white);
   font-family: var(--font-sans);
@@ -368,7 +369,7 @@
   background: var(--white);
   color: var(--dark);
   border: none;
-  border-radius: 13px;
+  border-radius: var(--r-pill);
   font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 500;
@@ -392,7 +393,7 @@
   width: 100%;
   background: rgba(var(--fg-rgb),.06);
   border: 1px solid rgba(var(--fg-rgb),.12);
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--text);
   font-size: 14px;
   padding: 9px 14px;
@@ -443,7 +444,7 @@
   text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 6px;
   padding: 12px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -508,8 +509,8 @@
   white-space: nowrap;
 }
 .user-manage-rol.rol-admin {
-  border-color: rgba(212,160,90,0.5);
-  color: #e0b87e;
+  border-color: rgba(169,121,10,0.5);
+  color: var(--low);
 }
 .user-manage-rol.rol-coordinador {
   border-color: rgba(130,170,210,0.5);

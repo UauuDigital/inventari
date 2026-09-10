@@ -18,6 +18,8 @@ export const STORAGE_USER_PROFILE   = 'uauu_inv_user_profile';
 export const STORAGE_PENDING_INV    = 'uauu_inv_pending_inventari';
 export const STORAGE_MASIA_ADULTS   = 'uauu_inv_masia_adults';
 export const STORAGE_GAS_URL        = 'uauu_inv_gas_url';
+export const STORAGE_HIST_RECEIVED  = 'uauu_inv_hist_received';
+export const STORAGE_HIST_INCIDENCE = 'uauu_inv_hist_incidence';
 
 export const SUPABASE_URL     = 'https://oeriszeicvdnagohnqvq.supabase.co';
 export const SUPABASE_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lcmlzemVpY3ZkbmFnb2hucXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjM2MTAsImV4cCI6MjA5NzMzOTYxMH0.GyZe8TDZus51kyYeOViZMPKxXYHlynfvJiJ83S_2cu0';
