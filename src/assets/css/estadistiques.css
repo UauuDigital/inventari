@@ -1,15 +1,37 @@
-.est-grid {
+#view-estadistiques {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+}
+
+#estadistiques-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.est-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   padding: 16px;
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .est-grid { grid-template-columns: 1fr; }
 }
 
 .est-card {
   background: rgba(var(--fg-rgb),.05);
   border: 1px solid rgba(var(--fg-rgb),.08);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 20px 16px 16px;
+  /* Sense min-width:0 aquí, una llegenda amb text llarg pot forçar la
+     seva columna del grid a créixer més enllà de l'1fr i les dues
+     targetes deixen de tenir la mateixa amplada. */
+  min-width: 0;
 }
 
 .est-card-title {
@@ -26,7 +48,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 10px;
 }
 
 .est-donut-wrap {
@@ -40,12 +62,11 @@
 
 .est-legend {
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
 }
 
-@media (max-width: 380px) {
-  .est-card-body { justify-content: flex-start; }
-  .est-legend { width: 100%; }
+@media (max-width: 620px) {
+  .est-card-body { flex-direction: column; }
 }
 
 .donut-center-val {
@@ -89,8 +110,9 @@
 .est-legend-label {
   color: var(--text-dim);
   font-size: 12px;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -100,6 +122,7 @@
   font-size: 12px;
   color: var(--text-dim);
   flex-shrink: 0;
+  margin-left: 6px;
 }
 
 .est-legend-meta strong {
@@ -132,12 +155,12 @@
 .est-tooltip {
   position: fixed;
   z-index: 9999;
-  background: rgba(22, 20, 18, 0.95);
-  color: #fff;
+  background: rgba(19, 18, 20, 0.95);
+  color: var(--paper);
   font-size: 12px;
   font-weight: 500;
   padding: 6px 10px;
-  border-radius: 7px;
+  border-radius: 6px;
   border: 1px solid rgba(255,255,255,.12);
   pointer-events: none;
   white-space: nowrap;

@@ -1,48 +1,61 @@
 @font-face {
-  font-family: 'Ogg';
-  src: url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.otf') format('opentype'),
-       url('../../../../catalegs-web/fonts/OGG%20MEDIUM/Ogg-Medium.ttf') format('truetype');
-  font-weight: 500;
+  font-family: 'Oswald';
+  src: url('../fonts/Oswald-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 700;
+  font-stretch: 75% 100%;
   font-display: swap;
 }
+
 @font-face {
-  font-family: 'Inter';
-  src: url('../../../../catalegs-web/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
-  font-weight: 100 900;
+  font-family: 'Ogg';
+  src: url('../fonts/Ogg Medium.ttf') format('truetype');
+  font-weight: 500;
   font-display: swap;
+  size-adjust: 112%;
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
+/*
+ * "El manifest de càrrega" — el taulell de la sala de material d'una masia,
+ * a plena llum: paper-carbó fred (no crema), etiquetes de magatzem en
+ * Oswald condensat majúscul per als títols grans (com el text estergit
+ * d'una caixa de transport), Inter per a tota la resta, xifres en
+ * monospace com un tiquet imprès. Cap accent de color: l'acció primària
+ * (FAB) i l'estoc pendent es marquen en negre/ink sòlid, amb pes
+ * tipogràfic i contrast — no amb un color cridaner.
+ * Cap pastilla, cap gradient, cap ombra fora de l'excepció del FAB.
+ */
 :root {
-  --dark:        #F2EFEE;
-  --cream:       #F2EFEE;
-  --white:       #221F1E;
-  --surface:     rgba(34,31,30,0.045);
-  --border:      rgba(34,31,30,0.1);
-  --text:        #221F1E;
-  --text-dim:    rgba(34,31,30,0.55);
-  --text-dimmer: rgba(34,31,30,0.32);
-  --low:         #D4956A;
-  --danger:      #C83030;
-  --success:     #5DBE78;
-  --warning:     #D4A843;
-  --font-serif:  'Ogg', Georgia, serif;
-  --font-sans:   'Inter', sans-serif;
-  --r-card:      18px;
-  --r-pill:      100px;
+  --dark:        #E3E6E7;
+  --cream:       #E3E6E7;
+  --white:       #1B1A1F;
+  --surface:     rgba(27,26,31,0.045);
+  --border:      rgba(27,26,31,0.14);
+  --text:        #1B1A1F;
+  --text-dim:    rgba(27,26,31,0.55);
+  --text-dimmer: rgba(27,26,31,0.34);
+  --low:         #A9790A;
+  --danger:      #C23B33;
+  --success:     #3C8F5E;
+  --warning:     #A9790A;
+  --font-serif:  'Oswald', 'Inter', sans-serif;
+  --font-sans:   'Ogg', 'Inter', sans-serif;
+  --font-mono:   ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+  --r-card:      6px;
+  --r-pill:      3px;
   --ease-expo:   cubic-bezier(.22,1,.36,1);
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bot:    env(safe-area-inset-bottom, 0px);
 
   /* Fixos: no canvien amb el tema (targetes/botons "paper" sobre fons fixos com modals) */
-  --ink:         #221F1E;
+  --ink:         #1B1A1F;
   --paper:       #fff;
   /* Component RGB de --white/--text, per compondre rgba(var(--fg-rgb),X) */
-  --fg-rgb:      34,31,30;
+  --fg-rgb:      27,26,31;
   /* Component RGB de --dark (fons de l'app), per compondre rgba(var(--bg-rgb),X) */
-  --bg-rgb:      242,239,238;
+  --bg-rgb:      227,230,231;
 }
 
 html { height: 100%; overflow-x: hidden; }

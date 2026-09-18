@@ -1,7 +1,7 @@
 import { state, STATUS_LABELS, STATUS_CSS, MASIA_COLORS, MASIA_LABELS, CAT_COLORS, saveOrders } from './config.js';
 import { t } from './i18n.js';
 import { uid, esc, fmtNum, fmtDate, toast, sendComandaToSheet, deleteComandaFromSheet, getGasUrl, sendToSheet, sortByCategoryName, unitSuffix, evalQtyExpr } from './helpers.js';
-import { revertOrderMitja } from './stats.js';
+import { revertOrderMitja, _isHistItemReceived, _isHistItemIncidence, _histStatusIcon } from './stats.js';
 
 // Si la comanda prové d'un inventari rebut, elimina també aquell registre del Sheets.
 function _deleteSourceHistorial(order) {
@@ -101,6 +101,45 @@ function _initDescAddSearch() {
   });
 }
 
+function _orderDescHtml(o) {
+  if (!o.desc) return '';
+  const items = _parseStructuredDesc(o.desc);
+  if (!items) return `<div class="order-desc">${esc(o.desc)}</div>`;
+  return `
+    <div class="order-received-list">
+      ${items.map(item => {
+        const checked   = _isHistItemReceived(o.id, item.name);
+        const incidence = _isHistItemIncidence(o.id, item.name);
+        const rowState  = incidence ? ' has-incidence' : (checked ? ' is-received' : '');
+        const qty       = `${fmtNum(item.qty)} ${unitSuffix(_catalogUnit(item.name))}`;
+        return `
+        <div class="order-received-row${rowState}">
+          <div class="hist-status-wrap">
+            <button type="button" class="hist-status-trigger" data-hist-menu-toggle aria-label="${t('Opcions')}" aria-haspopup="true">
+              ${_histStatusIcon(checked, incidence)}
+            </button>
+            <div class="hist-status-menu" hidden>
+              <button type="button" class="hist-status-menu-item${checked ? ' active' : ''}" data-hist-toggle-received="${o.id}" data-name="${esc(item.name)}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                ${t('Rebut')}
+              </button>
+              <button type="button" class="hist-status-menu-item hist-status-menu-item--danger${incidence ? ' active' : ''}" data-hist-toggle-incidence="${o.id}" data-name="${esc(item.name)}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                ${t('Incidència')}
+              </button>
+              <button type="button" class="hist-status-menu-item${(!checked && !incidence) ? ' active' : ''}" data-hist-clear-status="${o.id}" data-name="${esc(item.name)}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>
+                ${t('Pendent')}
+              </button>
+            </div>
+          </div>
+          <span class="order-received-name">${esc(item.name)}</span>
+          <span class="order-received-qty">${qty}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
 export function filteredOrders() {
   if (!state.orderFilter) return state.orders;
   return state.orders.filter(o => o.status === state.orderFilter);
@@ -140,7 +179,7 @@ export function renderOrders() {
         </button>
       </div>
       ${o.supplier ? `<div class="order-supplier">${esc(o.supplier)}</div>` : ''}
-      ${o.desc     ? `<div class="order-desc">${esc(o.desc)}</div>`         : ''}
+      ${_orderDescHtml(o)}
       <div class="order-card-footer">
         <div class="order-card-actions">
           <button class="order-icon-btn" data-print-order="${o.id}" aria-label="${t('Imprimir comanda')}">

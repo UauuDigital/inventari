@@ -48,7 +48,7 @@
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 6px;
   padding: 13px 15px;
 }
 
@@ -111,7 +111,7 @@
 .stats-cat-row {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 6px;
   padding: 13px 16px;
   display: flex;
   align-items: center;
@@ -148,7 +148,7 @@
 .stats-total-row {
   background: rgba(var(--fg-rgb),0.04);
   border: 1px solid rgba(var(--fg-rgb),0.06);
-  border-radius: 13px;
+  border-radius: 6px;
   padding: 16px;
   display: flex;
   justify-content: space-between;
@@ -165,10 +165,12 @@
 }
 
 .stats-total-val {
-  font-family: var(--font-serif);
-  font-size: 28px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 26px;
+  letter-spacing: -0.01em;
   color: var(--white);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── STATS QTY INPUTS ────────────────────────────────────────────── */
@@ -199,7 +201,7 @@
   justify-content: center;
   background: rgba(var(--fg-rgb),0.06);
   border: 1px solid rgba(var(--fg-rgb),0.11);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--text);
   cursor: pointer;
   font-size: 16px;
@@ -218,7 +220,7 @@
   gap: 4px;
   background: rgba(var(--fg-rgb),.1);
   border: 1px solid rgba(var(--fg-rgb),.14);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 4px 8px 4px 6px;
 }
 .stats-qty-field:focus-within {
@@ -248,7 +250,7 @@
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 6px;
   padding: 14px 16px;
   color: var(--white);
   font-family: var(--font-sans);
@@ -272,7 +274,7 @@
   background: var(--white);
   color: var(--dark);
   border: none;
-  border-radius: 13px;
+  border-radius: 6px;
   font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 500;
@@ -294,7 +296,7 @@
 .report-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -325,7 +327,7 @@
   color: var(--success);
   background: rgba(34,197,94,.12);
   border: 1px solid rgba(34,197,94,.25);
-  border-radius: 20px;
+  border-radius: 6px;
   padding: 2px 8px;
 }
 
@@ -333,9 +335,9 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--low);
-  background: rgba(212,149,106,.12);
-  border: 1px solid rgba(212,149,106,.3);
-  border-radius: 20px;
+  background: rgba(166,118,58,.12);
+  border: 1px solid rgba(166,118,58,.3);
+  border-radius: 6px;
   padding: 2px 8px;
   white-space: nowrap;
 }
@@ -343,17 +345,17 @@
 .report-order-badge {
   font-size: 11px;
   font-weight: 500;
-  color: #f2b544;
-  background: rgba(242,181,68,.12);
-  border: 1px solid rgba(242,181,68,.28);
-  border-radius: 20px;
+  color: var(--low);
+  background: rgba(169,121,10,.12);
+  border: 1px solid rgba(169,121,10,.3);
+  border-radius: 6px;
   padding: 2px 8px;
   white-space: nowrap;
 }
 
 .report-card--pending {
   border-style: dashed;
-  border-color: rgba(212,149,106,.35);
+  border-color: rgba(166,118,58,.35);
 }
 
 .btn-resend-historial {
@@ -362,7 +364,7 @@
   color: var(--ink);
   background: var(--low);
   border: none;
-  border-radius: 20px;
+  border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
   white-space: nowrap;
@@ -372,9 +374,9 @@
 .reports-offline-notice {
   font-size: 12px;
   color: var(--low);
-  background: rgba(212,149,106,.1);
-  border: 1px solid rgba(212,149,106,.25);
-  border-radius: 10px;
+  background: rgba(166,118,58,.1);
+  border: 1px solid rgba(166,118,58,.25);
+  border-radius: 6px;
   padding: 8px 12px;
 }
 
@@ -425,25 +427,49 @@
 }
 
 .report-items-list .stats-cat-row {
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 10px 14px;
+}
+
+/* Dins l'historial, la xifra és la dada clau de cada línia: l'aïllem del
+   gris apagat genèric de .stats-cat-count perquè es distingeixi d'un cop
+   d'ull del nom del producte. */
+.report-items-list .stats-cat-count {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 /* ── Botó "Genera comanda" a la targeta d'historial ─────────────────── */
 
 .btn-gen-comanda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 500;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1.5px solid rgba(var(--fg-rgb),.22);
   background: transparent;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
   transition: background .15s, border-color .15s;
 }
 .btn-gen-comanda:hover { background: rgba(var(--fg-rgb),.08); border-color: rgba(var(--fg-rgb),.38); }
+.btn-gen-comanda-icon { flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .btn-gen-comanda {
+    gap: 0;
+    padding: 6px;
+  }
+  .btn-gen-comanda-label { display: none; }
+}
 
 /* ── Vista editar comanda (tema fosc, vista nativa) ──────────────────── */
 
@@ -473,8 +499,8 @@
   z-index: 5;
   transition: opacity .15s, transform .15s;
 }
-.scroll-fab-bottom { bottom: calc(20px + var(--safe-bot)); }
-.scroll-fab-top    { bottom: calc(68px + var(--safe-bot)); }
+.scroll-fab-bottom,
+.scroll-fab-top { bottom: calc(20px + var(--safe-bot)); }
 .scroll-fab-bottom:hover,
 .scroll-fab-top:hover { transform: translateY(-2px); }
 .scroll-fab-bottom[hidden],
@@ -571,8 +597,8 @@
   gap: 6px;
   font-size: 12px;
   color: var(--low);
-  background: rgba(212,149,106,.12);
-  border: 1px solid rgba(212,149,106,.3);
+  background: rgba(166,118,58,.12);
+  border: 1px solid rgba(166,118,58,.3);
   border-radius: var(--r-pill);
   padding: 5px 12px;
   margin-bottom: 10px;
@@ -618,7 +644,7 @@
   flex-wrap: wrap;
   gap: 6px 8px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: rgba(var(--fg-rgb),.05);
   border: 1px solid rgba(var(--fg-rgb),.06);
 }
@@ -649,7 +675,7 @@
   gap: 4px;
   background: rgba(var(--fg-rgb),.1);
   border: 1px solid rgba(var(--fg-rgb),.14);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 4px 8px 4px 6px;
 }
 .coord-order-qty-wrap:focus-within {
@@ -661,9 +687,11 @@
   background: transparent;
   border: none;
   color: var(--text);
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 600;
   text-align: right;
+  font-variant-numeric: tabular-nums;
   outline: none;
 }
 .coord-order-qty-unit { font-size: 11px; color: var(--text-dim); }
@@ -671,7 +699,7 @@
   background: rgba(var(--fg-rgb),.1);
   border: 1px solid rgba(var(--fg-rgb),.18);
   padding: 5px 7px;
-  border-radius: 7px;
+  border-radius: 6px;
   font-family: inherit;
   font-weight: 700;
   color: var(--text);
@@ -692,16 +720,16 @@
   overflow-y: auto;
   margin-bottom: 14px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(34,31,30,.15) transparent;
+  scrollbar-color: rgba(27,26,31,.15) transparent;
 }
 .edit-hist-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  background: rgba(34,31,30,.04);
-  border: 1px solid rgba(34,31,30,.1);
-  border-radius: 10px;
+  background: rgba(27,26,31,.04);
+  border: 1px solid rgba(27,26,31,.1);
+  border-radius: 6px;
 }
 .edit-hist-row.is-low {
   border-color: rgba(200,48,48,.4);
@@ -711,16 +739,16 @@
 .edit-hist-name {
   flex: 1;
   font-size: 13px;
-  color: rgba(34,31,30,.85);
+  color: rgba(27,26,31,.85);
   min-width: 0;
 }
 .edit-hist-qty-wrap {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(34,31,30,.05);
-  border: 1px solid rgba(34,31,30,.14);
-  border-radius: 8px;
+  background: rgba(27,26,31,.05);
+  border: 1px solid rgba(27,26,31,.14);
+  border-radius: 6px;
   padding: 4px 8px 4px 6px;
   flex-shrink: 0;
 }
@@ -729,13 +757,13 @@
   background: transparent;
   border: none;
   outline: none;
-  color: rgba(34,31,30,.9);
+  color: rgba(27,26,31,.9);
   font-size: 14px;
   font-weight: 600;
   text-align: right;
   font-family: var(--font-sans);
 }
-.edit-hist-unit { font-size: 11px; color: rgba(34,31,30,.45); }
+.edit-hist-unit { font-size: 11px; color: rgba(27,26,31,.45); }
 
 /* ── Pending changes banner (comensal) ──────────────────────────────── */
 
@@ -745,9 +773,9 @@
   gap: 8px;
   margin: 8px 16px 0;
   padding: 10px 14px;
-  border-radius: 10px;
-  background: rgba(212,149,106,.12);
-  border: 1px solid rgba(212,149,106,.3);
+  border-radius: 6px;
+  background: rgba(166,118,58,.12);
+  border: 1px solid rgba(166,118,58,.3);
   font-size: 12px;
   color: var(--low);
 }
@@ -767,7 +795,7 @@
   gap: 10px;
   margin: 0 16px 4px;
   padding: 11px 14px;
-  border-radius: 12px;
+  border-radius: 6px;
   background: rgba(200,60,60,.12);
   border: 1px solid rgba(200,60,60,.32);
   font-size: 13px;
@@ -785,7 +813,7 @@
   padding: 13px;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 6px;
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -793,6 +821,25 @@
   transition: background .15s, color .15s;
 }
 .load-more-btn:hover { background: rgba(var(--fg-rgb),.05); color: var(--white); }
+
+/* Tanca la llista com un tiquet imprès en lloc de deixar buit mort sota
+   l'última targeta quan hi ha pocs registres. */
+.reports-end-marker {
+  margin-top: 4px;
+  padding: 6px 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+}
+.reports-end-marker::before,
+.reports-end-marker::after { content: '— · —'; }
 
 /* ── Offline sync badge ──────────────────────────────────────────────── */
 
@@ -805,7 +852,7 @@
   align-items: center;
   gap: 6px;
   background: rgba(30,25,22,.88);
-  border: 1px solid rgba(212,149,106,.5);
+  border: 1px solid rgba(166,118,58,.5);
   border-radius: var(--r-pill, 99px);
   padding: 5px 11px 5px 8px;
   font-size: 11px;

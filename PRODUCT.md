@@ -1,9 +1,5 @@
 # Product
 
-## Register
-
-product
-
 ## Platform
 
 web
@@ -18,10 +14,13 @@ Substituir els processos manuals/en paper de gestió d'estoc entre les quatre ma
 Una única eina compartida que substitueix el paper i les fulles soltes per portar l'inventari i les comandes de totes les masies, perquè ningú hagi de refer feina ni endevinar l'estat real de l'estoc.
 
 ## Brand Personality
-Elegant, discreta i professional — coherent amb el sector dels casaments de luxe que representa Uauu Weddings & Events. Es tradueix en un disseny fosc/clar minimalista, sense soroll visual, amb la serif Ogg reservada per a títols i noms d'entitat i la sans Inter per a la resta del text funcional.
+Continguda però amb personalitat pròpia: no és una eina de marca de cara al públic, és el full de treball intern d'un equip d'operacions d'esdeveniments de luxe. Es tradueix en un disseny industrial de sala de material — fons paper-carbó fred (mai crema), Oswald condensat majúscul per a títols (Inter per a la resta), xifres en monospace tabular com un tiquet, cantonades gairebé rectes amb un motiu de cantonada tallada com a signatura, i cap accent de color decoratiu: l'èmfasi ve del negre/ink sòlid, no d'un color saturat.
 
 ## Anti-references
-Cap referència externa concreta; el disseny actual (fons foscos, tipografia Ogg+Inter, sense decoració excessiva) és la pròpia referència a mantenir. Evitar qualsevol soroll visual que trenqui aquesta discreció (gradients, ombres apilades, decoració purament ornamental).
+Dues anti-referències explícites a evitar:
+1. La identitat original d'aquesta app (fons crema `#F2EFEE`, serif Ogg, accent terracota `#D4956A`, formes en pastilla `border-radius: 100px`).
+2. El "look genèric d'interfície feta per IA" en general (fons crema/marfil, serif elegant sol, accent terracota/salmó, pastilles arrodonides, gradients decoratius) — independentment de quina eina l'hagi generat.
+Seguir evitant qualsevol soroll visual afegit (gradients, ombres apilades, decoració purament ornamental).
 
 ## Design Principles
 - Llegibilitat i velocitat mòbil primer: un Encarregat ha de poder completar un inventari ràpid, amb poc temps i possiblement poca cobertura, sense fricció.

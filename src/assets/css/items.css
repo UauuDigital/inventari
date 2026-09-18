@@ -11,7 +11,7 @@
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 6px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -19,14 +19,16 @@
 }
 
 .stat-value {
-  font-family: var(--font-serif);
-  font-size: 26px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: -0.02em;
   color: var(--white);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
@@ -102,8 +104,21 @@
 }
 
 .item-card.is-low {
-  border-color: rgba(212,149,106,0.38);
-  background: rgba(212,149,106,0.05);
+  border-color: rgba(169,121,10,0.4);
+  background: rgba(169,121,10,0.06);
+}
+
+/* Etiqueta tallada: mateix motiu del FAB, en miniatura, per marcar
+   l'estoc pendent directament sobre la targeta. */
+.item-card.is-low::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: var(--low);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 
 .item-card.is-zero { opacity: 0.45; }
@@ -137,7 +152,7 @@
   border: none;
   color: var(--text-dimmer);
   cursor: pointer;
-  border-radius: 7px;
+  border-radius: 6px;
   transition: color .2s, background .2s;
   margin: -2px -2px 0 0;
   -webkit-tap-highlight-color: transparent;
@@ -152,11 +167,14 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border-radius: var(--r-pill);
-  padding: 3px 8px;
+  border-radius: 0;
+  padding: 3px 9px;
   display: inline-block;
   align-self: flex-start;
   border: 1px solid;
+  /* Mateix motiu signatura que el FAB: cantonada tallada en diagonal,
+     en miniatura, en lloc d'una caixa de vora arrodonida. */
+  clip-path: polygon(5px 0, 100% 0, 100% 100%, 0 100%, 0 5px);
   /* color and border-color set inline via JS */
 }
 
@@ -175,7 +193,7 @@
   justify-content: center;
   background: rgba(var(--fg-rgb),0.06);
   border: 1px solid rgba(var(--fg-rgb),0.11);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--white);
   cursor: pointer;
   font-size: 16px;
@@ -205,11 +223,13 @@
 }
 
 .qty-value {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
   color: var(--white);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .item-card.is-low .qty-value { color: var(--low); }
 
@@ -237,7 +257,7 @@
   gap: 14px;
 }
 
-.empty-icon { opacity: 0.18; }
+.empty-icon { color: var(--text); opacity: 0.18; }
 
 .empty-title {
   font-family: var(--font-serif);
