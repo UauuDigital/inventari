@@ -69,13 +69,13 @@
 }
 
 .app-version-bar {
-  position: fixed;
-  top: calc(var(--safe-top) + 8px);
-  right: 14px;
-  z-index: 400;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .app-version {

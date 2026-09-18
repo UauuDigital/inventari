@@ -526,13 +526,13 @@ function init() {
 }
 
 async function showAppVersion() {
-  const el = document.getElementById('app-version');
-  if (!el) return;
+  const els = document.querySelectorAll('.app-version');
+  if (!els.length) return;
   try {
     const res   = await fetch(`sw.js?t=${Date.now()}`, { cache: 'no-store' });
     const text  = await res.text();
     const match = text.match(/CACHE\s*=\s*'uauu-inv-(v[\d.]+)'/);
-    if (match) el.textContent = match[1];
+    if (match) els.forEach(el => { el.textContent = match[1]; });
   } catch {}
 }
 
