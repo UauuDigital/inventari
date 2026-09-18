@@ -251,7 +251,8 @@ export async function handleLoginSubmit(e) {
 
     const expectedRole = ROLE_MAP[state.user] || 'comensal';
     const profileRole  = (profile.rol || '').toLowerCase();
-    if (profileRole !== expectedRole) throw new Error(t('Aquest compte és {rol}, no {user}', { rol: profile.rol, user: state.user }));
+    const allowedRoles = expectedRole === 'comensal' ? ['comensal', 'coordinador'] : [expectedRole];
+    if (!allowedRoles.includes(profileRole)) throw new Error(t('Aquest compte és {rol}, no {user}', { rol: profile.rol, user: state.user }));
 
     const expiresAt = Date.now() + ((authData.expires_in || 3600) * 1000);
     localStorage.setItem(STORAGE_ACCESS_TOKEN,  authData.access_token);
